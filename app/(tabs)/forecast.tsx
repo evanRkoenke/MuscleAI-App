@@ -6,214 +6,248 @@ import {
   ScrollView,
   StyleSheet,
   Linking,
+  Dimensions,
 } from "react-native";
-import { useRouter } from "expo-router";
-import Svg, { Polyline, Line, Text as SvgText } from "react-native-svg";
+import Svg, { Polyline, Line, Text as SvgText, Circle, Defs, LinearGradient as SvgGrad, Stop } from "react-native-svg";
+import { LinearGradient } from "expo-linear-gradient";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
 import { useApp } from "@/lib/app-context";
 
-const CHART_WIDTH = 320;
+const SCREEN_W = Dimensions.get("window").width;
+const CHART_WIDTH = SCREEN_W - 56;
 const CHART_HEIGHT = 200;
-const CHART_PADDING = 40;
+const CHART_PAD_L = 44;
+const CHART_PAD_R = 16;
+const CHART_PAD_T = 20;
+const CHART_PAD_B = 32;
 
+const ELECTRIC_BLUE = "#007AFF";
+const CYAN_GLOW = "#00D4FF";
 const STRIPE_ELITE = "https://buy.stripe.com/28E00c3VTa1FffJc6WbEA05";
 
 export default function ForecastScreen() {
   const colors = useColors();
-  const router = useRouter();
-  const { subscription, profile, weightLog } = useApp();
+  const { subscription, profile } = useApp();
   const isElite = subscription === "elite";
 
-  // Generate forecast data
   const forecastData = useMemo(() => {
-    const startWeight = profile.currentWeight;
-    const targetWeight = profile.targetWeight;
-    const diff = targetWeight - startWeight;
-    const points = [];
-    for (let month = 0; month <= 12; month++) {
-      // Logarithmic progression curve
-      const progress = Math.log(1 + month) / Math.log(13);
-      const weight = startWeight + diff * progress;
-      points.push({
-        month,
-        weight: Math.round(weight * 10) / 10,
-        label: month === 0 ? "Now" : `${month}M`,
+    const start = profile.currentWeight;
+    const target = profile.targetWeight;
+    const diff = target - start;
+    const pts = [];
+    for (let m = 0; m <= 12; m++) {
+      const p = Math.log(1 + m) / Math.log(13);
+      pts.push({
+        month: m,
+        weight: Math.round((start + diff * p) * 10) / 10,
+        label: m === 0 ? "Now" : `${m}M`,
       });
     }
-    return points;
+    return pts;
   }, [profile.currentWeight, profile.targetWeight]);
 
-  const chartPoints = useMemo(() => {
+  const { chartPoints, dotPositions, minW, maxW } = useMemo(() => {
     const weights = forecastData.map((d) => d.weight);
-    const minW = Math.min(...weights) - 5;
-    const maxW = Math.max(...weights) + 5;
-    const range = maxW - minW || 1;
+    const mn = Math.min(...weights) - 3;
+    const mx = Math.max(...weights) + 3;
+    const range = mx - mn || 1;
+    const plotW = CHART_WIDTH - CHART_PAD_L - CHART_PAD_R;
+    const plotH = CHART_HEIGHT - CHART_PAD_T - CHART_PAD_B;
 
-    return forecastData
-      .map((d, i) => {
-        const x = CHART_PADDING + (i / 12) * (CHART_WIDTH - CHART_PADDING * 2);
-        const y = CHART_HEIGHT - CHART_PADDING - ((d.weight - minW) / range) * (CHART_HEIGHT - CHART_PADDING * 2);
-        return `${x},${y}`;
-      })
-      .join(" ");
+    const dots = forecastData.map((d, i) => {
+      const x = CHART_PAD_L + (i / 12) * plotW;
+      const y = CHART_PAD_T + (1 - (d.weight - mn) / range) * plotH;
+      return { x, y, weight: d.weight, month: d.month };
+    });
+
+    return {
+      chartPoints: dots.map((d) => `${d.x},${d.y}`).join(" "),
+      dotPositions: dots,
+      minW: mn,
+      maxW: mx,
+    };
   }, [forecastData]);
 
   const handleUnlock = async () => {
     try {
       await Linking.openURL(STRIPE_ELITE);
-    } catch (e) {
-      console.warn("Could not open Stripe link:", e);
+    } catch {
+      // handled silently
     }
   };
 
   return (
     <ScreenContainer>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            <IconSymbol name="chart.line.uptrend.xyaxis" size={24} color={colors.primary} />
-            <Text style={[styles.headerTitle, { color: colors.foreground }]}>
-              ANABOLIC FORECAST
-            </Text>
+            <IconSymbol name="chart.line.uptrend.xyaxis" size={22} color={ELECTRIC_BLUE} />
+            <Text style={styles.headerTitle}>ANABOLIC FORECAST</Text>
           </View>
-          {!isElite && <IconSymbol name="lock.fill" size={20} color={colors.warning} />}
+          {!isElite && <IconSymbol name="lock.fill" size={18} color="#FFB300" />}
         </View>
 
-        {/* Current Stats */}
-        <View style={[styles.statsRow]}>
-          <View style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-            <Text style={[styles.statValue, { color: colors.foreground }]}>
-              {profile.currentWeight}
-            </Text>
-            <Text style={[styles.statLabel, { color: colors.muted }]}>Current ({profile.unit})</Text>
+        {/* Weight Stats */}
+        <View style={styles.statsRow}>
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>{profile.currentWeight}</Text>
+            <Text style={styles.statUnit}>{profile.unit}</Text>
+            <Text style={styles.statLabel}>Current</Text>
           </View>
-          <View style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-            <Text style={[styles.statValue, { color: colors.primary }]}>
-              {profile.targetWeight}
-            </Text>
-            <Text style={[styles.statLabel, { color: colors.muted }]}>Target ({profile.unit})</Text>
+          <View style={styles.statDivider} />
+          <View style={styles.statCard}>
+            <Text style={[styles.statValue, { color: ELECTRIC_BLUE }]}>{profile.targetWeight}</Text>
+            <Text style={[styles.statUnit, { color: ELECTRIC_BLUE }]}>{profile.unit}</Text>
+            <Text style={styles.statLabel}>Target</Text>
           </View>
         </View>
 
-        {/* Chart */}
-        <View style={[styles.chartCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+        {/* Chart Card */}
+        <View style={styles.chartCard}>
           <View style={isElite ? undefined : styles.blurredContent}>
             <Svg width={CHART_WIDTH} height={CHART_HEIGHT}>
-              {/* Grid */}
-              {[0.25, 0.5, 0.75].map((ratio) => (
-                <Line
-                  key={ratio}
-                  x1={CHART_PADDING}
-                  y1={CHART_PADDING + ratio * (CHART_HEIGHT - CHART_PADDING * 2)}
-                  x2={CHART_WIDTH - CHART_PADDING}
-                  y2={CHART_PADDING + ratio * (CHART_HEIGHT - CHART_PADDING * 2)}
-                  stroke={colors.border}
-                  strokeWidth={1}
-                  strokeDasharray="4,4"
-                />
-              ))}
+              <Defs>
+                <SvgGrad id="lineGrad" x1="0" y1="0" x2="1" y2="0">
+                  <Stop offset="0" stopColor={ELECTRIC_BLUE} />
+                  <Stop offset="1" stopColor={CYAN_GLOW} />
+                </SvgGrad>
+              </Defs>
+              {/* Horizontal grid lines */}
+              {[0.25, 0.5, 0.75].map((r) => {
+                const y = CHART_PAD_T + r * (CHART_HEIGHT - CHART_PAD_T - CHART_PAD_B);
+                return (
+                  <Line
+                    key={r}
+                    x1={CHART_PAD_L}
+                    y1={y}
+                    x2={CHART_WIDTH - CHART_PAD_R}
+                    y2={y}
+                    stroke="#1A2533"
+                    strokeWidth={1}
+                    strokeDasharray="4,4"
+                  />
+                );
+              })}
               {/* X-axis labels */}
-              {[0, 3, 6, 9, 12].map((month) => (
-                <SvgText
-                  key={month}
-                  x={CHART_PADDING + (month / 12) * (CHART_WIDTH - CHART_PADDING * 2)}
-                  y={CHART_HEIGHT - 10}
-                  fill={colors.muted}
-                  fontSize={10}
-                  textAnchor="middle"
-                >
-                  {month === 0 ? "Now" : `${month}M`}
-                </SvgText>
-              ))}
-              {/* Forecast line */}
+              {[0, 3, 6, 9, 12].map((m) => {
+                const x = CHART_PAD_L + (m / 12) * (CHART_WIDTH - CHART_PAD_L - CHART_PAD_R);
+                return (
+                  <SvgText
+                    key={m}
+                    x={x}
+                    y={CHART_HEIGHT - 6}
+                    fill="#7A8A99"
+                    fontSize={10}
+                    fontWeight="600"
+                    textAnchor="middle"
+                  >
+                    {m === 0 ? "1M" : m === 12 ? "12 MONTHS" : `${m}M`}
+                  </SvgText>
+                );
+              })}
+              {/* Forecast line with gradient */}
               <Polyline
                 points={chartPoints}
                 fill="none"
-                stroke={colors.primary}
-                strokeWidth={2.5}
+                stroke="url(#lineGrad)"
+                strokeWidth={3}
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
+              {/* Data dots */}
+              {dotPositions.filter((_, i) => i % 3 === 0 || i === 12).map((d, i) => (
+                <Circle
+                  key={i}
+                  cx={d.x}
+                  cy={d.y}
+                  r={4}
+                  fill={ELECTRIC_BLUE}
+                  stroke="#0A0E14"
+                  strokeWidth={2}
+                />
+              ))}
             </Svg>
           </View>
 
           {!isElite && (
             <View style={styles.lockOverlay}>
-              <IconSymbol name="lock.fill" size={32} color={colors.primary} />
-              <Text style={[styles.lockText, { color: colors.foreground }]}>
-                Premium Feature
-              </Text>
+              <View style={styles.lockIconBg}>
+                <IconSymbol name="lock.fill" size={28} color={ELECTRIC_BLUE} />
+              </View>
+              <Text style={styles.lockText}>Premium Feature</Text>
             </View>
           )}
         </View>
 
-        {/* Priority Sync Card */}
-        <View style={[styles.syncCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <View style={styles.syncHeader}>
-            <IconSymbol name="lock.fill" size={20} color={colors.muted} />
-            <Text style={[styles.syncTitle, { color: colors.foreground }]}>Priority Sync</Text>
+        {/* Priority Sync */}
+        <View style={styles.syncCard}>
+          <View style={styles.syncRow}>
+            <IconSymbol name="lock.fill" size={18} color="#5A6A7A" />
+            <Text style={styles.syncTitle}>Priority Sync</Text>
+            <IconSymbol name="chevron.right" size={16} color="#3A4A5C" />
           </View>
-          <Text style={[styles.syncDescription, { color: colors.muted }]}>
+          <Text style={styles.syncDesc}>
             {isElite
-              ? "Your forecast syncs with your daily nutrition data for real-time predictions."
+              ? "Your forecast syncs with daily nutrition data for real-time predictions."
               : "Locked content updates — upgrade to Elite for real-time sync."}
           </Text>
         </View>
 
-        {/* Upsell Card (non-Elite) */}
+        {/* Premium Upsell */}
         {!isElite && (
-          <View style={[styles.upsellCard, { backgroundColor: colors.surface, borderColor: colors.primary }]}>
-            <Text style={[styles.upsellBadge, { color: colors.warning }]}>
-              PREMIUM MEMBERS ONLY
-            </Text>
-            <Text style={[styles.upsellTitle, { color: colors.foreground }]}>
+          <View style={styles.upsellCard}>
+            <LinearGradient
+              colors={["rgba(0,122,255,0.08)", "rgba(255,59,48,0.05)"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={StyleSheet.absoluteFill}
+            />
+            <Text style={styles.upsellBadge}>PREMIUM MEMBERS ONLY</Text>
+            <Text style={styles.upsellDesc}>
               Unlock this 12-Month Forecast and multiply your gains.
             </Text>
-            <View style={styles.upsellPricing}>
-              <Text style={[styles.upsellPrice, { color: colors.foreground }]}>
-                ELITE ANNUAL $79.99
-              </Text>
-              <Text style={[styles.upsellSavings, { color: colors.success }]}>66% SAVINGS</Text>
+            <View style={styles.upsellPriceRow}>
+              <Text style={styles.upsellPrice}>ELITE ANNUAL $79.99</Text>
+              <Text style={styles.upsellSavings}>66% SAVINGS</Text>
             </View>
             <TouchableOpacity
-              style={[styles.unlockButton, { backgroundColor: colors.primary }]}
+              style={styles.unlockButton}
               onPress={handleUnlock}
               activeOpacity={0.8}
             >
-              <Text style={styles.unlockButtonText}>UNLOCK</Text>
+              <LinearGradient
+                colors={[ELECTRIC_BLUE, "#FF3B30"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.unlockGradient}
+              >
+                <Text style={styles.unlockText}>UNLOCK</Text>
+              </LinearGradient>
             </TouchableOpacity>
           </View>
         )}
 
-        {/* Milestones (Elite only) */}
+        {/* Milestones (Elite) */}
         {isElite && (
           <View style={styles.milestones}>
-            <Text style={[styles.milestonesTitle, { color: colors.foreground }]}>
-              Projected Milestones
-            </Text>
+            <Text style={styles.milestonesTitle}>Projected Milestones</Text>
             {[
               { month: 1, label: "First visible progress" },
               { month: 3, label: "Noticeable body composition change" },
               { month: 6, label: "Halfway to target" },
               { month: 12, label: "Target weight achieved" },
-            ].map((milestone) => (
-              <View
-                key={milestone.month}
-                style={[styles.milestoneRow, { borderBottomColor: colors.border }]}
-              >
-                <View style={[styles.milestoneDot, { backgroundColor: colors.primary }]} />
+            ].map((ms) => (
+              <View key={ms.month} style={styles.milestoneRow}>
+                <View style={styles.milestoneDot} />
                 <View style={styles.milestoneInfo}>
-                  <Text style={[styles.milestoneMonth, { color: colors.primary }]}>
-                    Month {milestone.month}
-                  </Text>
-                  <Text style={[styles.milestoneLabel, { color: colors.muted }]}>
-                    {milestone.label}
-                  </Text>
+                  <Text style={styles.milestoneMonth}>Month {ms.month}</Text>
+                  <Text style={styles.milestoneLabel}>{ms.label}</Text>
                 </View>
-                <Text style={[styles.milestoneWeight, { color: colors.foreground }]}>
-                  {forecastData[milestone.month]?.weight} {profile.unit}
+                <Text style={styles.milestoneWeight}>
+                  {forecastData[ms.month]?.weight} {profile.unit}
                 </Text>
               </View>
             ))}
@@ -225,10 +259,7 @@ export default function ForecastScreen() {
 }
 
 const styles = StyleSheet.create({
-  scrollContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 100,
-  },
+  scrollContent: { paddingHorizontal: 20, paddingBottom: 100 },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -236,161 +267,113 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     paddingBottom: 16,
   },
-  headerLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
+  headerLeft: { flexDirection: "row", alignItems: "center", gap: 10 },
   headerTitle: {
     fontSize: 20,
-    fontWeight: "800",
+    fontWeight: "900",
     letterSpacing: 2,
+    color: "#ECEDEE",
   },
   statsRow: {
     flexDirection: "row",
-    gap: 12,
+    alignItems: "center",
+    backgroundColor: "#111820",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#1A2533",
+    padding: 18,
     marginBottom: 16,
   },
-  statCard: {
-    flex: 1,
-    borderRadius: 14,
-    padding: 16,
-    alignItems: "center",
-    borderWidth: 1,
-  },
-  statValue: {
-    fontSize: 28,
-    fontWeight: "900",
-  },
-  statLabel: {
-    fontSize: 12,
-    marginTop: 4,
-    fontWeight: "500",
-  },
+  statCard: { flex: 1, alignItems: "center" },
+  statDivider: { width: 1, height: 40, backgroundColor: "#1A2533" },
+  statValue: { fontSize: 32, fontWeight: "900", color: "#ECEDEE" },
+  statUnit: { fontSize: 14, fontWeight: "600", color: "#7A8A99", marginTop: 2 },
+  statLabel: { fontSize: 12, fontWeight: "500", color: "#5A6A7A", marginTop: 4 },
   chartCard: {
     borderRadius: 18,
-    padding: 16,
+    padding: 12,
     borderWidth: 1,
+    borderColor: "#1A2533",
+    backgroundColor: "#111820",
     marginBottom: 16,
     alignItems: "center",
-    position: "relative",
     overflow: "hidden",
   },
-  blurredContent: {
-    opacity: 0.3,
-  },
+  blurredContent: { opacity: 0.25 },
   lockOverlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    ...StyleSheet.absoluteFillObject,
     justifyContent: "center",
     alignItems: "center",
-    gap: 8,
+    gap: 10,
   },
-  lockText: {
-    fontSize: 16,
-    fontWeight: "700",
+  lockIconBg: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "rgba(0,122,255,0.12)",
+    justifyContent: "center",
+    alignItems: "center",
   },
+  lockText: { fontSize: 16, fontWeight: "700", color: "#ECEDEE" },
   syncCard: {
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
+    borderColor: "#1A2533",
+    backgroundColor: "#111820",
     marginBottom: 16,
   },
-  syncHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    marginBottom: 8,
-  },
-  syncTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-  },
-  syncDescription: {
-    fontSize: 14,
-    lineHeight: 20,
-  },
+  syncRow: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 8 },
+  syncTitle: { flex: 1, fontSize: 16, fontWeight: "700", color: "#ECEDEE" },
+  syncDesc: { fontSize: 14, lineHeight: 20, color: "#7A8A99" },
   upsellCard: {
-    borderRadius: 18,
-    padding: 20,
-    borderWidth: 2,
+    borderRadius: 20,
+    padding: 24,
+    borderWidth: 1.5,
+    borderColor: ELECTRIC_BLUE,
+    backgroundColor: "#111820",
     alignItems: "center",
     gap: 12,
+    overflow: "hidden",
+    marginBottom: 16,
   },
   upsellBadge: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "800",
-    letterSpacing: 1.5,
+    letterSpacing: 2,
+    color: "#FFB300",
   },
-  upsellTitle: {
-    fontSize: 16,
+  upsellDesc: {
+    fontSize: 15,
     fontWeight: "600",
     textAlign: "center",
     lineHeight: 22,
+    color: "#ECEDEE",
   },
-  upsellPricing: {
-    alignItems: "center",
-    gap: 4,
-  },
-  upsellPrice: {
-    fontSize: 20,
-    fontWeight: "900",
-    letterSpacing: 1,
-  },
-  upsellSavings: {
-    fontSize: 13,
-    fontWeight: "700",
-  },
-  unlockButton: {
-    width: "100%",
-    height: 48,
-    borderRadius: 24,
+  upsellPriceRow: { alignItems: "center", gap: 4 },
+  upsellPrice: { fontSize: 22, fontWeight: "900", letterSpacing: 1, color: "#ECEDEE" },
+  upsellSavings: { fontSize: 13, fontWeight: "700", color: "#00E676" },
+  unlockButton: { width: "100%", marginTop: 4 },
+  unlockGradient: {
+    height: 52,
+    borderRadius: 26,
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 4,
   },
-  unlockButtonText: {
-    color: "#FFFFFF",
-    fontSize: 18,
-    fontWeight: "900",
-    letterSpacing: 2,
-  },
-  milestones: {
-    marginTop: 8,
-  },
-  milestonesTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    marginBottom: 16,
-  },
+  unlockText: { color: "#FFFFFF", fontSize: 18, fontWeight: "900", letterSpacing: 3 },
+  milestones: { marginTop: 4 },
+  milestonesTitle: { fontSize: 18, fontWeight: "700", color: "#ECEDEE", marginBottom: 16 },
   milestoneRow: {
     flexDirection: "row",
     alignItems: "center",
     paddingVertical: 14,
     borderBottomWidth: 1,
+    borderBottomColor: "#1A2533",
     gap: 12,
   },
-  milestoneDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-  },
-  milestoneInfo: {
-    flex: 1,
-  },
-  milestoneMonth: {
-    fontSize: 14,
-    fontWeight: "700",
-  },
-  milestoneLabel: {
-    fontSize: 13,
-    marginTop: 2,
-  },
-  milestoneWeight: {
-    fontSize: 16,
-    fontWeight: "700",
-  },
+  milestoneDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: ELECTRIC_BLUE },
+  milestoneInfo: { flex: 1 },
+  milestoneMonth: { fontSize: 14, fontWeight: "700", color: ELECTRIC_BLUE },
+  milestoneLabel: { fontSize: 13, marginTop: 2, color: "#7A8A99" },
+  milestoneWeight: { fontSize: 16, fontWeight: "700", color: "#ECEDEE" },
 });

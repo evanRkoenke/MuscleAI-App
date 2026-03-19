@@ -13,14 +13,17 @@ import {
 import { useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { useColors } from "@/hooks/use-colors";
 import { trpc } from "@/lib/trpc";
+import * as Haptics from "expo-haptics";
+
+const ELECTRIC_BLUE = "#007AFF";
 
 interface ChatMessage {
   id: string;
   role: "user" | "assistant";
   content: string;
   timestamp: Date;
+  isEscalation?: boolean;
 }
 
 const QUICK_ACTIONS = [
@@ -39,7 +42,6 @@ const SYSTEM_PROMPT = `You are Muscle Support, the AI assistant for Muscle AI â€
 Be concise, friendly, and professional. Use short paragraphs. If you cannot resolve an issue after the user's 3rd message, suggest escalating to human support.`;
 
 export default function SupportScreen() {
-  const colors = useColors();
   const router = useRouter();
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
@@ -60,6 +62,10 @@ export default function SupportScreen() {
   const sendMessage = useCallback(
     async (text: string) => {
       if (!text.trim() || loading) return;
+
+      if (Platform.OS !== "web") {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
 
       const userMessage: ChatMessage = {
         id: Date.now().toString(),
@@ -127,10 +133,14 @@ export default function SupportScreen() {
             id: (Date.now() + 2).toString(),
             role: "assistant",
             content:
-              "It seems like this issue needs more attention. I've flagged it for Human Review. Our support team will follow up within 24 hours. Is there anything else I can help with in the meantime?",
+              "It seems like this issue needs more attention. I've flagged it for Human Review. Our support team will follow up within 24 hours via email. Is there anything else I can help with in the meantime?",
             timestamp: new Date(),
+            isEscalation: true,
           };
           setMessages((prev) => [...prev, escalationMessage]);
+          if (Platform.OS !== "web") {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+          }
         }, 1000);
       }
     },
@@ -141,15 +151,20 @@ export default function SupportScreen() {
     <View
       style={[
         styles.messageBubble,
-        item.role === "user"
-          ? [styles.userBubble, { backgroundColor: colors.primary }]
-          : [styles.assistantBubble, { backgroundColor: colors.surface }],
+        item.role === "user" ? styles.userBubble : styles.assistantBubble,
+        item.isEscalation && styles.escalationBubble,
       ]}
     >
+      {item.isEscalation && (
+        <View style={styles.escalationBadge}>
+          <IconSymbol name="bolt.fill" size={12} color="#FFB300" />
+          <Text style={styles.escalationBadgeText}>ESCALATED</Text>
+        </View>
+      )}
       <Text
         style={[
           styles.messageText,
-          { color: item.role === "user" ? "#FFFFFF" : colors.foreground },
+          { color: item.role === "user" ? "#FFFFFF" : "#ECEDEE" },
         ]}
       >
         {item.content}
@@ -164,17 +179,20 @@ export default function SupportScreen() {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         {/* Header */}
-        <View style={[styles.header, { borderBottomColor: colors.border }]}>
+        <View style={styles.header}>
           <TouchableOpacity
             onPress={() => router.back()}
             style={styles.backButton}
             activeOpacity={0.7}
           >
-            <IconSymbol name="arrow.left" size={24} color={colors.foreground} />
+            <IconSymbol name="arrow.left" size={24} color="#ECEDEE" />
           </TouchableOpacity>
           <View style={styles.headerCenter}>
-            <Text style={[styles.headerTitle, { color: colors.foreground }]}>Muscle Support</Text>
-            <Text style={[styles.headerSubtitle, { color: colors.success }]}>Online</Text>
+            <Text style={styles.headerTitle}>Muscle Support</Text>
+            <View style={styles.onlineRow}>
+              <View style={styles.onlineDot} />
+              <Text style={styles.headerSubtitle}>Online</Text>
+            </View>
           </View>
           <View style={styles.backButton} />
         </View>
@@ -196,13 +214,11 @@ export default function SupportScreen() {
             {QUICK_ACTIONS.map((action) => (
               <TouchableOpacity
                 key={action.label}
-                style={[styles.quickActionChip, { borderColor: colors.primary, backgroundColor: colors.primary + "10" }]}
+                style={styles.quickActionChip}
                 onPress={() => sendMessage(action.prompt)}
                 activeOpacity={0.7}
               >
-                <Text style={[styles.quickActionText, { color: colors.primary }]}>
-                  {action.label}
-                </Text>
+                <Text style={styles.quickActionText}>{action.label}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -211,17 +227,17 @@ export default function SupportScreen() {
         {/* Loading indicator */}
         {loading && (
           <View style={styles.loadingRow}>
-            <ActivityIndicator size="small" color={colors.primary} />
-            <Text style={[styles.loadingText, { color: colors.muted }]}>Thinking...</Text>
+            <ActivityIndicator size="small" color={ELECTRIC_BLUE} />
+            <Text style={styles.loadingText}>Thinking...</Text>
           </View>
         )}
 
         {/* Input */}
-        <View style={[styles.inputContainer, { borderTopColor: colors.border, backgroundColor: colors.background }]}>
+        <View style={styles.inputContainer}>
           <TextInput
-            style={[styles.input, { color: colors.foreground, backgroundColor: colors.surface }]}
+            style={styles.input}
             placeholder="Type a message..."
-            placeholderTextColor={colors.muted}
+            placeholderTextColor="#5A6A7A"
             value={input}
             onChangeText={setInput}
             returnKeyType="send"
@@ -230,7 +246,10 @@ export default function SupportScreen() {
             maxLength={500}
           />
           <TouchableOpacity
-            style={[styles.sendButton, { backgroundColor: input.trim() ? colors.primary : colors.border }]}
+            style={[
+              styles.sendButton,
+              { backgroundColor: input.trim() ? ELECTRIC_BLUE : "#1A2533" },
+            ]}
             onPress={() => sendMessage(input)}
             disabled={!input.trim() || loading}
             activeOpacity={0.8}
@@ -251,48 +270,45 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
+    borderBottomColor: "#1A2533",
   },
-  backButton: {
-    width: 40,
-    height: 40,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  headerCenter: {
-    flex: 1,
-    alignItems: "center",
-  },
-  headerTitle: {
-    fontSize: 17,
-    fontWeight: "700",
-  },
-  headerSubtitle: {
-    fontSize: 12,
-    fontWeight: "500",
-  },
-  messageList: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    gap: 8,
-  },
-  messageBubble: {
-    maxWidth: "80%",
-    borderRadius: 18,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-  },
+  backButton: { width: 40, height: 40, justifyContent: "center", alignItems: "center" },
+  headerCenter: { flex: 1, alignItems: "center" },
+  headerTitle: { fontSize: 17, fontWeight: "800", color: "#ECEDEE" },
+  onlineRow: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 2 },
+  onlineDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: "#00E676" },
+  headerSubtitle: { fontSize: 12, fontWeight: "500", color: "#00E676" },
+  messageList: { paddingHorizontal: 16, paddingVertical: 12, gap: 8 },
+  messageBubble: { maxWidth: "80%", borderRadius: 18, paddingHorizontal: 16, paddingVertical: 10 },
   userBubble: {
     alignSelf: "flex-end",
     borderBottomRightRadius: 4,
+    backgroundColor: ELECTRIC_BLUE,
   },
   assistantBubble: {
     alignSelf: "flex-start",
     borderBottomLeftRadius: 4,
+    backgroundColor: "#111820",
+    borderWidth: 1,
+    borderColor: "#1A2533",
   },
-  messageText: {
-    fontSize: 15,
-    lineHeight: 22,
+  escalationBubble: {
+    borderColor: "#FFB300",
+    backgroundColor: "rgba(255,179,0,0.06)",
   },
+  escalationBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginBottom: 6,
+  },
+  escalationBadgeText: {
+    fontSize: 10,
+    fontWeight: "900",
+    letterSpacing: 1.5,
+    color: "#FFB300",
+  },
+  messageText: { fontSize: 15, lineHeight: 22 },
   quickActions: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -305,11 +321,10 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 1,
+    borderColor: ELECTRIC_BLUE,
+    backgroundColor: "rgba(0,122,255,0.08)",
   },
-  quickActionText: {
-    fontSize: 13,
-    fontWeight: "600",
-  },
+  quickActionText: { fontSize: 13, fontWeight: "600", color: ELECTRIC_BLUE },
   loadingRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -317,15 +332,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 8,
   },
-  loadingText: {
-    fontSize: 13,
-  },
+  loadingText: { fontSize: 13, color: "#5A6A7A" },
   inputContainer: {
     flexDirection: "row",
     alignItems: "flex-end",
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderTopWidth: 1,
+    borderTopColor: "#1A2533",
+    backgroundColor: "#0A0E14",
     gap: 8,
   },
   input: {
@@ -335,6 +350,10 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     fontSize: 15,
     maxHeight: 100,
+    color: "#ECEDEE",
+    backgroundColor: "#111820",
+    borderWidth: 1,
+    borderColor: "#1A2533",
   },
   sendButton: {
     width: 40,

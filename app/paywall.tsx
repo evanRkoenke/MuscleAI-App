@@ -1,11 +1,24 @@
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Linking } from "react-native";
+import { useState } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+  Linking,
+  Platform,
+  Alert,
+  ActivityIndicator,
+} from "react-native";
 import { useRouter } from "expo-router";
+import { LinearGradient } from "expo-linear-gradient";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { useColors } from "@/hooks/use-colors";
 import { useApp } from "@/lib/app-context";
 import * as Haptics from "expo-haptics";
-import { Platform } from "react-native";
+
+const ELECTRIC_BLUE = "#007AFF";
+const CYAN_GLOW = "#00D4FF";
 
 const STRIPE_LINKS = {
   elite: "https://buy.stripe.com/28E00c3VTa1FffJc6WbEA05",
@@ -31,12 +44,12 @@ const tiers: TierInfo[] = [
     price: "$79.99",
     period: "/year",
     badge: "BEST VALUE",
-    savings: "66% savings",
+    savings: "66% savings vs monthly",
     features: [
       "Unlimited AI meal scanning",
       "12-Month Muscle Forecast",
       "Priority Sync",
-      "Advanced analytics",
+      "Advanced analytics & insights",
       "Gains Cards for social sharing",
     ],
     highlighted: true,
@@ -70,23 +83,63 @@ const tiers: TierInfo[] = [
 
 export default function PaywallScreen() {
   const router = useRouter();
-  const colors = useColors();
   const { setSubscription } = useApp();
+  const [subscribing, setSubscribing] = useState<string | null>(null);
 
   const handleSubscribe = async (tier: TierInfo) => {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
-    // Open Stripe checkout link
-    const url = STRIPE_LINKS[tier.id];
+    setSubscribing(tier.id);
     try {
+      const url = STRIPE_LINKS[tier.id];
+      const canOpen = await Linking.canOpenURL(url);
+      if (!canOpen) {
+        Alert.alert(
+          "Unable to Open Checkout",
+          "Could not open the payment page. Please check your internet connection and try again.",
+          [{ text: "OK" }]
+        );
+        return;
+      }
       await Linking.openURL(url);
-    } catch (e) {
-      console.warn("Could not open Stripe link:", e);
+      // Set subscription locally after opening checkout
+      // In production, this would be confirmed via Stripe webhook
+      await setSubscription(tier.id);
+      if (Platform.OS !== "web") {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+      router.replace("/(tabs)");
+    } catch (error) {
+      Alert.alert(
+        "Payment Error",
+        "Something went wrong while processing your subscription. Please try again or contact support.",
+        [
+          { text: "Try Again", onPress: () => handleSubscribe(tier) },
+          { text: "Cancel", style: "cancel" },
+        ]
+      );
+      if (Platform.OS !== "web") {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      }
+    } finally {
+      setSubscribing(null);
     }
-    // Set subscription tier locally
-    await setSubscription(tier.id);
-    router.replace("/(tabs)");
+  };
+
+  const handleRestore = async () => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    // In production: verify with App Store / Google Play receipts
+    Alert.alert(
+      "Restore Purchases",
+      "If you have an existing subscription, it will be restored automatically when you sign in with the same account. If you're having issues, please contact support.",
+      [
+        { text: "Contact Support", onPress: () => (router as any).push("/support") },
+        { text: "OK", style: "cancel" },
+      ]
+    );
   };
 
   const handleSkip = () => {
@@ -96,82 +149,104 @@ export default function PaywallScreen() {
   return (
     <ScreenContainer edges={["top", "bottom", "left", "right"]}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        {/* Header */}
         <View style={styles.header}>
-          <IconSymbol name="bolt.fill" size={40} color={colors.primary} />
-          <Text style={[styles.title, { color: colors.foreground }]}>Unlock Your</Text>
-          <Text style={[styles.titleHighlight, { color: colors.primary }]}>Full Potential</Text>
-          <Text style={[styles.subtitle, { color: colors.muted }]}>
+          <View style={styles.iconGlow}>
+            <IconSymbol name="bolt.fill" size={36} color={ELECTRIC_BLUE} />
+          </View>
+          <Text style={styles.title}>Unlock Your</Text>
+          <Text style={styles.titleHighlight}>Full Potential</Text>
+          <Text style={styles.subtitle}>
             Choose your plan to access AI-powered nutrition tracking
           </Text>
         </View>
 
+        {/* Tier Cards */}
         <View style={styles.tiersContainer}>
           {tiers.map((tier) => (
             <View
               key={tier.id}
               style={[
                 styles.tierCard,
-                {
-                  backgroundColor: colors.surface,
-                  borderColor: tier.highlighted ? colors.primary : colors.border,
-                  borderWidth: tier.highlighted ? 2 : 1,
-                },
+                tier.highlighted && styles.tierCardHighlighted,
               ]}
             >
+              {tier.highlighted && (
+                <LinearGradient
+                  colors={["rgba(0,122,255,0.08)", "rgba(0,212,255,0.04)"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={StyleSheet.absoluteFill}
+                />
+              )}
               {tier.badge && (
-                <View style={[styles.badge, { backgroundColor: colors.primary }]}>
+                <LinearGradient
+                  colors={[ELECTRIC_BLUE, CYAN_GLOW]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.badge}
+                >
                   <Text style={styles.badgeText}>{tier.badge}</Text>
-                </View>
+                </LinearGradient>
               )}
               <View style={styles.tierHeader}>
-                <Text style={[styles.tierName, { color: colors.foreground }]}>{tier.name}</Text>
+                <Text style={styles.tierName}>{tier.name}</Text>
                 <View style={styles.priceRow}>
-                  <Text style={[styles.tierPrice, { color: colors.foreground }]}>{tier.price}</Text>
-                  <Text style={[styles.tierPeriod, { color: colors.muted }]}>{tier.period}</Text>
+                  <Text style={styles.tierPrice}>{tier.price}</Text>
+                  <Text style={styles.tierPeriod}>{tier.period}</Text>
                 </View>
                 {tier.savings && (
-                  <Text style={[styles.savings, { color: colors.success }]}>{tier.savings}</Text>
+                  <Text style={styles.savings}>{tier.savings}</Text>
                 )}
               </View>
               <View style={styles.featuresContainer}>
                 {tier.features.map((feature, i) => (
                   <View key={i} style={styles.featureRow}>
-                    <IconSymbol name="checkmark" size={16} color={colors.primary} />
-                    <Text style={[styles.featureText, { color: colors.muted }]}>{feature}</Text>
+                    <IconSymbol name="checkmark" size={14} color={ELECTRIC_BLUE} />
+                    <Text style={styles.featureText}>{feature}</Text>
                   </View>
                 ))}
               </View>
               <TouchableOpacity
                 style={[
                   styles.subscribeButton,
-                  {
-                    backgroundColor: tier.highlighted ? colors.primary : "transparent",
-                    borderColor: colors.primary,
-                    borderWidth: tier.highlighted ? 0 : 1,
-                  },
+                  !tier.highlighted && styles.subscribeButtonOutline,
                 ]}
                 onPress={() => handleSubscribe(tier)}
                 activeOpacity={0.8}
+                disabled={subscribing !== null}
               >
-                <Text
-                  style={[
-                    styles.subscribeButtonText,
-                    { color: tier.highlighted ? "#FFFFFF" : colors.primary },
-                  ]}
-                >
-                  {tier.highlighted ? "UNLOCK" : "Subscribe"}
-                </Text>
+                {tier.highlighted ? (
+                  <LinearGradient
+                    colors={[ELECTRIC_BLUE, "#FF3B30"]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.subscribeGradient}
+                  >
+                    {subscribing === tier.id ? (
+                      <ActivityIndicator color="#FFFFFF" />
+                    ) : (
+                      <Text style={styles.subscribeTextWhite}>UNLOCK</Text>
+                    )}
+                  </LinearGradient>
+                ) : subscribing === tier.id ? (
+                  <ActivityIndicator color={ELECTRIC_BLUE} />
+                ) : (
+                  <Text style={styles.subscribeTextBlue}>Subscribe</Text>
+                )}
               </TouchableOpacity>
             </View>
           ))}
         </View>
 
+        {/* Skip */}
         <TouchableOpacity style={styles.skipButton} onPress={handleSkip} activeOpacity={0.7}>
-          <Text style={[styles.skipText, { color: colors.muted }]}>Continue with Free</Text>
+          <Text style={styles.skipText}>Continue with Free</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.restoreButton} activeOpacity={0.7}>
-          <Text style={[styles.restoreText, { color: colors.muted }]}>Restore Purchases</Text>
+        {/* Restore */}
+        <TouchableOpacity style={styles.restoreButton} onPress={handleRestore} activeOpacity={0.7}>
+          <Text style={styles.restoreText}>Restore Purchases</Text>
         </TouchableOpacity>
       </ScrollView>
     </ScreenContainer>
@@ -189,30 +264,47 @@ const styles = StyleSheet.create({
     marginBottom: 28,
     gap: 4,
   },
+  iconGlow: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: "rgba(0,122,255,0.12)",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 8,
+  },
   title: {
     fontSize: 28,
     fontWeight: "800",
-    marginTop: 12,
+    color: "#ECEDEE",
   },
   titleHighlight: {
-    fontSize: 30,
+    fontSize: 32,
     fontWeight: "900",
     letterSpacing: 1,
+    color: ELECTRIC_BLUE,
   },
   subtitle: {
     fontSize: 15,
     textAlign: "center",
     marginTop: 8,
     lineHeight: 22,
+    color: "#7A8A99",
   },
   tiersContainer: {
     gap: 16,
   },
   tierCard: {
     borderRadius: 20,
-    padding: 20,
-    position: "relative",
+    padding: 22,
     overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "#1A2533",
+    backgroundColor: "#111820",
+  },
+  tierCardHighlighted: {
+    borderWidth: 2,
+    borderColor: ELECTRIC_BLUE,
   },
   badge: {
     position: "absolute",
@@ -224,39 +316,43 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     color: "#FFFFFF",
-    fontSize: 11,
-    fontWeight: "800",
-    letterSpacing: 1,
+    fontSize: 10,
+    fontWeight: "900",
+    letterSpacing: 1.5,
   },
   tierHeader: {
     marginBottom: 16,
   },
   tierName: {
-    fontSize: 16,
-    fontWeight: "800",
-    letterSpacing: 2,
+    fontSize: 14,
+    fontWeight: "900",
+    letterSpacing: 2.5,
+    color: "#7A8A99",
   },
   priceRow: {
     flexDirection: "row",
     alignItems: "baseline",
-    marginTop: 4,
+    marginTop: 6,
   },
   tierPrice: {
-    fontSize: 32,
+    fontSize: 34,
     fontWeight: "900",
+    color: "#ECEDEE",
   },
   tierPeriod: {
     fontSize: 16,
     marginLeft: 4,
+    color: "#5A6A7A",
   },
   savings: {
     fontSize: 13,
-    fontWeight: "600",
-    marginTop: 2,
+    fontWeight: "700",
+    marginTop: 4,
+    color: "#00E676",
   },
   featuresContainer: {
     gap: 10,
-    marginBottom: 16,
+    marginBottom: 18,
   },
   featureRow: {
     flexDirection: "row",
@@ -266,14 +362,33 @@ const styles = StyleSheet.create({
   featureText: {
     fontSize: 14,
     lineHeight: 20,
+    color: "#ECEDEE",
   },
   subscribeButton: {
-    height: 48,
-    borderRadius: 24,
+    borderRadius: 26,
+    overflow: "hidden",
+  },
+  subscribeButtonOutline: {
+    height: 50,
+    borderWidth: 1,
+    borderColor: ELECTRIC_BLUE,
     justifyContent: "center",
     alignItems: "center",
   },
-  subscribeButtonText: {
+  subscribeGradient: {
+    height: 52,
+    borderRadius: 26,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  subscribeTextWhite: {
+    color: "#FFFFFF",
+    fontSize: 18,
+    fontWeight: "900",
+    letterSpacing: 3,
+  },
+  subscribeTextBlue: {
+    color: ELECTRIC_BLUE,
     fontSize: 16,
     fontWeight: "800",
     letterSpacing: 1,
@@ -286,6 +401,7 @@ const styles = StyleSheet.create({
   skipText: {
     fontSize: 15,
     fontWeight: "500",
+    color: "#5A6A7A",
   },
   restoreButton: {
     alignItems: "center",
@@ -295,5 +411,6 @@ const styles = StyleSheet.create({
   restoreText: {
     fontSize: 13,
     textDecorationLine: "underline",
+    color: "#5A6A7A",
   },
 });

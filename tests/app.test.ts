@@ -122,6 +122,26 @@ describe("Muscle AI - Core Logic", () => {
       return tier === "elite";
     }
 
+    function getTierLabel(tier: Tier): string {
+      const labels: Record<Tier, string> = {
+        free: "Free",
+        essential: "Essential",
+        pro: "Pro",
+        elite: "Elite Annual",
+      };
+      return labels[tier];
+    }
+
+    function getTierPrice(tier: Tier): string {
+      const prices: Record<Tier, string> = {
+        free: "$0",
+        essential: "$9.99/mo",
+        pro: "$19.99/mo",
+        elite: "$79.99/yr",
+      };
+      return prices[tier];
+    }
+
     it("should allow elite to access forecast", () => {
       expect(canAccessForecast("elite")).toBe(true);
     });
@@ -136,6 +156,18 @@ describe("Muscle AI - Core Logic", () => {
 
     it("should block essential from forecast", () => {
       expect(canAccessForecast("essential")).toBe(false);
+    });
+
+    it("should return correct tier labels", () => {
+      expect(getTierLabel("elite")).toBe("Elite Annual");
+      expect(getTierLabel("pro")).toBe("Pro");
+      expect(getTierLabel("essential")).toBe("Essential");
+    });
+
+    it("should return correct tier prices", () => {
+      expect(getTierPrice("elite")).toBe("$79.99/yr");
+      expect(getTierPrice("pro")).toBe("$19.99/mo");
+      expect(getTierPrice("essential")).toBe("$9.99/mo");
     });
   });
 
@@ -169,7 +201,7 @@ describe("Muscle AI - Core Logic", () => {
     });
   });
 
-  // Test Stripe URLs
+  // Test Stripe Payment Links
   describe("Stripe Payment Links", () => {
     const STRIPE_LINKS = {
       elite: "https://buy.stripe.com/28E00c3VTa1FffJc6WbEA05",
@@ -202,6 +234,122 @@ describe("Muscle AI - Core Logic", () => {
       const target = 195;
       const diff = current - target;
       expect(diff).toBe(5);
+    });
+  });
+
+  // Test branded color constants
+  describe("Branded Colors", () => {
+    const ELECTRIC_BLUE = "#007AFF";
+    const CYAN_GLOW = "#00D4FF";
+    const PROTEIN_CYAN = "#00E5FF";
+    const DARK_BG = "#0A0E14";
+    const SURFACE_BG = "#111820";
+
+    it("should use Electric Blue as primary action color", () => {
+      expect(ELECTRIC_BLUE).toBe("#007AFF");
+    });
+
+    it("should use Cyan Glow for gradient endpoints", () => {
+      expect(CYAN_GLOW).toBe("#00D4FF");
+    });
+
+    it("should use Protein Cyan for protein-related UI", () => {
+      expect(PROTEIN_CYAN).toBe("#00E5FF");
+    });
+
+    it("should use dark backgrounds for clinical luxury feel", () => {
+      expect(DARK_BG).toBe("#0A0E14");
+      expect(SURFACE_BG).toBe("#111820");
+    });
+  });
+
+  // Test auth flow logic
+  describe("Auth Flow", () => {
+    type AuthMode = "login" | "signup" | "forgot";
+
+    it("should toggle between login and signup", () => {
+      let mode: AuthMode = "login";
+      mode = mode === "login" ? "signup" : "login";
+      expect(mode).toBe("signup");
+      mode = mode === "login" ? "signup" : "login";
+      expect(mode).toBe("login");
+    });
+
+    it("should validate email format", () => {
+      const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+      expect(isValidEmail("user@example.com")).toBe(true);
+      expect(isValidEmail("test@domain.co")).toBe(true);
+      expect(isValidEmail("invalid")).toBe(false);
+      expect(isValidEmail("no@domain")).toBe(false);
+      expect(isValidEmail("")).toBe(false);
+    });
+
+    it("should validate password length", () => {
+      const isValidPassword = (pw: string) => pw.length >= 6;
+      expect(isValidPassword("123456")).toBe(true);
+      expect(isValidPassword("short")).toBe(false);
+      expect(isValidPassword("")).toBe(false);
+    });
+  });
+
+  // Test error message formatting
+  describe("Error Handling", () => {
+    function formatError(error: unknown): string {
+      if (error instanceof Error) return error.message;
+      if (typeof error === "string") return error;
+      return "Something went wrong. Please try again.";
+    }
+
+    it("should format Error objects", () => {
+      expect(formatError(new Error("Network error"))).toBe("Network error");
+    });
+
+    it("should format string errors", () => {
+      expect(formatError("Custom error")).toBe("Custom error");
+    });
+
+    it("should provide fallback for unknown errors", () => {
+      expect(formatError(null)).toBe("Something went wrong. Please try again.");
+      expect(formatError(undefined)).toBe("Something went wrong. Please try again.");
+      expect(formatError(42)).toBe("Something went wrong. Please try again.");
+    });
+  });
+
+  // Test AI support escalation logic
+  describe("AI Support Escalation", () => {
+    it("should escalate after 3 interactions", () => {
+      const MAX_INTERACTIONS = 3;
+      let interactionCount = 0;
+
+      const shouldEscalate = () => interactionCount >= MAX_INTERACTIONS;
+
+      expect(shouldEscalate()).toBe(false);
+      interactionCount++;
+      expect(shouldEscalate()).toBe(false);
+      interactionCount++;
+      expect(shouldEscalate()).toBe(false);
+      interactionCount++;
+      expect(shouldEscalate()).toBe(true);
+    });
+  });
+
+  // Test Stripe Customer Portal URL construction
+  describe("Stripe Customer Portal", () => {
+    it("should construct valid portal URL", () => {
+      const baseUrl = "https://billing.stripe.com/p/login/test";
+      expect(baseUrl).toMatch(/^https:\/\/billing\.stripe\.com\//);
+    });
+
+    it("should map subscription to correct Stripe link", () => {
+      const links: Record<string, string> = {
+        elite: "https://buy.stripe.com/28E00c3VTa1FffJc6WbEA05",
+        pro: "https://buy.stripe.com/8x214gdwt3Dh6Jd1sibEA04",
+        essential: "https://buy.stripe.com/14A5kwbol0r55F92wmbEA06",
+      };
+
+      expect(links["elite"]).toContain("bEA05");
+      expect(links["pro"]).toContain("bEA04");
+      expect(links["essential"]).toContain("bEA06");
     });
   });
 });

@@ -7,23 +7,24 @@ import {
   TouchableOpacity,
   ViewToken,
   StyleSheet,
+  Platform,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { useColors } from "@/hooks/use-colors";
 import * as Haptics from "expo-haptics";
-import { Platform } from "react-native";
 
 const { width } = Dimensions.get("window");
+const ELECTRIC_BLUE = "#007AFF";
+const CYAN_GLOW = "#00D4FF";
 
 interface SlideData {
   id: string;
   title: string;
   highlight: string;
   subtitle: string;
-  icon: "camera.fill" | "flame.fill" | "chart.line.uptrend.xyaxis";
+  icon: "flame.fill" | "camera.fill" | "chart.line.uptrend.xyaxis";
   iconSize: number;
 }
 
@@ -34,7 +35,7 @@ const slides: SlideData[] = [
     highlight: "PERFORMANCE",
     subtitle: "Optimize your training with AI-powered nutrition tracking",
     icon: "flame.fill",
-    iconSize: 80,
+    iconSize: 64,
   },
   {
     id: "2",
@@ -42,7 +43,7 @@ const slides: SlideData[] = [
     highlight: "NUTRITION OS",
     subtitle: "Calculate calories, scan your meals, and track every macro",
     icon: "camera.fill",
-    iconSize: 80,
+    iconSize: 64,
   },
   {
     id: "3",
@@ -50,7 +51,7 @@ const slides: SlideData[] = [
     highlight: "12-MONTH JOURNEY",
     subtitle: "Achieve your goals with precision AI planning and forecasting",
     icon: "chart.line.uptrend.xyaxis",
-    iconSize: 80,
+    iconSize: 64,
   },
 ];
 
@@ -58,7 +59,6 @@ export default function OnboardingScreen() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
   const router = useRouter();
-  const colors = useColors();
 
   const onViewableItemsChanged = useRef(
     ({ viewableItems }: { viewableItems: ViewToken[] }) => {
@@ -89,13 +89,13 @@ export default function OnboardingScreen() {
     <View style={[styles.slide, { width }]}>
       <View style={styles.slideContent}>
         <View style={styles.iconContainer}>
-          <View style={[styles.iconGlow, { backgroundColor: colors.primary + "20" }]}>
-            <IconSymbol name={item.icon} size={item.iconSize} color={colors.primary} />
+          <View style={styles.iconGlow}>
+            <IconSymbol name={item.icon} size={item.iconSize} color={ELECTRIC_BLUE} />
           </View>
         </View>
-        <Text style={[styles.title, { color: colors.foreground }]}>{item.title}</Text>
-        <Text style={[styles.highlight, { color: colors.primary }]}>{item.highlight}</Text>
-        <Text style={[styles.subtitle, { color: colors.muted }]}>{item.subtitle}</Text>
+        <Text style={styles.title}>{item.title}</Text>
+        <Text style={styles.highlight}>{item.highlight}</Text>
+        <Text style={styles.subtitle}>{item.subtitle}</Text>
       </View>
     </View>
   );
@@ -108,7 +108,7 @@ export default function OnboardingScreen() {
           onPress={handleSkip}
           activeOpacity={0.7}
         >
-          <Text style={[styles.skipText, { color: colors.muted }]}>Skip</Text>
+          <Text style={styles.skipText}>Skip</Text>
         </TouchableOpacity>
 
         <FlatList
@@ -131,8 +131,7 @@ export default function OnboardingScreen() {
                 style={[
                   styles.dot,
                   {
-                    backgroundColor:
-                      index === currentIndex ? colors.primary : colors.border,
+                    backgroundColor: index === currentIndex ? ELECTRIC_BLUE : "#1A2533",
                     width: index === currentIndex ? 24 : 8,
                   },
                 ]}
@@ -141,13 +140,20 @@ export default function OnboardingScreen() {
           </View>
 
           <TouchableOpacity
-            style={[styles.nextButton, { backgroundColor: colors.primary }]}
+            style={styles.nextButton}
             onPress={handleNext}
             activeOpacity={0.8}
           >
-            <Text style={styles.nextButtonText}>
-              {currentIndex === slides.length - 1 ? "Get Started" : "Next"}
-            </Text>
+            <LinearGradient
+              colors={[ELECTRIC_BLUE, CYAN_GLOW]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.nextGradient}
+            >
+              <Text style={styles.nextButtonText}>
+                {currentIndex === slides.length - 1 ? "Get Started" : "Next"}
+              </Text>
+            </LinearGradient>
           </TouchableOpacity>
         </View>
       </View>
@@ -156,9 +162,7 @@ export default function OnboardingScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
+  container: { flex: 1 },
   skipButton: {
     position: "absolute",
     top: 8,
@@ -166,35 +170,24 @@ const styles = StyleSheet.create({
     zIndex: 10,
     padding: 8,
   },
-  skipText: {
-    fontSize: 16,
-    fontWeight: "500",
-  },
-  slide: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 40,
-  },
-  slideContent: {
-    alignItems: "center",
-    gap: 16,
-  },
-  iconContainer: {
-    marginBottom: 24,
-  },
+  skipText: { fontSize: 16, fontWeight: "500", color: "#5A6A7A" },
+  slide: { flex: 1, justifyContent: "center", alignItems: "center", paddingHorizontal: 40 },
+  slideContent: { alignItems: "center", gap: 16 },
+  iconContainer: { marginBottom: 24 },
   iconGlow: {
     width: 140,
     height: 140,
     borderRadius: 70,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "rgba(0,122,255,0.1)",
   },
   title: {
     fontSize: 32,
     fontWeight: "800",
     textAlign: "center",
     letterSpacing: 2,
+    color: "#ECEDEE",
   },
   highlight: {
     fontSize: 34,
@@ -202,6 +195,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     letterSpacing: 1,
     marginTop: -8,
+    color: ELECTRIC_BLUE,
   },
   subtitle: {
     fontSize: 16,
@@ -209,23 +203,13 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     marginTop: 8,
     paddingHorizontal: 20,
+    color: "#7A8A99",
   },
-  bottomSection: {
-    paddingHorizontal: 24,
-    paddingBottom: 24,
-    gap: 24,
-  },
-  pagination: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 8,
-  },
-  dot: {
-    height: 8,
-    borderRadius: 4,
-  },
-  nextButton: {
+  bottomSection: { paddingHorizontal: 24, paddingBottom: 24, gap: 24 },
+  pagination: { flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 8 },
+  dot: { height: 8, borderRadius: 4 },
+  nextButton: { borderRadius: 28, overflow: "hidden" },
+  nextGradient: {
     height: 56,
     borderRadius: 28,
     justifyContent: "center",
@@ -234,7 +218,7 @@ const styles = StyleSheet.create({
   nextButtonText: {
     color: "#FFFFFF",
     fontSize: 18,
-    fontWeight: "700",
+    fontWeight: "800",
     letterSpacing: 0.5,
   },
 });

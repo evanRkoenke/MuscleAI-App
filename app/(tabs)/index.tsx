@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 import {
   View,
   Text,
@@ -9,7 +9,8 @@ import {
   Platform,
 } from "react-native";
 import { useRouter } from "expo-router";
-import Svg, { Circle } from "react-native-svg";
+import Svg, { Circle, Defs, LinearGradient as SvgGradient, Stop } from "react-native-svg";
+import { LinearGradient } from "expo-linear-gradient";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
@@ -17,10 +18,17 @@ import { useApp } from "@/lib/app-context";
 import * as Haptics from "expo-haptics";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
-const RING_SIZE = SCREEN_WIDTH * 0.55;
-const RING_STROKE = 12;
+const RING_SIZE = SCREEN_WIDTH * 0.52;
+const RING_STROKE = 14;
 const RING_RADIUS = (RING_SIZE - RING_STROKE) / 2;
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
+
+// Brand colors
+const ELECTRIC_BLUE = "#007AFF";
+const CYAN_GLOW = "#00D4FF";
+const PROTEIN_CYAN = "#00E5FF";
+const CARBS_AMBER = "#FFB300";
+const FAT_RED = "#FF6B6B";
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -48,7 +56,7 @@ export default function HomeScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={[styles.headerTitle, { color: colors.primary }]}>MUSCLE AI</Text>
+          <Text style={styles.headerTitle}>MUSCLE AI</Text>
           <TouchableOpacity
             onPress={() => (router as any).push("/settings")}
             style={styles.settingsButton}
@@ -58,24 +66,33 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Calorie Ring */}
+        {/* Calorie Ring with Glow */}
         <View style={styles.ringContainer}>
+          {/* Outer glow layer */}
+          <View style={styles.ringGlow} />
           <Svg width={RING_SIZE} height={RING_SIZE}>
+            <Defs>
+              <SvgGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
+                <Stop offset="0" stopColor="#003A80" stopOpacity="1" />
+                <Stop offset="0.5" stopColor={ELECTRIC_BLUE} stopOpacity="1" />
+                <Stop offset="1" stopColor={CYAN_GLOW} stopOpacity="1" />
+              </SvgGradient>
+            </Defs>
             {/* Background ring */}
             <Circle
               cx={RING_SIZE / 2}
               cy={RING_SIZE / 2}
               r={RING_RADIUS}
-              stroke={colors.border}
+              stroke="#1A2533"
               strokeWidth={RING_STROKE}
               fill="transparent"
             />
-            {/* Progress ring */}
+            {/* Progress ring with gradient */}
             <Circle
               cx={RING_SIZE / 2}
               cy={RING_SIZE / 2}
               r={RING_RADIUS}
-              stroke={colors.primary}
+              stroke="url(#ringGrad)"
               strokeWidth={RING_STROKE}
               fill="transparent"
               strokeDasharray={RING_CIRCUMFERENCE}
@@ -86,10 +103,10 @@ export default function HomeScreen() {
             />
           </Svg>
           <View style={styles.ringCenter}>
-            <Text style={[styles.calorieNumber, { color: colors.foreground }]}>
+            <Text style={styles.calorieNumber}>
               {caloriesRemaining.toLocaleString()}
             </Text>
-            <Text style={[styles.calorieLabel, { color: colors.muted }]}>Calories Remaining</Text>
+            <Text style={styles.calorieLabel}>Calories Remaining</Text>
           </View>
         </View>
 
@@ -100,78 +117,66 @@ export default function HomeScreen() {
             value={todayMacros.protein}
             goal={profile.proteinGoal}
             unit="g"
-            color={colors.primary}
-            bgColor={colors.surface}
-            textColor={colors.foreground}
-            mutedColor={colors.muted}
+            color={PROTEIN_CYAN}
           />
           <MacroCard
             label="CARBS"
             value={todayMacros.carbs}
             goal={profile.carbsGoal}
             unit="g"
-            color="#8B5CF6"
-            bgColor={colors.surface}
-            textColor={colors.foreground}
-            mutedColor={colors.muted}
+            color={CARBS_AMBER}
           />
           <MacroCard
             label="FAT"
             value={todayMacros.fat}
             goal={profile.fatGoal}
             unit="g"
-            color="#F59E0B"
-            bgColor={colors.surface}
-            textColor={colors.foreground}
-            mutedColor={colors.muted}
+            color={FAT_RED}
           />
         </View>
 
         {/* Quick Actions */}
         <View style={styles.quickActions}>
-          <QuickActionButton
-            icon="camera.fill"
-            label="Scan"
+          <TouchableOpacity
+            style={styles.quickActionButton}
             onPress={handleScan}
-            color={colors.primary}
-            bgColor={colors.surface}
-            textColor={colors.foreground}
-            borderColor={colors.border}
-          />
-          <QuickActionButton
-            icon="fork.knife"
-            label="Meals"
+            activeOpacity={0.7}
+          >
+            <IconSymbol name="camera.fill" size={18} color={ELECTRIC_BLUE} />
+            <Text style={styles.quickActionLabel}>Scan</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.quickActionButton}
             onPress={() => router.push("/(tabs)/meals")}
-            color={colors.primary}
-            bgColor={colors.surface}
-            textColor={colors.foreground}
-            borderColor={colors.border}
-          />
-          <QuickActionButton
-            icon="chart.line.uptrend.xyaxis"
-            label="Forecast"
+            activeOpacity={0.7}
+          >
+            <IconSymbol name="fork.knife" size={18} color={ELECTRIC_BLUE} />
+            <Text style={styles.quickActionLabel}>Meals</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.quickActionButton}
             onPress={() => router.push("/(tabs)/forecast")}
-            color={colors.primary}
-            bgColor={colors.surface}
-            textColor={colors.foreground}
-            borderColor={colors.border}
-          />
+            activeOpacity={0.7}
+          >
+            <IconSymbol name="chart.line.uptrend.xyaxis" size={18} color={ELECTRIC_BLUE} />
+            <Text style={styles.quickActionLabel}>Forecast</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Protein Priority Card */}
-        <View style={[styles.priorityCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <Text style={[styles.priorityTitle, { color: colors.foreground }]}>PROTEIN PRIORITY</Text>
+        <View style={styles.priorityCard}>
+          <Text style={styles.priorityTitle}>PROTEIN PRIORITY</Text>
           {lastMeal ? (
             <View style={styles.priorityContent}>
               <View style={styles.priorityInfo}>
-                <Text style={[styles.priorityMealName, { color: colors.foreground }]}>
+                <Text style={styles.priorityMealName}>
                   {lastMeal.name}
                 </Text>
-                <Text style={[styles.priorityMealMacros, { color: colors.muted }]}>
+                <Text style={styles.priorityMealMacros}>
                   {lastMeal.calories} cal · {lastMeal.protein}g protein
                 </Text>
               </View>
-              <View style={[styles.anabolicBadge, { backgroundColor: getScoreColor(lastMeal.anabolicScore) + "20" }]}>
+              <View style={[styles.anabolicBadge, { backgroundColor: getScoreColor(lastMeal.anabolicScore) + "18" }]}>
                 <Text style={[styles.anabolicScore, { color: getScoreColor(lastMeal.anabolicScore) }]}>
                   {lastMeal.anabolicScore}
                 </Text>
@@ -182,8 +187,8 @@ export default function HomeScreen() {
             </View>
           ) : (
             <View style={styles.priorityEmpty}>
-              <IconSymbol name="camera.fill" size={32} color={colors.muted} />
-              <Text style={[styles.priorityEmptyText, { color: colors.muted }]}>
+              <IconSymbol name="camera.fill" size={32} color="#3A4A5C" />
+              <Text style={styles.priorityEmptyText}>
                 Scan your first meal to see your Anabolic Score
               </Text>
             </View>
@@ -192,28 +197,43 @@ export default function HomeScreen() {
 
         {/* AI Support Quick Access */}
         <TouchableOpacity
-          style={[styles.supportCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
+          style={styles.supportCard}
           onPress={() => (router as any).push("/support")}
           activeOpacity={0.7}
         >
-          <IconSymbol name="bubble.left.fill" size={24} color={colors.primary} />
+          <LinearGradient
+            colors={["rgba(0,122,255,0.12)", "rgba(0,212,255,0.06)"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={StyleSheet.absoluteFill}
+          />
+          <IconSymbol name="bubble.left.fill" size={24} color={ELECTRIC_BLUE} />
           <View style={styles.supportInfo}>
-            <Text style={[styles.supportTitle, { color: colors.foreground }]}>Muscle Support</Text>
-            <Text style={[styles.supportSubtitle, { color: colors.muted }]}>
-              AI-powered help, 24/7
-            </Text>
+            <Text style={styles.supportTitle}>Muscle Support</Text>
+            <Text style={styles.supportSubtitle}>AI-powered help, 24/7</Text>
           </View>
-          <IconSymbol name="chevron.right" size={20} color={colors.muted} />
+          <IconSymbol name="chevron.right" size={18} color="#3A4A5C" />
         </TouchableOpacity>
+
+        {/* Bottom spacer for floating button */}
+        <View style={{ height: 40 }} />
       </ScrollView>
 
-      {/* Floating Scan Button */}
+      {/* Floating Scan Button with Glow */}
       <TouchableOpacity
-        style={[styles.floatingButton, { backgroundColor: colors.primary }]}
+        style={styles.floatingButton}
         onPress={handleScan}
         activeOpacity={0.8}
       >
-        <IconSymbol name="camera.fill" size={28} color="#FFFFFF" />
+        <View style={styles.floatingGlow} />
+        <LinearGradient
+          colors={[ELECTRIC_BLUE, CYAN_GLOW]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.floatingGradient}
+        >
+          <IconSymbol name="camera.fill" size={28} color="#FFFFFF" />
+        </LinearGradient>
       </TouchableOpacity>
     </ScreenContainer>
   );
@@ -225,64 +245,30 @@ function MacroCard({
   goal,
   unit,
   color,
-  bgColor,
-  textColor,
-  mutedColor,
 }: {
   label: string;
   value: number;
   goal: number;
   unit: string;
   color: string;
-  bgColor: string;
-  textColor: string;
-  mutedColor: string;
 }) {
+  const pct = Math.min(100, (value / goal) * 100);
   return (
-    <View style={[styles.macroCard, { backgroundColor: bgColor }]}>
-      <Text style={[styles.macroValue, { color: textColor }]}>
+    <View style={styles.macroCard}>
+      <Text style={styles.macroValue}>
         {value}
-        <Text style={[styles.macroUnit, { color: mutedColor }]}>{unit}</Text>
+        <Text style={styles.macroUnit}>{unit}</Text>
       </Text>
-      <View style={[styles.macroBar, { backgroundColor: color + "20" }]}>
+      <View style={styles.macroBar}>
         <View
           style={[
             styles.macroBarFill,
-            { backgroundColor: color, width: `${Math.min(100, (value / goal) * 100)}%` },
+            { backgroundColor: color, width: `${pct}%` },
           ]}
         />
       </View>
       <Text style={[styles.macroLabel, { color }]}>{label}</Text>
     </View>
-  );
-}
-
-function QuickActionButton({
-  icon,
-  label,
-  onPress,
-  color,
-  bgColor,
-  textColor,
-  borderColor,
-}: {
-  icon: "camera.fill" | "fork.knife" | "chart.line.uptrend.xyaxis";
-  label: string;
-  onPress: () => void;
-  color: string;
-  bgColor: string;
-  textColor: string;
-  borderColor: string;
-}) {
-  return (
-    <TouchableOpacity
-      style={[styles.quickActionButton, { backgroundColor: bgColor, borderColor }]}
-      onPress={onPress}
-      activeOpacity={0.7}
-    >
-      <IconSymbol name={icon} size={20} color={color} />
-      <Text style={[styles.quickActionLabel, { color: textColor }]}>{label}</Text>
-    </TouchableOpacity>
   );
 }
 
@@ -304,55 +290,81 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   headerTitle: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: "900",
-    letterSpacing: 3,
+    letterSpacing: 4,
+    color: ELECTRIC_BLUE,
+    fontStyle: "italic",
   },
   settingsButton: {
     padding: 8,
   },
+  // Ring
   ringContainer: {
     alignItems: "center",
     justifyContent: "center",
-    marginVertical: 16,
+    marginVertical: 12,
+  },
+  ringGlow: {
+    position: "absolute",
+    width: RING_SIZE + 30,
+    height: RING_SIZE + 30,
+    borderRadius: (RING_SIZE + 30) / 2,
+    backgroundColor: "transparent",
+    shadowColor: ELECTRIC_BLUE,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.35,
+    shadowRadius: 30,
+    elevation: 0,
   },
   ringCenter: {
     position: "absolute",
     alignItems: "center",
   },
   calorieNumber: {
-    fontSize: 42,
+    fontSize: 44,
     fontWeight: "900",
+    color: "#ECEDEE",
+    letterSpacing: -1,
   },
   calorieLabel: {
     fontSize: 13,
-    fontWeight: "500",
+    fontWeight: "600",
+    color: "#7A8A99",
     marginTop: 2,
+    letterSpacing: 0.5,
   },
+  // Macros
   macroRow: {
     flexDirection: "row",
     gap: 10,
-    marginBottom: 20,
+    marginBottom: 18,
   },
   macroCard: {
     flex: 1,
+    backgroundColor: "#111820",
     borderRadius: 14,
-    padding: 12,
+    padding: 14,
     alignItems: "center",
     gap: 6,
+    borderWidth: 1,
+    borderColor: "#1A2533",
   },
   macroValue: {
-    fontSize: 22,
-    fontWeight: "800",
+    fontSize: 24,
+    fontWeight: "900",
+    color: "#ECEDEE",
   },
   macroUnit: {
     fontSize: 14,
     fontWeight: "500",
+    color: "#7A8A99",
   },
   macroBar: {
     width: "100%",
     height: 4,
     borderRadius: 2,
+    backgroundColor: "#1A2533",
     overflow: "hidden",
   },
   macroBarFill: {
@@ -361,13 +373,14 @@ const styles = StyleSheet.create({
   },
   macroLabel: {
     fontSize: 10,
-    fontWeight: "700",
-    letterSpacing: 1,
+    fontWeight: "800",
+    letterSpacing: 1.5,
   },
+  // Quick Actions
   quickActions: {
     flexDirection: "row",
     gap: 10,
-    marginBottom: 20,
+    marginBottom: 18,
   },
   quickActionButton: {
     flex: 1,
@@ -378,22 +391,29 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 14,
     borderWidth: 1,
+    borderColor: "#1A2533",
+    backgroundColor: "#111820",
   },
   quickActionLabel: {
     fontSize: 14,
-    fontWeight: "600",
+    fontWeight: "700",
+    color: "#ECEDEE",
   },
+  // Protein Priority
   priorityCard: {
     borderRadius: 18,
     padding: 18,
     borderWidth: 1,
-    marginBottom: 16,
+    borderColor: "#1A2533",
+    backgroundColor: "#111820",
+    marginBottom: 14,
   },
   priorityTitle: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "800",
-    letterSpacing: 1.5,
+    letterSpacing: 2,
     marginBottom: 14,
+    color: "#ECEDEE",
   },
   priorityContent: {
     flexDirection: "row",
@@ -407,44 +427,54 @@ const styles = StyleSheet.create({
   priorityMealName: {
     fontSize: 17,
     fontWeight: "700",
+    color: "#ECEDEE",
   },
   priorityMealMacros: {
     fontSize: 14,
+    color: "#7A8A99",
   },
   anabolicBadge: {
-    width: 64,
-    height: 64,
-    borderRadius: 14,
+    width: 68,
+    height: 68,
+    borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.06)",
   },
   anabolicScore: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: "900",
   },
   anabolicLabel: {
     fontSize: 7,
-    fontWeight: "700",
-    letterSpacing: 0.5,
+    fontWeight: "800",
+    letterSpacing: 0.8,
+    marginTop: 1,
   },
   priorityEmpty: {
     alignItems: "center",
     gap: 10,
-    paddingVertical: 16,
+    paddingVertical: 20,
   },
   priorityEmptyText: {
     fontSize: 14,
     textAlign: "center",
     lineHeight: 20,
+    color: "#5A6A7A",
   },
+  // Support
   supportCard: {
     flexDirection: "row",
     alignItems: "center",
     borderRadius: 14,
     padding: 16,
     borderWidth: 1,
+    borderColor: "#1A2533",
+    backgroundColor: "#111820",
     gap: 14,
-    marginBottom: 16,
+    marginBottom: 14,
+    overflow: "hidden",
   },
   supportInfo: {
     flex: 1,
@@ -452,24 +482,42 @@ const styles = StyleSheet.create({
   supportTitle: {
     fontSize: 16,
     fontWeight: "700",
+    color: "#ECEDEE",
   },
   supportSubtitle: {
     fontSize: 13,
     marginTop: 2,
+    color: "#7A8A99",
   },
+  // Floating button
   floatingButton: {
     position: "absolute",
-    bottom: 20,
+    bottom: 16,
     alignSelf: "center",
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#00B4FF",
+  },
+  floatingGlow: {
+    position: "absolute",
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: ELECTRIC_BLUE,
+    opacity: 0.25,
+  },
+  floatingGradient: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: ELECTRIC_BLUE,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    elevation: 8,
+    shadowOpacity: 0.5,
+    shadowRadius: 16,
+    elevation: 10,
   },
 });

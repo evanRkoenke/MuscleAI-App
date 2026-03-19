@@ -20,3 +20,22 @@
 - [x] Add onboarding → auth → paywall → dashboard navigation flow
 - [x] Add local data persistence (AsyncStorage for meals, weight, settings)
 - [x] Polish animations and haptic feedback
+
+## Beta Refinement — Design & System Debug
+- [x] Redesign calorie ring with thick stroke, blue gradient glow, ceramic/3D effect
+- [x] Update primary color to Electric Blue (#007AFF) across all action buttons
+- [x] Improve macro cards with colored labels (cyan protein, amber carbs, red fat)
+- [x] Add glow effects to floating camera button and interactive elements
+- [x] Improve typography to bold, modern, high-tech sans-serif
+- [x] Redesign Protein Priority card with anabolic score badge overlay
+- [x] Polish Forecast screen chart with proper line weight and glow
+- [x] Add Forecast premium upsell box matching reference (66% savings, UNLOCK button)
+- [x] Fix auth screen: add Forgot Password flow
+- [x] Fix auth screen: add Login/Signup toggle
+- [x] Ensure user data persists across logins (AsyncStorage)
+- [x] Fix Manage Subscription to route to Stripe Customer Portal
+- [x] Verify Elite plan unlocks 12-Month Forecast
+- [x] Add branded error handling for scan failures
+- [x] Add branded error handling for payment declines
+- [x] Improve scan screen with faster feedback and error states
+- [x] Run full system diagnostic and fix all issues

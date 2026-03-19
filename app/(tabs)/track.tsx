@@ -10,13 +10,15 @@ import {
   Platform,
 } from "react-native";
 import { useRouter } from "expo-router";
-import Svg, { Polyline, Circle as SvgCircle, Line, Text as SvgText } from "react-native-svg";
+import Svg, { Polyline, Line, Defs, LinearGradient as SvgGradient, Stop, Rect } from "react-native-svg";
+import { LinearGradient } from "expo-linear-gradient";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { useColors } from "@/hooks/use-colors";
 import { useApp } from "@/lib/app-context";
 import * as Haptics from "expo-haptics";
 
+const ELECTRIC_BLUE = "#007AFF";
+const CYAN_GLOW = "#00D4FF";
 const CHART_WIDTH = 320;
 const CHART_HEIGHT = 180;
 const CHART_PADDING = 40;
@@ -24,7 +26,6 @@ const CHART_PADDING = 40;
 type TimeRange = "1M" | "3M" | "6M" | "1Y";
 
 export default function TrackScreen() {
-  const colors = useColors();
   const router = useRouter();
   const { weightLog, addWeight, profile, updateProfile } = useApp();
   const [timeRange, setTimeRange] = useState<TimeRange>("3M");
@@ -33,12 +34,7 @@ export default function TrackScreen() {
 
   const filteredData = useMemo(() => {
     const now = new Date();
-    const rangeMap: Record<TimeRange, number> = {
-      "1M": 30,
-      "3M": 90,
-      "6M": 180,
-      "1Y": 365,
-    };
+    const rangeMap: Record<TimeRange, number> = { "1M": 30, "3M": 90, "6M": 180, "1Y": 365 };
     const days = rangeMap[timeRange];
     const cutoff = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
     return weightLog
@@ -52,7 +48,6 @@ export default function TrackScreen() {
     const minW = Math.min(...weights) - 2;
     const maxW = Math.max(...weights) + 2;
     const range = maxW - minW || 1;
-
     return filteredData
       .map((d, i) => {
         const x = CHART_PADDING + (i / (filteredData.length - 1)) * (CHART_WIDTH - CHART_PADDING * 2);
@@ -71,11 +66,7 @@ export default function TrackScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
     const today = new Date().toISOString().split("T")[0];
-    await addWeight({
-      id: Date.now().toString(),
-      date: today,
-      weight,
-    });
+    await addWeight({ id: Date.now().toString(), date: today, weight });
     await updateProfile({ currentWeight: weight });
     setNewWeight("");
     setShowLogModal(false);
@@ -85,29 +76,41 @@ export default function TrackScreen() {
     <ScreenContainer>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <Text style={[styles.headerTitle, { color: colors.foreground }]}>Track</Text>
+          <Text style={styles.headerTitle}>Track</Text>
           <TouchableOpacity
-            style={[styles.logButton, { backgroundColor: colors.primary }]}
+            style={styles.logButton}
             onPress={() => setShowLogModal(true)}
             activeOpacity={0.8}
           >
-            <IconSymbol name="plus" size={18} color="#FFFFFF" />
-            <Text style={styles.logButtonText}>Log Weight</Text>
+            <LinearGradient
+              colors={[ELECTRIC_BLUE, CYAN_GLOW]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.logButtonGradient}
+            >
+              <IconSymbol name="plus" size={18} color="#FFFFFF" />
+              <Text style={styles.logButtonText}>Log Weight</Text>
+            </LinearGradient>
           </TouchableOpacity>
         </View>
 
         {/* Current Weight */}
-        <View style={[styles.weightCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <Text style={[styles.weightValue, { color: colors.foreground }]}>
+        <View style={styles.weightCard}>
+          <Text style={styles.weightValue}>
             {latestWeight}
-            <Text style={[styles.weightUnit, { color: colors.muted }]}> {profile.unit}</Text>
+            <Text style={styles.weightUnit}> {profile.unit}</Text>
           </Text>
-          <Text style={[styles.weightLabel, { color: colors.muted }]}>Current Weight</Text>
+          <Text style={styles.weightLabel}>Current Weight</Text>
           <View style={styles.weightTargetRow}>
-            <Text style={[styles.weightTarget, { color: colors.primary }]}>
+            <Text style={styles.weightTarget}>
               Target: {profile.targetWeight} {profile.unit}
             </Text>
-            <Text style={[styles.weightDiff, { color: latestWeight > profile.targetWeight ? colors.warning : colors.success }]}>
+            <Text
+              style={[
+                styles.weightDiff,
+                { color: latestWeight > profile.targetWeight ? "#FFB300" : "#00E676" },
+              ]}
+            >
               {latestWeight > profile.targetWeight ? "+" : ""}
               {(latestWeight - profile.targetWeight).toFixed(1)} {profile.unit}
             </Text>
@@ -121,10 +124,7 @@ export default function TrackScreen() {
               key={range}
               style={[
                 styles.timeRangeButton,
-                {
-                  backgroundColor: timeRange === range ? colors.primary + "20" : "transparent",
-                  borderColor: timeRange === range ? colors.primary : colors.border,
-                },
+                timeRange === range && styles.timeRangeActive,
               ]}
               onPress={() => setTimeRange(range)}
               activeOpacity={0.7}
@@ -132,7 +132,7 @@ export default function TrackScreen() {
               <Text
                 style={[
                   styles.timeRangeText,
-                  { color: timeRange === range ? colors.primary : colors.muted },
+                  timeRange === range && styles.timeRangeTextActive,
                 ]}
               >
                 {range}
@@ -142,10 +142,15 @@ export default function TrackScreen() {
         </View>
 
         {/* Weight Chart */}
-        <View style={[styles.chartCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+        <View style={styles.chartCard}>
           {filteredData.length >= 2 ? (
             <Svg width={CHART_WIDTH} height={CHART_HEIGHT}>
-              {/* Grid lines */}
+              <Defs>
+                <SvgGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
+                  <Stop offset="0" stopColor={ELECTRIC_BLUE} />
+                  <Stop offset="1" stopColor={CYAN_GLOW} />
+                </SvgGradient>
+              </Defs>
               {[0.25, 0.5, 0.75].map((ratio) => (
                 <Line
                   key={ratio}
@@ -153,7 +158,7 @@ export default function TrackScreen() {
                   y1={CHART_PADDING + ratio * (CHART_HEIGHT - CHART_PADDING * 2)}
                   x2={CHART_WIDTH - CHART_PADDING}
                   y2={CHART_PADDING + ratio * (CHART_HEIGHT - CHART_PADDING * 2)}
-                  stroke={colors.border}
+                  stroke="#1A2533"
                   strokeWidth={1}
                   strokeDasharray="4,4"
                 />
@@ -161,16 +166,16 @@ export default function TrackScreen() {
               <Polyline
                 points={chartPoints}
                 fill="none"
-                stroke={colors.primary}
-                strokeWidth={2.5}
+                stroke="url(#lineGrad)"
+                strokeWidth={3}
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
             </Svg>
           ) : (
             <View style={styles.chartEmpty}>
-              <IconSymbol name="chart.bar.fill" size={40} color={colors.muted} />
-              <Text style={[styles.chartEmptyText, { color: colors.muted }]}>
+              <IconSymbol name="chart.bar.fill" size={40} color="#5A6A7A" />
+              <Text style={styles.chartEmptyText}>
                 Log at least 2 weights to see your chart
               </Text>
             </View>
@@ -178,54 +183,51 @@ export default function TrackScreen() {
         </View>
 
         {/* Recent Entries */}
-        <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Recent Entries</Text>
+        <Text style={styles.sectionTitle}>Recent Entries</Text>
         {weightLog.length > 0 ? (
           [...weightLog]
             .reverse()
             .slice(0, 10)
             .map((entry) => (
-              <View
-                key={entry.id}
-                style={[styles.entryRow, { borderBottomColor: colors.border }]}
-              >
-                <Text style={[styles.entryDate, { color: colors.muted }]}>
+              <View key={entry.id} style={styles.entryRow}>
+                <Text style={styles.entryDate}>
                   {new Date(entry.date).toLocaleDateString("en-US", {
                     month: "short",
                     day: "numeric",
                   })}
                 </Text>
-                <Text style={[styles.entryWeight, { color: colors.foreground }]}>
+                <Text style={styles.entryWeight}>
                   {entry.weight} {profile.unit}
                 </Text>
               </View>
             ))
         ) : (
-          <Text style={[styles.emptyText, { color: colors.muted }]}>
+          <Text style={styles.emptyText}>
             No weight entries yet. Tap "Log Weight" to start tracking.
           </Text>
         )}
 
         {/* Share Progress */}
         <TouchableOpacity
-          style={[styles.shareButton, { borderColor: colors.primary }]}
+          style={styles.shareButton}
           onPress={() => (router as any).push("/gains-card")}
           activeOpacity={0.7}
         >
-          <IconSymbol name="square.and.arrow.up" size={20} color={colors.primary} />
-          <Text style={[styles.shareButtonText, { color: colors.primary }]}>Share Progress</Text>
+          <IconSymbol name="square.and.arrow.up" size={20} color={ELECTRIC_BLUE} />
+          <Text style={styles.shareButtonText}>Share Progress</Text>
         </TouchableOpacity>
       </ScrollView>
 
       {/* Log Weight Modal */}
       <Modal visible={showLogModal} transparent animationType="fade">
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
-            <Text style={[styles.modalTitle, { color: colors.foreground }]}>Log Weight</Text>
-            <View style={[styles.modalInput, { borderColor: colors.border, backgroundColor: colors.background }]}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Log Weight</Text>
+            <View style={styles.modalInputContainer}>
               <TextInput
-                style={[styles.modalInputText, { color: colors.foreground }]}
+                style={styles.modalInputText}
                 placeholder={`Weight (${profile.unit})`}
-                placeholderTextColor={colors.muted}
+                placeholderTextColor="#5A6A7A"
                 value={newWeight}
                 onChangeText={setNewWeight}
                 keyboardType="decimal-pad"
@@ -235,18 +237,18 @@ export default function TrackScreen() {
             </View>
             <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={[styles.modalButton, { borderColor: colors.border }]}
+                style={styles.modalCancelButton}
                 onPress={() => setShowLogModal(false)}
                 activeOpacity={0.7}
               >
-                <Text style={[styles.modalButtonText, { color: colors.muted }]}>Cancel</Text>
+                <Text style={styles.modalCancelText}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: colors.primary }]}
+                style={styles.modalSaveButton}
                 onPress={handleLogWeight}
                 activeOpacity={0.8}
               >
-                <Text style={[styles.modalButtonText, { color: "#FFFFFF" }]}>Save</Text>
+                <Text style={styles.modalSaveText}>Save</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -257,10 +259,7 @@ export default function TrackScreen() {
 }
 
 const styles = StyleSheet.create({
-  scrollContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 100,
-  },
+  scrollContent: { paddingHorizontal: 20, paddingBottom: 100 },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -268,11 +267,9 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     paddingBottom: 16,
   },
-  headerTitle: {
-    fontSize: 26,
-    fontWeight: "800",
-  },
-  logButton: {
+  headerTitle: { fontSize: 26, fontWeight: "900", color: "#ECEDEE" },
+  logButton: { borderRadius: 20, overflow: "hidden" },
+  logButtonGradient: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
@@ -280,98 +277,64 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 20,
   },
-  logButtonText: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "700",
-  },
+  logButtonText: { color: "#FFFFFF", fontSize: 14, fontWeight: "700" },
   weightCard: {
     borderRadius: 18,
     padding: 20,
     borderWidth: 1,
+    borderColor: "#1A2533",
+    backgroundColor: "#111820",
     alignItems: "center",
     marginBottom: 16,
   },
-  weightValue: {
-    fontSize: 48,
-    fontWeight: "900",
-  },
-  weightUnit: {
-    fontSize: 20,
-    fontWeight: "500",
-  },
-  weightLabel: {
-    fontSize: 14,
-    marginTop: 4,
-  },
+  weightValue: { fontSize: 48, fontWeight: "900", color: "#ECEDEE" },
+  weightUnit: { fontSize: 20, fontWeight: "500", color: "#5A6A7A" },
+  weightLabel: { fontSize: 13, fontWeight: "600", color: "#5A6A7A", marginTop: 4 },
   weightTargetRow: {
     flexDirection: "row",
-    gap: 16,
-    marginTop: 12,
+    gap: 12,
+    marginTop: 8,
+    alignItems: "center",
   },
-  weightTarget: {
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  weightDiff: {
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  timeRangeRow: {
-    flexDirection: "row",
-    gap: 8,
-    marginBottom: 16,
-  },
+  weightTarget: { fontSize: 14, fontWeight: "600", color: ELECTRIC_BLUE },
+  weightDiff: { fontSize: 14, fontWeight: "700" },
+  timeRangeRow: { flexDirection: "row", gap: 8, marginBottom: 16 },
   timeRangeButton: {
     flex: 1,
     paddingVertical: 8,
     borderRadius: 10,
     borderWidth: 1,
+    borderColor: "#1A2533",
     alignItems: "center",
   },
-  timeRangeText: {
-    fontSize: 13,
-    fontWeight: "700",
+  timeRangeActive: {
+    backgroundColor: "rgba(0,122,255,0.12)",
+    borderColor: ELECTRIC_BLUE,
   },
+  timeRangeText: { fontSize: 13, fontWeight: "700", color: "#5A6A7A" },
+  timeRangeTextActive: { color: ELECTRIC_BLUE },
   chartCard: {
     borderRadius: 18,
     padding: 16,
     borderWidth: 1,
+    borderColor: "#1A2533",
+    backgroundColor: "#111820",
+    alignItems: "center",
     marginBottom: 24,
-    alignItems: "center",
   },
-  chartEmpty: {
-    alignItems: "center",
-    paddingVertical: 40,
-    gap: 12,
-  },
-  chartEmptyText: {
-    fontSize: 14,
-    textAlign: "center",
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    marginBottom: 12,
-  },
+  chartEmpty: { alignItems: "center", paddingVertical: 30, gap: 10 },
+  chartEmptyText: { fontSize: 14, color: "#5A6A7A", textAlign: "center" },
+  sectionTitle: { fontSize: 18, fontWeight: "800", color: "#ECEDEE", marginBottom: 12 },
   entryRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     paddingVertical: 12,
     borderBottomWidth: 1,
+    borderBottomColor: "#1A2533",
   },
-  entryDate: {
-    fontSize: 15,
-  },
-  entryWeight: {
-    fontSize: 15,
-    fontWeight: "600",
-  },
-  emptyText: {
-    fontSize: 14,
-    textAlign: "center",
-    paddingVertical: 20,
-  },
+  entryDate: { fontSize: 15, color: "#7A8A99" },
+  entryWeight: { fontSize: 15, fontWeight: "700", color: "#ECEDEE" },
+  emptyText: { fontSize: 14, color: "#5A6A7A", textAlign: "center", paddingVertical: 20 },
   shareButton: {
     flexDirection: "row",
     alignItems: "center",
@@ -381,14 +344,12 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 14,
     borderWidth: 1,
+    borderColor: ELECTRIC_BLUE,
   },
-  shareButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
-  },
+  shareButtonText: { fontSize: 15, fontWeight: "700", color: ELECTRIC_BLUE },
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.7)",
+    backgroundColor: "rgba(0,0,0,0.75)",
     justifyContent: "center",
     alignItems: "center",
     padding: 24,
@@ -398,39 +359,45 @@ const styles = StyleSheet.create({
     maxWidth: 340,
     borderRadius: 20,
     padding: 24,
-    gap: 20,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: "700",
-    textAlign: "center",
-  },
-  modalInput: {
+    gap: 16,
+    backgroundColor: "#111820",
     borderWidth: 1,
-    borderRadius: 14,
-    paddingHorizontal: 16,
-    height: 52,
-    justifyContent: "center",
+    borderColor: "#1A2533",
+  },
+  modalTitle: { fontSize: 20, fontWeight: "800", textAlign: "center", color: "#ECEDEE" },
+  modalInputContainer: {
+    borderWidth: 1,
+    borderColor: "#1A2533",
+    backgroundColor: "#0A0E14",
+    borderRadius: 12,
+    overflow: "hidden",
   },
   modalInputText: {
-    fontSize: 18,
-    fontWeight: "600",
+    paddingHorizontal: 16,
+    height: 52,
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#ECEDEE",
+    textAlign: "center",
   },
-  modalButtons: {
-    flexDirection: "row",
-    gap: 12,
-  },
-  modalButton: {
+  modalButtons: { flexDirection: "row", gap: 12 },
+  modalCancelButton: {
     flex: 1,
     height: 48,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "transparent",
+    borderColor: "#1A2533",
     justifyContent: "center",
     alignItems: "center",
   },
-  modalButtonText: {
-    fontSize: 16,
-    fontWeight: "700",
+  modalCancelText: { fontSize: 16, fontWeight: "700", color: "#7A8A99" },
+  modalSaveButton: {
+    flex: 1,
+    height: 48,
+    borderRadius: 14,
+    backgroundColor: ELECTRIC_BLUE,
+    justifyContent: "center",
+    alignItems: "center",
   },
+  modalSaveText: { fontSize: 16, fontWeight: "700", color: "#FFFFFF" },
 });
