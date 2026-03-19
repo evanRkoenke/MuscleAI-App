@@ -56,3 +56,6 @@
 - [x] Persist Gains Cards and personal records in AsyncStorage
 - [x] Add profile access from Dashboard (header tap or settings)
 - [x] Wire navigation to Profile screen from tab bar or settings
+
+## Logo in Dashboard Header
+- [x] Replace gradient "M" avatar with blue digital bicep logo image in Dashboard header

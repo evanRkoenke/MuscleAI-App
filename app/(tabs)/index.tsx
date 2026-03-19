@@ -85,16 +85,11 @@ export default function HomeScreen() {
               style={styles.avatarBtn}
               activeOpacity={0.7}
             >
-              <LinearGradient
-                colors={[ELECTRIC_BLUE, CYAN_GLOW]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.avatarGrad}
-              >
-                <Text style={styles.avatarText}>
-                  {profile.name ? profile.name[0].toUpperCase() : "M"}
-                </Text>
-              </LinearGradient>
+              <Image
+                source={require("@/assets/images/icon.png")}
+                style={styles.headerLogo}
+                resizeMode="contain"
+              />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>MUSCLE AI</Text>
           </View>
@@ -319,20 +314,13 @@ const styles = StyleSheet.create({
   avatarBtn: {
     width: 34,
     height: 34,
-    borderRadius: 17,
+    borderRadius: 8,
     overflow: "hidden",
   },
-  avatarGrad: {
+  headerLogo: {
     width: 34,
     height: 34,
-    borderRadius: 17,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  avatarText: {
-    fontSize: 15,
-    fontWeight: "900",
-    color: "#FFFFFF",
+    borderRadius: 8,
   },
   headerTitle: {
     fontSize: 22,
