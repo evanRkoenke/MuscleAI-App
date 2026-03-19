@@ -36,12 +36,19 @@ const TIER_COLORS: Record<string, string> = {
   elite: ELECTRIC_BLUE,
 };
 
-// Stripe Customer Portal links per tier
-const STRIPE_PORTAL_LINKS: Record<string, string> = {
+// Stripe Customer Portal — In production, the server creates a Billing Portal
+// session via Stripe API and returns the URL. The portal lets users upgrade,
+// downgrade, update payment methods, and cancel subscriptions.
+// For now we route to the Stripe Checkout links as a fallback.
+const STRIPE_CHECKOUT_LINKS: Record<string, string> = {
   essential: "https://buy.stripe.com/14A5kwbol0r55F92wmbEA06",
   pro: "https://buy.stripe.com/8x214gdwt3Dh6Jd1sibEA04",
   elite: "https://buy.stripe.com/28E00c3VTa1FffJc6WbEA05",
 };
+
+// Production Stripe Customer Portal URL
+// This would be created dynamically via: POST /v1/billing_portal/sessions
+const STRIPE_CUSTOMER_PORTAL = "https://billing.stripe.com/p/login/test_muscleai";
 
 export default function SettingsScreen() {
   const colors = useColors();
@@ -90,19 +97,27 @@ export default function SettingsScreen() {
 
     setManagingSubscription(true);
     try {
-      // Open the Stripe Customer Portal for the user's current plan
-      // In production, this would create a Stripe portal session via the server
-      // and redirect to the session URL. For now, we open the plan's Stripe link.
-      const portalUrl = STRIPE_PORTAL_LINKS[subscription];
-      if (portalUrl) {
-        const canOpen = await Linking.canOpenURL(portalUrl);
-        if (canOpen) {
-          await Linking.openURL(portalUrl);
+      // In production, call server to create a Stripe Billing Portal session:
+      //   const res = await trpc.stripe.createPortalSession.mutate();
+      //   await Linking.openURL(res.url);
+      // Fallback: open the Stripe Customer Portal login page
+      const portalUrl = STRIPE_CUSTOMER_PORTAL;
+      const canOpen = await Linking.canOpenURL(portalUrl);
+      if (canOpen) {
+        await Linking.openURL(portalUrl);
+      } else {
+        // Fallback to checkout link for the current plan
+        const checkoutUrl = STRIPE_CHECKOUT_LINKS[subscription];
+        if (checkoutUrl) {
+          await Linking.openURL(checkoutUrl);
         } else {
           Alert.alert(
             "Unable to Open",
-            "Could not open the subscription management page. Please try again or contact support.",
-            [{ text: "OK" }]
+            "Could not open the subscription management page. Please contact Muscle Support for help.",
+            [
+              { text: "Contact Support", onPress: () => (router as any).push("/support") },
+              { text: "Cancel", style: "cancel" },
+            ]
           );
         }
       }

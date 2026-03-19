@@ -296,7 +296,7 @@ const styles = StyleSheet.create({
   },
   tierCard: {
     borderRadius: 20,
-    padding: 22,
+    padding: 20,
     overflow: "hidden",
     borderWidth: 1,
     borderColor: "#1A2533",
@@ -305,6 +305,13 @@ const styles = StyleSheet.create({
   tierCardHighlighted: {
     borderWidth: 2,
     borderColor: ELECTRIC_BLUE,
+    padding: 24,
+    // Elite card gets extra visual weight
+    shadowColor: ELECTRIC_BLUE,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.25,
+    shadowRadius: 20,
+    elevation: 8,
   },
   badge: {
     position: "absolute",
@@ -327,7 +334,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "900",
     letterSpacing: 2.5,
-    color: "#7A8A99",
+    color: "#ECEDEE",
   },
   priceRow: {
     flexDirection: "row",
@@ -335,7 +342,7 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   tierPrice: {
-    fontSize: 34,
+    fontSize: 36,
     fontWeight: "900",
     color: "#ECEDEE",
   },

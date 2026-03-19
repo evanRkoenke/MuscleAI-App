@@ -39,3 +39,12 @@
 - [x] Add branded error handling for payment declines
 - [x] Improve scan screen with faster feedback and error states
 - [x] Run full system diagnostic and fix all issues
+
+## Priority Reset — Pixel-Perfect Visual Fidelity
+- [x] Rebuild Dashboard ceramic ring to exact reference: thick arc stroke, blue-to-cyan gradient, outer glow shadow, large centered number
+- [x] Match Dashboard layout exactly: MUSCLE AI header, settings gear, ring → macros row → quick actions → Protein Priority card → Muscle Support → camera FAB
+- [x] Rebuild Forecast chart to match reference: gradient line, proper axis labels (1M, 10, 12 MONTHS), weight label with date
+- [x] Rebuild Forecast upsell box: lock icon, "Priority Sync", "PREMIUM MEMBERS ONLY" text, "ELITE ANNUAL $79.99" with "66% SAVINGS", gradient UNLOCK button
+- [x] Fix Manage Subscription to correctly route to Stripe Customer Portal (production logic)
+- [x] Make Elite Annual ($79.99/yr) the primary highlighted CTA on paywall, visually distinct from other tiers
+- [x] Remove all stock/generic icons where Blue Digital Bicep branding should appear
