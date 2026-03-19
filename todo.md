@@ -1,0 +1,22 @@
+# Muscle AI — Project TODO
+
+- [x] Configure dark luxury theme (colors, tokens)
+- [x] Set up tab navigation (Scan, Meals, Track, Forecast)
+- [x] Build onboarding flow (3 slides)
+- [x] Build auth screen (login/signup with Google/Apple/Email)
+- [x] Build paywall screen (3 tiers with Stripe links)
+- [x] Build Dashboard/Home screen (calorie ring, macros, protein priority)
+- [x] Build Scan screen (camera + AI analysis overlay)
+- [x] Build Meals screen (daily meal log with sections)
+- [x] Build Track screen (weight chart, log weight)
+- [x] Build Forecast screen (12-month projection, Elite lock)
+- [x] Build AI Support Chat screen (Muscle Support chatbot)
+- [x] Build Settings screen (profile, subscription, goals, logout)
+- [x] Build Gains Card screen (shareable progress cards)
+- [x] Integrate server-side LLM for meal scanning AI
+- [x] Integrate server-side LLM for AI support chatbot
+- [x] Wire Stripe payment links into paywall
+- [x] Add app icon and branding assets
+- [x] Add onboarding → auth → paywall → dashboard navigation flow
+- [x] Add local data persistence (AsyncStorage for meals, weight, settings)
+- [x] Polish animations and haptic feedback
