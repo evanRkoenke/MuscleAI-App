@@ -12,6 +12,7 @@ import { useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
 import Svg, {
   Polyline,
+  Polygon,
   Line,
   Text as SvgText,
   Circle as SvgCircle,
@@ -24,23 +25,24 @@ import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useApp } from "@/lib/app-context";
 
-const SCREEN_W = Dimensions.get("window").width;
-const CHART_W = SCREEN_W - 56;
-const CHART_H = 200;
-const PAD_L = 8;
-const PAD_R = 8;
-const PAD_T = 16;
-const PAD_B = 28;
+const SW = Dimensions.get("window").width;
+const CHART_W = SW - 56;
+const CHART_H = 210;
+const PL = 10;
+const PR = 10;
+const PT = 20;
+const PB = 32;
 
 // Brand palette
-const ELECTRIC_BLUE = "#007AFF";
-const CYAN_GLOW = "#00D4FF";
-const DEEP_BLUE = "#003A80";
-const SURFACE = "#111820";
-const BORDER = "#1A2533";
-const TEXT_PRIMARY = "#ECEDEE";
-const TEXT_SECONDARY = "#7A8A99";
-const TEXT_TERTIARY = "#5A6A7A";
+const BLUE = "#007AFF";
+const CYAN = "#00D4FF";
+const BG = "#060A10";
+const SURF = "#0D1219";
+const SURF2 = "#111820";
+const BDR = "#1A2533";
+const T1 = "#ECEDEE";
+const T2 = "#7A8A99";
+const T3 = "#3A4A5C";
 
 export default function ForecastScreen() {
   const { subscription, profile } = useApp();
@@ -64,26 +66,32 @@ export default function ForecastScreen() {
   }, [profile.currentWeight, profile.targetWeight]);
 
   // Chart geometry
-  const { chartPoints, dots, minW, maxW } = useMemo(() => {
+  const { chartPoints, fillPoints, dots } = useMemo(() => {
     const weights = forecastData.map((d) => d.weight);
     const mn = Math.min(...weights) - 2;
     const mx = Math.max(...weights) + 2;
     const range = mx - mn || 1;
-    const plotW = CHART_W - PAD_L - PAD_R;
-    const plotH = CHART_H - PAD_T - PAD_B;
+    const plotW = CHART_W - PL - PR;
+    const plotH = CHART_H - PT - PB;
 
     const positions = forecastData.map((d, i) => ({
-      x: PAD_L + (i / 12) * plotW,
-      y: PAD_T + (1 - (d.weight - mn) / range) * plotH,
+      x: PL + (i / 12) * plotW,
+      y: PT + (1 - (d.weight - mn) / range) * plotH,
       weight: d.weight,
       month: d.month,
     }));
 
+    const lineStr = positions.map((d) => `${d.x},${d.y}`).join(" ");
+    // Fill polygon: line points + bottom-right + bottom-left
+    const bottomY = CHART_H - PB;
+    const fillStr =
+      lineStr +
+      ` ${positions[positions.length - 1].x},${bottomY} ${positions[0].x},${bottomY}`;
+
     return {
-      chartPoints: positions.map((d) => `${d.x},${d.y}`).join(" "),
+      chartPoints: lineStr,
+      fillPoints: fillStr,
       dots: positions,
-      minW: mn,
-      maxW: mx,
     };
   }, [forecastData]);
 
@@ -98,56 +106,65 @@ export default function ForecastScreen() {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
-    // Navigate to paywall for native StoreKit purchase
     (router as any).push("/paywall");
   };
 
   return (
-    <ScreenContainer>
+    <ScreenContainer containerClassName="bg-transparent">
+      <View style={StyleSheet.absoluteFill}>
+        <LinearGradient colors={[BG, "#080D14", BG]} style={StyleSheet.absoluteFill} />
+      </View>
+
       <ScrollView
-        contentContainerStyle={styles.scroll}
+        contentContainerStyle={st.scroll}
         showsVerticalScrollIndicator={false}
       >
-        {/* ─── HEADER ─── */}
-        <View style={styles.header}>
-          <View style={styles.headerLeft}>
-            <IconSymbol name="chart.line.uptrend.xyaxis" size={20} color={ELECTRIC_BLUE} />
-            <Text style={styles.headerTitle}>ANABOLIC FORECAST</Text>
+        {/* ═══ HEADER ═══ */}
+        <View style={st.hdr}>
+          <View style={st.hdrLeft}>
+            <IconSymbol name="chart.line.uptrend.xyaxis" size={18} color={BLUE} />
+            <Text style={st.hdrTitle}>ANABOLIC FORECAST</Text>
           </View>
+          <TouchableOpacity
+            onPress={() => (router as any).push("/settings")}
+            style={st.hdrGear}
+            activeOpacity={0.7}
+          >
+            <IconSymbol name="gearshape.fill" size={18} color={T3} />
+          </TouchableOpacity>
         </View>
 
-        {/* ─── WEIGHT + DATE ─── */}
-        <View style={styles.weightRow}>
-          <Text style={styles.weightValue}>
+        {/* ═══ WEIGHT + DATE ═══ */}
+        <View style={st.wRow}>
+          <Text style={st.wVal}>
             {profile.currentWeight}
-            <Text style={styles.weightUnit}> {profile.unit}</Text>
+            <Text style={st.wUnit}> {profile.unit}</Text>
           </Text>
-          <Text style={styles.dateLabel}>{targetDate}</Text>
+          <Text style={st.wDate}>{targetDate}</Text>
         </View>
 
-        {/* ─── CHART ─── */}
-        <View style={styles.chartCard}>
-          <View style={isElite ? undefined : styles.blurred}>
+        {/* ═══ CHART ═══ */}
+        <View style={st.chartCard}>
+          <View style={isElite ? undefined : st.blurred}>
             <Svg width={CHART_W} height={CHART_H}>
               <Defs>
-                <SvgGrad id="fLineGrad" x1="0" y1="0" x2="1" y2="0">
-                  <Stop offset="0" stopColor={DEEP_BLUE} />
-                  <Stop offset="0.4" stopColor={ELECTRIC_BLUE} />
-                  <Stop offset="1" stopColor={CYAN_GLOW} />
+                <SvgGrad id="fillG" x1="0" y1="0" x2="0" y2="1">
+                  <Stop offset="0" stopColor={BLUE} stopOpacity="0.25" />
+                  <Stop offset="1" stopColor={BLUE} stopOpacity="0" />
                 </SvgGrad>
               </Defs>
 
-              {/* Horizontal grid lines (subtle dashed) */}
+              {/* Horizontal grid lines */}
               {[0.25, 0.5, 0.75].map((r) => {
-                const y = PAD_T + r * (CHART_H - PAD_T - PAD_B);
+                const y = PT + r * (CHART_H - PT - PB);
                 return (
                   <Line
                     key={r}
-                    x1={PAD_L}
+                    x1={PL}
                     y1={y}
-                    x2={CHART_W - PAD_R}
+                    x2={CHART_W - PR}
                     y2={y}
-                    stroke={BORDER}
+                    stroke={BDR}
                     strokeWidth={0.5}
                     strokeDasharray="4,6"
                   />
@@ -161,15 +178,15 @@ export default function ForecastScreen() {
                 { m: 10, label: "10" },
                 { m: 12, label: "12 MONTHS" },
               ].map(({ m, label }) => {
-                const x = PAD_L + (m / 12) * (CHART_W - PAD_L - PAD_R);
+                const x = PL + (m / 12) * (CHART_W - PL - PR);
                 return (
                   <SvgText
                     key={m}
                     x={x}
-                    y={CHART_H - 4}
-                    fill={TEXT_SECONDARY}
+                    y={CHART_H - 6}
+                    fill={T2}
                     fontSize={10}
-                    fontWeight="600"
+                    fontWeight="700"
                     textAnchor="middle"
                   >
                     {label}
@@ -177,17 +194,20 @@ export default function ForecastScreen() {
                 );
               })}
 
-              {/* Forecast line */}
+              {/* Gradient fill under the line */}
+              <Polygon points={fillPoints} fill="url(#fillG)" />
+
+              {/* Forecast line — WHITE to match reference */}
               <Polyline
                 points={chartPoints}
                 fill="none"
-                stroke="url(#fLineGrad)"
-                strokeWidth={3}
+                stroke="#FFFFFF"
+                strokeWidth={2.5}
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
 
-              {/* Data point dots */}
+              {/* Data point dots — white with dark stroke */}
               {dots
                 .filter((_, i) => i % 3 === 0 || i === 12)
                 .map((d, i) => (
@@ -195,9 +215,9 @@ export default function ForecastScreen() {
                     key={i}
                     cx={d.x}
                     cy={d.y}
-                    r={4.5}
-                    fill={ELECTRIC_BLUE}
-                    stroke="#0A0E14"
+                    r={4}
+                    fill="#FFFFFF"
+                    stroke={BG}
                     strokeWidth={2}
                   />
                 ))}
@@ -206,160 +226,146 @@ export default function ForecastScreen() {
 
           {/* Lock overlay for non-Elite */}
           {!isElite && (
-            <View style={styles.lockOverlay}>
-              <View style={styles.lockCircle}>
-                <IconSymbol name="lock.fill" size={28} color={ELECTRIC_BLUE} />
+            <View style={st.lockOverlay}>
+              <View style={st.lockCircle}>
+                <IconSymbol name="lock.fill" size={28} color={BLUE} />
               </View>
-              <Text style={styles.lockLabel}>Premium Feature</Text>
+              <Text style={st.lockLbl}>Premium Feature</Text>
             </View>
           )}
         </View>
 
-        {/* ─── PRIORITY SYNC CARD ─── */}
-        <View style={styles.syncCard}>
-          <View style={styles.syncRow}>
-            <IconSymbol name="lock.fill" size={18} color={TEXT_TERTIARY} />
-            <View style={styles.syncInfo}>
-              <Text style={styles.syncTitle}>Priority Sync</Text>
-              <Text style={styles.syncSub}>
+        {/* ═══ PRIORITY SYNC CARD ═══ */}
+        <View style={st.syncCard}>
+          <View style={st.syncRow}>
+            <View style={st.syncIcon}>
+              <IconSymbol name="lock.fill" size={16} color={T3} />
+            </View>
+            <View style={st.syncInfo}>
+              <Text style={st.syncTitle}>Priority Sync</Text>
+              <Text style={st.syncSub}>
                 {isElite
                   ? "Real-time sync with your daily nutrition data."
                   : "Locked content updates"}
               </Text>
             </View>
-            <IconSymbol name="chevron.right" size={16} color={TEXT_TERTIARY} />
+            <IconSymbol name="chevron.right" size={14} color={T3} />
           </View>
         </View>
 
-        {/* ─── PREMIUM UPSELL BOX ─── */}
+        {/* ═══ PREMIUM UPSELL BOX ═══ */}
         {!isElite && (
-          <View style={styles.upsellCard}>
+          <View style={st.upsellCard}>
             <LinearGradient
               colors={["rgba(0,122,255,0.06)", "rgba(255,59,48,0.03)"]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={StyleSheet.absoluteFill}
             />
-            <Text style={styles.upsellBadge}>PREMIUM MEMBERS ONLY</Text>
-            <Text style={styles.upsellDesc}>
+
+            <Text style={st.upsellBadge}>PREMIUM MEMBERS ONLY</Text>
+            <Text style={st.upsellDesc}>
               Unlock this 12-Month Forecast and{"\n"}multiply your gains.
             </Text>
 
             {/* Price block */}
-            <View style={styles.priceBlock}>
-              <Text style={styles.priceMain}>ELITE ANNUAL $79.99</Text>
-              <Text style={styles.priceSavings}>66% SAVINGS</Text>
+            <View style={st.priceBlock}>
+              <Text style={st.priceMain}>ELITE ANNUAL $79.99</Text>
+              <Text style={st.priceSave}>66% SAVINGS</Text>
             </View>
 
             {/* UNLOCK button — gradient blue → red */}
             <TouchableOpacity
-              style={styles.unlockBtn}
+              style={st.unlockBtn}
               onPress={handleUnlock}
               activeOpacity={0.8}
             >
+              <View style={st.unlockGlow} />
               <LinearGradient
-                colors={[ELECTRIC_BLUE, "#FF3B30"]}
+                colors={[BLUE, "#FF3B30"]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
-                style={styles.unlockGrad}
+                style={st.unlockGrad}
               >
-                <Text style={styles.unlockText}>UNLOCK</Text>
+                <Text style={st.unlockTxt}>UNLOCK</Text>
               </LinearGradient>
             </TouchableOpacity>
           </View>
         )}
 
-        {/* ─── MILESTONES (Elite only) ─── */}
+        {/* ═══ MILESTONES (Elite only) ═══ */}
         {isElite && (
-          <View style={styles.milestones}>
-            <Text style={styles.msTitle}>Projected Milestones</Text>
+          <View style={st.milestones}>
+            <Text style={st.msTitle}>Projected Milestones</Text>
             {[
               { month: 1, label: "First visible progress" },
               { month: 3, label: "Noticeable body composition change" },
               { month: 6, label: "Halfway to target" },
               { month: 12, label: "Target weight achieved" },
             ].map((ms) => (
-              <View key={ms.month} style={styles.msRow}>
-                <View style={styles.msDot} />
-                <View style={styles.msInfo}>
-                  <Text style={styles.msMonth}>Month {ms.month}</Text>
-                  <Text style={styles.msLabel}>{ms.label}</Text>
+              <View key={ms.month} style={st.msRow}>
+                <View style={st.msDot} />
+                <View style={st.msInfo}>
+                  <Text style={st.msMonth}>Month {ms.month}</Text>
+                  <Text style={st.msLabel}>{ms.label}</Text>
                 </View>
-                <Text style={styles.msWeight}>
+                <Text style={st.msWeight}>
                   {forecastData[ms.month]?.weight} {profile.unit}
                 </Text>
               </View>
             ))}
           </View>
         )}
+
+        <View style={{ height: 80 }} />
       </ScrollView>
     </ScreenContainer>
   );
 }
 
-const styles = StyleSheet.create({
-  scroll: {
-    paddingHorizontal: 20,
-    paddingBottom: 100,
-  },
+const st = StyleSheet.create({
+  scroll: { paddingHorizontal: 20, paddingBottom: 100 },
 
   /* Header */
-  header: {
+  hdr: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     paddingTop: 8,
-    paddingBottom: 12,
+    paddingBottom: 10,
   },
-  headerLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  headerTitle: {
+  hdrLeft: { flexDirection: "row", alignItems: "center", gap: 10 },
+  hdrTitle: {
     fontSize: 18,
     fontWeight: "900",
-    letterSpacing: 2,
-    color: TEXT_PRIMARY,
+    letterSpacing: 2.5,
+    color: T1,
   },
+  hdrGear: { padding: 8 },
 
   /* Weight row */
-  weightRow: {
+  wRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "baseline",
-    marginBottom: 8,
+    marginBottom: 10,
   },
-  weightValue: {
-    fontSize: 36,
-    fontWeight: "900",
-    color: TEXT_PRIMARY,
-  },
-  weightUnit: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: TEXT_SECONDARY,
-  },
-  dateLabel: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: TEXT_SECONDARY,
-  },
+  wVal: { fontSize: 38, fontWeight: "900", color: T1 },
+  wUnit: { fontSize: 18, fontWeight: "600", color: T2 },
+  wDate: { fontSize: 14, fontWeight: "600", color: T2 },
 
   /* Chart */
   chartCard: {
     borderRadius: 16,
     padding: 12,
     borderWidth: 1,
-    borderColor: BORDER,
-    backgroundColor: SURFACE,
+    borderColor: BDR,
+    backgroundColor: SURF2,
     marginBottom: 14,
     alignItems: "center",
     overflow: "hidden",
   },
-  blurred: {
-    opacity: 0.2,
-  },
+  blurred: { opacity: 0.15 },
   lockOverlay: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: "center",
@@ -374,47 +380,37 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  lockLabel: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: TEXT_PRIMARY,
-  },
+  lockLbl: { fontSize: 16, fontWeight: "700", color: T1 },
 
   /* Priority Sync */
   syncCard: {
     borderRadius: 14,
     padding: 16,
     borderWidth: 1,
-    borderColor: BORDER,
-    backgroundColor: SURFACE,
+    borderColor: BDR,
+    backgroundColor: SURF2,
     marginBottom: 14,
   },
-  syncRow: {
-    flexDirection: "row",
+  syncRow: { flexDirection: "row", alignItems: "center", gap: 12 },
+  syncIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "rgba(58,74,92,0.3)",
+    justifyContent: "center",
     alignItems: "center",
-    gap: 12,
   },
-  syncInfo: {
-    flex: 1,
-    gap: 2,
-  },
-  syncTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: TEXT_PRIMARY,
-  },
-  syncSub: {
-    fontSize: 13,
-    color: TEXT_SECONDARY,
-  },
+  syncInfo: { flex: 1, gap: 2 },
+  syncTitle: { fontSize: 16, fontWeight: "700", color: T1 },
+  syncSub: { fontSize: 13, color: T2 },
 
   /* Upsell */
   upsellCard: {
     borderRadius: 20,
     padding: 24,
     borderWidth: 1.5,
-    borderColor: ELECTRIC_BLUE,
-    backgroundColor: SURFACE,
+    borderColor: BLUE,
+    backgroundColor: SURF2,
     alignItems: "center",
     gap: 10,
     overflow: "hidden",
@@ -423,89 +419,76 @@ const styles = StyleSheet.create({
   upsellBadge: {
     fontSize: 12,
     fontWeight: "900",
-    letterSpacing: 2,
-    color: TEXT_PRIMARY,
+    letterSpacing: 2.5,
+    color: T1,
   },
   upsellDesc: {
     fontSize: 15,
     fontWeight: "500",
     textAlign: "center",
     lineHeight: 22,
-    color: TEXT_SECONDARY,
+    color: T2,
   },
-  priceBlock: {
-    alignItems: "center",
-    gap: 4,
-    marginTop: 4,
-  },
+  priceBlock: { alignItems: "center", gap: 4, marginTop: 4 },
   priceMain: {
     fontSize: 22,
     fontWeight: "900",
     letterSpacing: 1,
-    color: TEXT_PRIMARY,
+    color: T1,
   },
-  priceSavings: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: "#00E676",
-  },
+  priceSave: { fontSize: 13, fontWeight: "700", color: "#00E676" },
   unlockBtn: {
     width: "100%",
     marginTop: 6,
+    position: "relative",
+  },
+  unlockGlow: {
+    position: "absolute",
+    top: -4,
+    left: "10%",
+    right: "10%",
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: BLUE,
+    opacity: 0.2,
   },
   unlockGrad: {
     height: 52,
     borderRadius: 26,
     justifyContent: "center",
     alignItems: "center",
+    shadowColor: BLUE,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.5,
+    shadowRadius: 16,
+    elevation: 8,
   },
-  unlockText: {
+  unlockTxt: {
     color: "#FFFFFF",
     fontSize: 18,
     fontWeight: "900",
-    letterSpacing: 3,
+    letterSpacing: 4,
   },
 
   /* Milestones */
-  milestones: {
-    marginTop: 4,
-  },
-  msTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: TEXT_PRIMARY,
-    marginBottom: 16,
-  },
+  milestones: { marginTop: 4 },
+  msTitle: { fontSize: 18, fontWeight: "700", color: T1, marginBottom: 16 },
   msRow: {
     flexDirection: "row",
     alignItems: "center",
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: BORDER,
+    borderBottomColor: BDR,
     gap: 12,
   },
   msDot: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: ELECTRIC_BLUE,
+    backgroundColor: BLUE,
   },
-  msInfo: {
-    flex: 1,
-  },
-  msMonth: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: ELECTRIC_BLUE,
-  },
-  msLabel: {
-    fontSize: 13,
-    marginTop: 2,
-    color: TEXT_SECONDARY,
-  },
-  msWeight: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: TEXT_PRIMARY,
-  },
+  msInfo: { flex: 1 },
+  msMonth: { fontSize: 14, fontWeight: "700", color: BLUE },
+  msLabel: { fontSize: 13, marginTop: 2, color: T2 },
+  msWeight: { fontSize: 16, fontWeight: "700", color: T1 },
 });

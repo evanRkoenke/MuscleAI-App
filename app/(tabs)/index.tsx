@@ -7,7 +7,6 @@ import {
   StyleSheet,
   Dimensions,
   Platform,
-  Image,
 } from "react-native";
 import { useRouter } from "expo-router";
 import Svg, {
@@ -22,486 +21,393 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useApp } from "@/lib/app-context";
 import * as Haptics from "expo-haptics";
 
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
+const { width: SW } = Dimensions.get("window");
 
-// ─── Ring dimensions (matches reference: large, thick, prominent) ───
-const RING_SIZE = Math.min(SCREEN_WIDTH * 0.58, 240);
-const RING_STROKE = 16;
-const RING_RADIUS = (RING_SIZE - RING_STROKE) / 2;
-const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
+// ─── Ring geometry ───
+const RING_SIZE = Math.min(SW * 0.62, 260);
+const RING_STROKE = 18;
+const RING_R = (RING_SIZE - RING_STROKE) / 2;
+const RING_C = 2 * Math.PI * RING_R;
 
-// ─── Brand palette (exact from reference) ───
-const ELECTRIC_BLUE = "#007AFF";
-const DEEP_BLUE = "#003A80";
-const CYAN_GLOW = "#00D4FF";
-const PROTEIN_CYAN = "#00E5FF";
-const CARBS_AMBER = "#FFB300";
-const FAT_RED = "#FF3D3D";
-const DARK_BG = "#0A0E14";
-const SURFACE = "#111820";
-const BORDER = "#1A2533";
-const TEXT_PRIMARY = "#ECEDEE";
-const TEXT_SECONDARY = "#7A8A99";
-const TEXT_TERTIARY = "#3A4A5C";
+// ─── Brand palette ───
+const BLUE = "#007AFF";
+const DEEP = "#0033AA";
+const CYAN = "#00D4FF";
+const PROT = "#00E5FF";
+const CARB = "#FFB300";
+const FATR = "#FF3D3D";
+const BG = "#060A10";
+const SURF = "#0D1219";
+const SURF2 = "#111820";
+const BDR = "#1A2533";
+const T1 = "#ECEDEE";
+const T2 = "#7A8A99";
+const T3 = "#3A4A5C";
 
-function getScoreColor(score: number): string {
-  if (score >= 80) return "#00E676";
-  if (score >= 60) return "#FFB300";
-  return "#FF3D3D";
+function scoreColor(s: number) {
+  return s >= 80 ? "#00E676" : s >= 60 ? "#FFB300" : "#FF3D3D";
 }
 
 export default function HomeScreen() {
   const router = useRouter();
   const { profile, getTodayCalories, getTodayMacros, getTodayMeals } = useApp();
 
-  const todayCalories = getTodayCalories();
-  const todayMacros = getTodayMacros();
-  const caloriesRemaining = Math.max(0, profile.calorieGoal - todayCalories);
-  const progress = Math.min(1, todayCalories / profile.calorieGoal);
-  // Ring starts from top (12 o'clock), sweeps clockwise ~270 degrees max
-  const strokeDashoffset = RING_CIRCUMFERENCE * (1 - progress);
+  const cal = getTodayCalories();
+  const mac = getTodayMacros();
+  const rem = Math.max(0, profile.calorieGoal - cal);
+  const prog = Math.min(1, cal / profile.calorieGoal);
+  const dashOff = RING_C * (1 - prog * 0.75); // max 270° sweep
 
-  const todayMeals = getTodayMeals();
-  const lastMeal = todayMeals.length > 0 ? todayMeals[todayMeals.length - 1] : null;
+  const meals = getTodayMeals();
+  const last = meals.length > 0 ? meals[meals.length - 1] : null;
 
-  const handleScan = useCallback(() => {
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    }
+  const doScan = useCallback(() => {
+    if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     (router as any).push("/scan-meal");
   }, [router]);
 
   return (
-    <ScreenContainer>
+    <ScreenContainer containerClassName="bg-transparent">
+      {/* Full-screen dark background */}
+      <View style={StyleSheet.absoluteFill}>
+        <LinearGradient
+          colors={[BG, "#080D14", BG]}
+          style={StyleSheet.absoluteFill}
+        />
+      </View>
+
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={s.scroll}
         showsVerticalScrollIndicator={false}
       >
-        {/* ─── HEADER: avatar + "MUSCLE AI" + gear ─── */}
-        <View style={styles.header}>
-          <View style={styles.headerLeft}>
-            <TouchableOpacity
-              onPress={() => (router as any).push("/profile")}
-              style={styles.avatarBtn}
-              activeOpacity={0.7}
-            >
-              {profile.profilePhotoUri ? (
-                <Image
-                  source={{ uri: profile.profilePhotoUri }}
-                  style={styles.headerAvatar}
-                />
-              ) : (
-                <LinearGradient
-                  colors={[ELECTRIC_BLUE, CYAN_GLOW]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={styles.headerAvatarGrad}
-                >
-                  <Text style={styles.headerAvatarInitial}>
-                    {profile.name ? profile.name[0].toUpperCase() : "M"}
-                  </Text>
-                </LinearGradient>
-              )}
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>MUSCLE AI</Text>
-          </View>
+        {/* ═══ HEADER ═══ */}
+        <View style={s.hdr}>
+          <Text style={s.hdrTitle}>MUSCLE AI</Text>
           <TouchableOpacity
             onPress={() => (router as any).push("/settings")}
-            style={styles.settingsBtn}
+            style={s.hdrGear}
             activeOpacity={0.7}
           >
-            <IconSymbol name="gearshape.fill" size={22} color={TEXT_SECONDARY} />
+            <IconSymbol name="gearshape.fill" size={20} color={T3} />
           </TouchableOpacity>
         </View>
 
-        {/* ─── CERAMIC CALORIE RING ─── */}
-        <View style={styles.ringOuter}>
-          {/* Outer glow aura */}
-          <View style={styles.ringGlowAura} />
+        {/* ═══ CALORIE RING ═══ */}
+        <View style={s.ringWrap}>
+          {/* Multi-layer glow */}
+          <View style={s.glow1} />
+          <View style={s.glow2} />
+          <View style={s.glow3} />
+
           <Svg width={RING_SIZE} height={RING_SIZE}>
             <Defs>
-              <SvgGradient id="ceramicGrad" x1="0" y1="0" x2="1" y2="1">
-                <Stop offset="0" stopColor={DEEP_BLUE} stopOpacity="1" />
-                <Stop offset="0.45" stopColor={ELECTRIC_BLUE} stopOpacity="1" />
-                <Stop offset="1" stopColor={CYAN_GLOW} stopOpacity="1" />
+              <SvgGradient id="rg" x1="0" y1="0" x2="1" y2="1">
+                <Stop offset="0" stopColor={DEEP} />
+                <Stop offset="0.4" stopColor={BLUE} />
+                <Stop offset="1" stopColor={CYAN} />
               </SvgGradient>
             </Defs>
-            {/* Track ring (dark background) */}
+            {/* Track */}
             <Circle
               cx={RING_SIZE / 2}
               cy={RING_SIZE / 2}
-              r={RING_RADIUS}
-              stroke={BORDER}
+              r={RING_R}
+              stroke="#141E2C"
               strokeWidth={RING_STROKE}
               fill="transparent"
             />
-            {/* Progress arc with gradient */}
+            {/* Progress arc */}
             <Circle
               cx={RING_SIZE / 2}
               cy={RING_SIZE / 2}
-              r={RING_RADIUS}
-              stroke="url(#ceramicGrad)"
+              r={RING_R}
+              stroke="url(#rg)"
               strokeWidth={RING_STROKE}
               fill="transparent"
-              strokeDasharray={RING_CIRCUMFERENCE}
-              strokeDashoffset={strokeDashoffset}
+              strokeDasharray={RING_C}
+              strokeDashoffset={dashOff}
               strokeLinecap="round"
-              rotation="-90"
+              rotation="-225"
               origin={`${RING_SIZE / 2}, ${RING_SIZE / 2}`}
             />
           </Svg>
+
           {/* Center text */}
-          <View style={styles.ringCenterText}>
-            <Text style={styles.calorieNumber}>
-              {caloriesRemaining.toLocaleString()}
-            </Text>
-            <Text style={styles.calorieLabel}>Calories Remaining</Text>
+          <View style={s.ringCenter}>
+            <Text style={s.ringNum}>{rem.toLocaleString()}</Text>
+            <Text style={s.ringLabel}>Calories Remaining</Text>
           </View>
         </View>
 
-        {/* ─── MACRO ROW: 3 cards ─── */}
-        <View style={styles.macroRow}>
-          <View style={styles.macroCard}>
-            <Text style={styles.macroValue}>
-              {todayMacros.protein}
-              <Text style={styles.macroUnit}>g</Text>
-            </Text>
-            <Text style={[styles.macroLabel, { color: PROTEIN_CYAN }]}>PROTEIN</Text>
-          </View>
-          <View style={styles.macroCard}>
-            <Text style={styles.macroValue}>
-              {todayMacros.carbs}
-              <Text style={styles.macroUnit}>g</Text>
-            </Text>
-            <Text style={[styles.macroLabel, { color: CARBS_AMBER }]}>CARBS</Text>
-          </View>
-          <View style={styles.macroCard}>
-            <Text style={styles.macroValue}>
-              {todayMacros.fat}
-              <Text style={styles.macroUnit}>g</Text>
-            </Text>
-            <Text style={[styles.macroLabel, { color: FAT_RED }]}>FAT</Text>
-          </View>
+        {/* ═══ MACRO ROW ═══ */}
+        <View style={s.macRow}>
+          {[
+            { val: mac.protein, unit: "g", label: "PROTEIN", color: PROT },
+            { val: mac.carbs, unit: "g", label: "CARBS", color: CARB },
+            { val: mac.fat, unit: "g", label: "FAT", color: FATR },
+          ].map((m) => (
+            <View key={m.label} style={s.macCard}>
+              <Text style={s.macVal}>
+                {m.val}
+                <Text style={s.macUnit}>{m.unit}</Text>
+              </Text>
+              <Text style={[s.macLbl, { color: m.color }]}>{m.label}</Text>
+            </View>
+          ))}
         </View>
 
-        {/* ─── QUICK ACTIONS: Scan / Meals / Forecast ─── */}
-        <View style={styles.quickRow}>
-          <TouchableOpacity
-            style={styles.quickBtn}
-            onPress={handleScan}
-            activeOpacity={0.7}
-          >
-            <IconSymbol name="camera.fill" size={16} color={ELECTRIC_BLUE} />
-            <Text style={styles.quickLabel}>Scan</Text>
+        {/* ═══ QUICK ACTIONS ═══ */}
+        <View style={s.qRow}>
+          <TouchableOpacity style={s.qBtn} onPress={doScan} activeOpacity={0.7}>
+            <IconSymbol name="camera.fill" size={15} color={BLUE} />
+            <Text style={s.qTxt}>Scan</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.quickBtn}
+            style={s.qBtn}
             onPress={() => router.push("/(tabs)/meals")}
             activeOpacity={0.7}
           >
-            <IconSymbol name="fork.knife" size={16} color={ELECTRIC_BLUE} />
-            <Text style={styles.quickLabel}>Meals</Text>
+            <IconSymbol name="fork.knife" size={15} color={BLUE} />
+            <Text style={s.qTxt}>Meals</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.quickBtn}
+            style={s.qBtn}
             onPress={() => router.push("/(tabs)/forecast")}
             activeOpacity={0.7}
           >
-            <IconSymbol name="chart.line.uptrend.xyaxis" size={16} color={ELECTRIC_BLUE} />
-            <Text style={styles.quickLabel}>Forecast</Text>
+            <IconSymbol name="chart.line.uptrend.xyaxis" size={15} color={BLUE} />
+            <Text style={s.qTxt}>Forecast</Text>
           </TouchableOpacity>
         </View>
 
-        {/* ─── PROTEIN PRIORITY CARD ─── */}
-        <View style={styles.priorityCard}>
-          <Text style={styles.priorityHeader}>PROTEIN PRIORITY</Text>
-          {lastMeal ? (
-            <View style={styles.priorityBody}>
-              {/* Left: meal info */}
-              <View style={styles.priorityLeft}>
-                <Text style={styles.priorityMealName} numberOfLines={1}>
-                  {lastMeal.name}
-                </Text>
-                <Text style={styles.priorityMealDetail}>
-                  {lastMeal.calories} cal · {lastMeal.protein}g protein
-                </Text>
+        {/* ═══ PROTEIN PRIORITY ═══ */}
+        <View style={s.ppCard}>
+          <Text style={s.ppHdr}>PROTEIN PRIORITY</Text>
+          {last ? (
+            <View style={s.ppBody}>
+              <View style={s.ppLeft}>
+                <Text style={s.ppName} numberOfLines={1}>{last.name}</Text>
+                <Text style={s.ppDetail}>{last.calories} cal · {last.protein}g protein</Text>
               </View>
-              {/* Right: anabolic score badge */}
-              <View
-                style={[
-                  styles.anabolicBadge,
-                  { backgroundColor: getScoreColor(lastMeal.anabolicScore) + "15" },
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.anabolicNumber,
-                    { color: getScoreColor(lastMeal.anabolicScore) },
-                  ]}
-                >
-                  {lastMeal.anabolicScore}
-                </Text>
-                <Text
-                  style={[
-                    styles.anabolicText,
-                    { color: getScoreColor(lastMeal.anabolicScore) },
-                  ]}
-                >
-                  ANABOLIC{"\n"}SCORE
-                </Text>
+              <View style={[s.ppBadge, { backgroundColor: scoreColor(last.anabolicScore) + "18", borderColor: scoreColor(last.anabolicScore) + "40" }]}>
+                <Text style={[s.ppScore, { color: scoreColor(last.anabolicScore) }]}>{last.anabolicScore}</Text>
+                <Text style={[s.ppScoreLbl, { color: scoreColor(last.anabolicScore) }]}>ANABOLIC{"\n"}SCORE</Text>
               </View>
             </View>
           ) : (
-            <View style={styles.priorityEmpty}>
-              <IconSymbol name="camera.fill" size={32} color={TEXT_TERTIARY} />
-              <Text style={styles.priorityEmptyText}>
-                Scan your first meal to see your Anabolic Score
-              </Text>
+            <View style={s.ppEmpty}>
+              <IconSymbol name="camera.fill" size={28} color={T3} />
+              <Text style={s.ppEmptyTxt}>Scan your first meal to see your Anabolic Score</Text>
             </View>
           )}
         </View>
 
-        {/* ─── MUSCLE SUPPORT CARD ─── */}
+        {/* ═══ MUSCLE SUPPORT ═══ */}
         <TouchableOpacity
-          style={styles.supportCard}
+          style={s.supCard}
           onPress={() => (router as any).push("/support")}
           activeOpacity={0.7}
         >
           <LinearGradient
-            colors={["rgba(0,122,255,0.10)", "rgba(0,212,255,0.04)"]}
+            colors={["rgba(0,122,255,0.08)", "rgba(0,212,255,0.03)"]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={StyleSheet.absoluteFill}
           />
-          <IconSymbol name="bubble.left.fill" size={24} color={ELECTRIC_BLUE} />
-          <View style={styles.supportInfo}>
-            <Text style={styles.supportTitle}>Muscle Support</Text>
-            <Text style={styles.supportSub}>AI-powered help, 24/7</Text>
+          <IconSymbol name="bubble.left.fill" size={22} color={BLUE} />
+          <View style={s.supInfo}>
+            <Text style={s.supTitle}>Muscle Support</Text>
+            <Text style={s.supSub}>AI-powered help, 24/7</Text>
           </View>
-          <IconSymbol name="chevron.right" size={18} color={TEXT_TERTIARY} />
+          <IconSymbol name="chevron.right" size={16} color={T3} />
         </TouchableOpacity>
 
-        {/* Bottom spacer for FAB */}
-        <View style={{ height: 48 }} />
+        <View style={{ height: 80 }} />
       </ScrollView>
 
-      {/* ─── FLOATING CAMERA BUTTON ─── */}
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={handleScan}
-        activeOpacity={0.8}
-      >
-        <View style={styles.fabGlow} />
+      {/* ═══ FLOATING CAMERA FAB ═══ */}
+      <TouchableOpacity style={s.fab} onPress={doScan} activeOpacity={0.8}>
+        <View style={s.fabGlow} />
         <LinearGradient
-          colors={[ELECTRIC_BLUE, CYAN_GLOW]}
+          colors={[BLUE, CYAN]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          style={styles.fabGradient}
+          style={s.fabInner}
         >
-          <IconSymbol name="camera.fill" size={28} color="#FFFFFF" />
+          <IconSymbol name="camera.fill" size={26} color="#FFFFFF" />
         </LinearGradient>
       </TouchableOpacity>
     </ScreenContainer>
   );
 }
 
-const styles = StyleSheet.create({
-  scrollContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 110,
-  },
+const s = StyleSheet.create({
+  scroll: { paddingHorizontal: 20, paddingBottom: 120 },
 
-  /* ── Header ── */
-  header: {
+  /* Header */
+  hdr: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: 10,
+    paddingVertical: 12,
   },
-  headerLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  avatarBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    overflow: "hidden",
-  },
-  headerAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    borderWidth: 2,
-    borderColor: ELECTRIC_BLUE,
-  },
-  headerAvatarGrad: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  headerAvatarInitial: {
-    fontSize: 16,
+  hdrTitle: {
+    fontSize: 24,
     fontWeight: "900",
-    color: "#FFFFFF",
-  },
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: "900",
-    letterSpacing: 4,
-    color: ELECTRIC_BLUE,
+    letterSpacing: 5,
+    color: T1,
     fontStyle: "italic",
   },
-  settingsBtn: {
-    padding: 8,
-  },
+  hdrGear: { padding: 8 },
 
-  /* ── Ceramic Calorie Ring ── */
-  ringOuter: {
+  /* Ring */
+  ringWrap: {
     alignItems: "center",
     justifyContent: "center",
-    marginVertical: 8,
     alignSelf: "center",
+    marginVertical: 4,
+    width: RING_SIZE + 60,
+    height: RING_SIZE + 60,
   },
-  ringGlowAura: {
+  glow1: {
     position: "absolute",
-    width: RING_SIZE + 40,
-    height: RING_SIZE + 40,
-    borderRadius: (RING_SIZE + 40) / 2,
+    width: RING_SIZE + 50,
+    height: RING_SIZE + 50,
+    borderRadius: (RING_SIZE + 50) / 2,
+    backgroundColor: "rgba(0,122,255,0.06)",
+  },
+  glow2: {
+    position: "absolute",
+    width: RING_SIZE + 30,
+    height: RING_SIZE + 30,
+    borderRadius: (RING_SIZE + 30) / 2,
     backgroundColor: "transparent",
-    // iOS shadow creates the glow aura
-    shadowColor: ELECTRIC_BLUE,
+    shadowColor: BLUE,
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.4,
-    shadowRadius: 35,
+    shadowOpacity: 0.55,
+    shadowRadius: 40,
     elevation: 0,
   },
-  ringCenterText: {
+  glow3: {
+    position: "absolute",
+    width: RING_SIZE + 10,
+    height: RING_SIZE + 10,
+    borderRadius: (RING_SIZE + 10) / 2,
+    backgroundColor: "transparent",
+    shadowColor: CYAN,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.25,
+    shadowRadius: 25,
+    elevation: 0,
+  },
+  ringCenter: {
     position: "absolute",
     alignItems: "center",
   },
-  calorieNumber: {
-    fontSize: 46,
+  ringNum: {
+    fontSize: 50,
     fontWeight: "900",
-    color: TEXT_PRIMARY,
-    letterSpacing: -1,
+    color: T1,
+    letterSpacing: -2,
   },
-  calorieLabel: {
+  ringLabel: {
     fontSize: 13,
     fontWeight: "600",
-    color: TEXT_SECONDARY,
+    color: T2,
     marginTop: 2,
   },
 
-  /* ── Macro Row ── */
-  macroRow: {
+  /* Macros */
+  macRow: {
     flexDirection: "row",
     gap: 10,
-    marginTop: 4,
     marginBottom: 14,
   },
-  macroCard: {
+  macCard: {
     flex: 1,
-    backgroundColor: SURFACE,
+    backgroundColor: SURF2,
     borderRadius: 14,
-    paddingVertical: 14,
-    paddingHorizontal: 8,
+    paddingVertical: 16,
+    paddingHorizontal: 6,
     alignItems: "center",
     borderWidth: 1,
-    borderColor: BORDER,
-    gap: 4,
+    borderColor: BDR,
+    gap: 5,
   },
-  macroValue: {
-    fontSize: 26,
+  macVal: {
+    fontSize: 28,
     fontWeight: "900",
-    color: TEXT_PRIMARY,
+    color: T1,
   },
-  macroUnit: {
+  macUnit: {
     fontSize: 14,
     fontWeight: "500",
-    color: TEXT_SECONDARY,
+    color: T2,
   },
-  macroLabel: {
+  macLbl: {
     fontSize: 10,
     fontWeight: "900",
     letterSpacing: 1.5,
   },
 
-  /* ── Quick Actions ── */
-  quickRow: {
+  /* Quick actions */
+  qRow: {
     flexDirection: "row",
     gap: 10,
     marginBottom: 14,
   },
-  quickBtn: {
+  qBtn: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 6,
-    paddingVertical: 12,
+    paddingVertical: 13,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: BORDER,
-    backgroundColor: SURFACE,
+    borderColor: BDR,
+    backgroundColor: SURF,
   },
-  quickLabel: {
+  qTxt: {
     fontSize: 14,
     fontWeight: "700",
-    color: TEXT_PRIMARY,
+    color: T1,
   },
 
-  /* ── Protein Priority ── */
-  priorityCard: {
+  /* Protein Priority */
+  ppCard: {
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: BORDER,
-    backgroundColor: SURFACE,
+    borderColor: BDR,
+    backgroundColor: SURF2,
     marginBottom: 12,
   },
-  priorityHeader: {
+  ppHdr: {
     fontSize: 13,
     fontWeight: "900",
-    letterSpacing: 2,
-    color: TEXT_PRIMARY,
+    letterSpacing: 2.5,
+    color: T1,
     marginBottom: 14,
   },
-  priorityBody: {
+  ppBody: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
-  priorityLeft: {
-    flex: 1,
-    gap: 4,
-  },
-  priorityMealName: {
-    fontSize: 17,
-    fontWeight: "700",
-    color: TEXT_PRIMARY,
-  },
-  priorityMealDetail: {
-    fontSize: 14,
-    color: TEXT_SECONDARY,
-  },
-  anabolicBadge: {
-    width: 72,
-    height: 72,
+  ppLeft: { flex: 1, gap: 4 },
+  ppName: { fontSize: 17, fontWeight: "700", color: T1 },
+  ppDetail: { fontSize: 14, color: T2 },
+  ppBadge: {
+    width: 76,
+    height: 76,
     borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.05)",
   },
-  anabolicNumber: {
-    fontSize: 28,
-    fontWeight: "900",
-  },
-  anabolicText: {
+  ppScore: { fontSize: 30, fontWeight: "900" },
+  ppScoreLbl: {
     fontSize: 7,
     fontWeight: "800",
     letterSpacing: 0.5,
@@ -509,49 +415,39 @@ const styles = StyleSheet.create({
     lineHeight: 9,
     marginTop: 2,
   },
-  priorityEmpty: {
+  ppEmpty: {
     alignItems: "center",
     gap: 10,
-    paddingVertical: 20,
+    paddingVertical: 24,
   },
-  priorityEmptyText: {
+  ppEmptyTxt: {
     fontSize: 14,
     textAlign: "center",
     lineHeight: 20,
-    color: TEXT_TERTIARY,
+    color: T3,
   },
 
-  /* ── Muscle Support ── */
-  supportCard: {
+  /* Muscle Support */
+  supCard: {
     flexDirection: "row",
     alignItems: "center",
     borderRadius: 14,
     padding: 16,
     borderWidth: 1,
-    borderColor: BORDER,
-    backgroundColor: SURFACE,
+    borderColor: BDR,
+    backgroundColor: SURF2,
     gap: 14,
     marginBottom: 12,
     overflow: "hidden",
   },
-  supportInfo: {
-    flex: 1,
-  },
-  supportTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: TEXT_PRIMARY,
-  },
-  supportSub: {
-    fontSize: 13,
-    marginTop: 2,
-    color: TEXT_SECONDARY,
-  },
+  supInfo: { flex: 1 },
+  supTitle: { fontSize: 16, fontWeight: "700", color: T1 },
+  supSub: { fontSize: 13, marginTop: 2, color: T2 },
 
-  /* ── Floating Camera Button ── */
+  /* FAB */
   fab: {
     position: "absolute",
-    bottom: 16,
+    bottom: 18,
     alignSelf: "center",
     width: 64,
     height: 64,
@@ -561,22 +457,22 @@ const styles = StyleSheet.create({
   },
   fabGlow: {
     position: "absolute",
-    width: 84,
-    height: 84,
-    borderRadius: 42,
-    backgroundColor: ELECTRIC_BLUE,
-    opacity: 0.2,
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    backgroundColor: BLUE,
+    opacity: 0.25,
   },
-  fabGradient: {
+  fabInner: {
     width: 64,
     height: 64,
     borderRadius: 32,
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: ELECTRIC_BLUE,
+    shadowColor: BLUE,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.5,
-    shadowRadius: 16,
-    elevation: 10,
+    shadowOpacity: 0.6,
+    shadowRadius: 20,
+    elevation: 12,
   },
 });

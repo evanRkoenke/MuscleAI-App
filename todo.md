@@ -86,3 +86,12 @@
 - [x] Lock email editing for free plan users (show upgrade prompt)
 - [x] Lock payment method management for free plan users (show upgrade prompt)
 - [x] Paid plan users (essential, pro, elite) can edit email and manage payment
+
+## Design Reset v3 — Absolute Visual Fidelity
+- [x] Re-examine reference images and document exact pixel specs
+- [x] Rebuild Dashboard ceramic ring with proper thick arc, gradient glow, and exact reference layout
+- [x] Rebuild Forecast chart with exact line-weight, axis labels, and font-style from reference
+- [x] Replace all stock icons with Blue Digital Bicep branding where appropriate
+- [x] Fix Manage Subscription routing to Stripe Customer Portal
+- [x] Make Elite Annual $79.99 the dominant highlighted CTA on paywall
+- [x] Match Clinical Luxury dark aesthetic exactly (no generic UI elements)
