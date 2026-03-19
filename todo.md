@@ -98,3 +98,6 @@
 
 ## Profile Button in Header
 - [x] Add profile avatar button/icon to the left of "MUSCLE AI" header on Dashboard
+
+## Status Bar Dark Background
+- [x] Fix status bar area to have dark background matching the app theme
