@@ -5,9 +5,11 @@ import {
   TouchableOpacity,
   ScrollView,
   StyleSheet,
-  Linking,
   Dimensions,
+  Platform,
 } from "react-native";
+import { useRouter } from "expo-router";
+import * as Haptics from "expo-haptics";
 import Svg, {
   Polyline,
   Line,
@@ -40,10 +42,9 @@ const TEXT_PRIMARY = "#ECEDEE";
 const TEXT_SECONDARY = "#7A8A99";
 const TEXT_TERTIARY = "#5A6A7A";
 
-const STRIPE_ELITE = "https://buy.stripe.com/28E00c3VTa1FffJc6WbEA05";
-
 export default function ForecastScreen() {
   const { subscription, profile } = useApp();
+  const router = useRouter();
   const isElite = subscription === "elite";
 
   // Generate 13 data points (month 0–12)
@@ -93,12 +94,12 @@ export default function ForecastScreen() {
     return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   }, []);
 
-  const handleUnlock = async () => {
-    try {
-      await Linking.openURL(STRIPE_ELITE);
-    } catch {
-      // silent
+  const handleUnlock = () => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
+    // Navigate to paywall for native StoreKit purchase
+    (router as any).push("/paywall");
   };
 
   return (

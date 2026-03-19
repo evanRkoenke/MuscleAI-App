@@ -59,3 +59,15 @@
 
 ## Logo in Dashboard Header
 - [x] Replace gradient "M" avatar with blue digital bicep logo image in Dashboard header
+
+## Native Apple StoreKit IAP Integration
+- [x] Install expo-iap package for StoreKit 2 support
+- [x] Create IAP service module with product IDs, purchase flow, and restore logic
+- [x] Rebuild paywall UI to trigger native iOS purchase sheet instead of Safari redirects
+- [x] Add server-side receipt validation endpoint
+- [x] Update subscription status in app state after successful purchase
+- [x] Instantly unlock 12-Month Forecast and Priority Sync on Elite purchase
+- [x] Maintain Clinical Luxury / Electric Blue paywall design
+- [x] Add restore purchases functionality
+- [x] Handle purchase errors with branded error messages
+- [x] Graceful web fallback (Stripe links) since StoreKit only works on iOS

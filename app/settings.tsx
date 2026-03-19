@@ -90,41 +90,57 @@ export default function SettingsScreen() {
     }
 
     if (subscription === "free") {
-      // Free users go to paywall to subscribe
-      router.push("/paywall");
+      // Free users go to paywall to subscribe via native IAP
+      (router as any).push("/paywall");
       return;
     }
 
     setManagingSubscription(true);
     try {
-      // In production, call server to create a Stripe Billing Portal session:
-      //   const res = await trpc.stripe.createPortalSession.mutate();
-      //   await Linking.openURL(res.url);
-      // Fallback: open the Stripe Customer Portal login page
-      const portalUrl = STRIPE_CUSTOMER_PORTAL;
-      const canOpen = await Linking.canOpenURL(portalUrl);
-      if (canOpen) {
-        await Linking.openURL(portalUrl);
-      } else {
-        // Fallback to checkout link for the current plan
-        const checkoutUrl = STRIPE_CHECKOUT_LINKS[subscription];
-        if (checkoutUrl) {
-          await Linking.openURL(checkoutUrl);
+      if (Platform.OS === "ios") {
+        // On iOS: open the native subscription management screen
+        // This deep link opens Settings > Apple ID > Subscriptions
+        const iosSubsUrl = "https://apps.apple.com/account/subscriptions";
+        const canOpen = await Linking.canOpenURL(iosSubsUrl);
+        if (canOpen) {
+          await Linking.openURL(iosSubsUrl);
         } else {
           Alert.alert(
-            "Unable to Open",
-            "Could not open the subscription management page. Please contact Muscle Support for help.",
-            [
-              { text: "Contact Support", onPress: () => (router as any).push("/support") },
-              { text: "Cancel", style: "cancel" },
-            ]
+            "Manage Subscription",
+            "Go to Settings > Apple ID > Subscriptions to manage your Muscle AI subscription.",
+            [{ text: "OK" }]
           );
+        }
+      } else if (Platform.OS === "android") {
+        // On Android: open Google Play subscription management
+        const androidSubsUrl = "https://play.google.com/store/account/subscriptions";
+        await Linking.openURL(androidSubsUrl);
+      } else {
+        // Web fallback: open Stripe Customer Portal
+        const portalUrl = STRIPE_CUSTOMER_PORTAL;
+        const canOpen = await Linking.canOpenURL(portalUrl);
+        if (canOpen) {
+          await Linking.openURL(portalUrl);
+        } else {
+          const checkoutUrl = STRIPE_CHECKOUT_LINKS[subscription];
+          if (checkoutUrl) {
+            await Linking.openURL(checkoutUrl);
+          } else {
+            Alert.alert(
+              "Unable to Open",
+              "Could not open the subscription management page. Please contact Muscle Support for help.",
+              [
+                { text: "Contact Support", onPress: () => (router as any).push("/support") },
+                { text: "Cancel", style: "cancel" },
+              ]
+            );
+          }
         }
       }
     } catch (error) {
       Alert.alert(
         "Connection Error",
-        "Unable to connect to the billing portal. Please check your internet connection and try again.",
+        "Unable to open subscription management. Please try again or contact Muscle Support.",
         [
           { text: "Try Again", onPress: handleManageSubscription },
           { text: "Contact Support", onPress: () => (router as any).push("/support") },
