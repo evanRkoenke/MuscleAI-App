@@ -101,3 +101,6 @@
 
 ## Status Bar Dark Background
 - [x] Fix status bar area to have dark background matching the app theme
+
+## iOS Status Bar Background Fix (Real Device)
+- [x] Fix iOS status bar area to show dark background on real device (not just web preview)

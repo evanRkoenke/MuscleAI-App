@@ -45,14 +45,17 @@ const config: ExpoConfig = {
   orientation: "portrait",
   icon: "./assets/images/icon.png",
   scheme: env.scheme,
-  userInterfaceStyle: "automatic",
+  userInterfaceStyle: "dark",
+  backgroundColor: "#0A0E14",
   newArchEnabled: true,
   ios: {
     supportsTablet: true,
     bundleIdentifier: env.iosBundleId,
-    "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
-      }
+    backgroundColor: "#0A0E14",
+    infoPlist: {
+      ITSAppUsesNonExemptEncryption: false,
+      UIUserInterfaceStyle: "Dark",
+    },
   },
   android: {
     adaptiveIcon: {
@@ -85,6 +88,7 @@ const config: ExpoConfig = {
     favicon: "./assets/images/favicon.png",
   },
   plugins: [
+    "expo-system-ui",
     "expo-router",
     [
       "expo-audio",

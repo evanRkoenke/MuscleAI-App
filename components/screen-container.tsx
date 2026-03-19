@@ -54,6 +54,7 @@ export function ScreenContainer({
         "bg-background",
         containerClassName
       )}
+      style={{ backgroundColor: "#0A0E14" }}
       {...props}
     >
       <SafeAreaView
