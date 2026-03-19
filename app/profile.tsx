@@ -424,12 +424,25 @@ export default function ProfileScreen() {
             <Text style={styles.editProfileBtnText}>Edit Profile</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.paymentBtn}
-            onPress={handleManagePayment}
+            style={[styles.paymentBtn, subscription === "free" && { opacity: 0.4 }]}
+            onPress={() => {
+              if (subscription === "free") {
+                Alert.alert(
+                  "Premium Feature",
+                  "Subscribe to a paid plan to manage your payment method.",
+                  [
+                    { text: "Upgrade", onPress: () => (router as any).push("/paywall") },
+                    { text: "Cancel", style: "cancel" },
+                  ]
+                );
+              } else {
+                handleManagePayment();
+              }
+            }}
             activeOpacity={0.8}
           >
-            <IconSymbol name="creditcard.fill" size={14} color={TEXT_PRIMARY} />
-            <Text style={styles.paymentBtnText}>Payment</Text>
+            <IconSymbol name={subscription === "free" ? "lock.fill" : "creditcard.fill"} size={14} color={subscription === "free" ? TEXT_TERTIARY : TEXT_PRIMARY} />
+            <Text style={[styles.paymentBtnText, subscription === "free" && { color: TEXT_TERTIARY }]}>{subscription === "free" ? "Locked" : "Payment"}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -598,17 +611,39 @@ export default function ProfileScreen() {
             {/* Email Field */}
             <View style={styles.fieldContainer}>
               <Text style={styles.fieldLabel}>EMAIL</Text>
-              <TextInput
-                style={styles.fieldInput}
-                value={editEmail}
-                onChangeText={setEditEmail}
-                placeholder="your@email.com"
-                placeholderTextColor={TEXT_TERTIARY}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                returnKeyType="done"
-                onSubmitEditing={handleSaveProfile}
-              />
+              {subscription === "free" ? (
+                <TouchableOpacity
+                  style={styles.lockedField}
+                  onPress={() => {
+                    Alert.alert(
+                      "Premium Feature",
+                      "Upgrade to a paid plan to edit your email address.",
+                      [
+                        { text: "Upgrade", onPress: () => { setEditModalVisible(false); (router as any).push("/paywall"); } },
+                        { text: "Cancel", style: "cancel" },
+                      ]
+                    );
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <IconSymbol name="lock.fill" size={14} color={TEXT_TERTIARY} />
+                  <Text style={styles.lockedFieldText}>
+                    {editEmail || "Upgrade to edit email"}
+                  </Text>
+                </TouchableOpacity>
+              ) : (
+                <TextInput
+                  style={styles.fieldInput}
+                  value={editEmail}
+                  onChangeText={setEditEmail}
+                  placeholder="your@email.com"
+                  placeholderTextColor={TEXT_TERTIARY}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  returnKeyType="done"
+                  onSubmitEditing={handleSaveProfile}
+                />
+              )}
             </View>
 
             {/* Save Button */}
@@ -633,24 +668,48 @@ export default function ProfileScreen() {
             </TouchableOpacity>
 
             {/* Payment Method Section */}
-            <TouchableOpacity
-              style={styles.paymentRow}
-              onPress={handleManagePayment}
-              activeOpacity={0.7}
-            >
-              <View style={styles.paymentRowLeft}>
-                <IconSymbol name="creditcard.fill" size={20} color={ELECTRIC_BLUE} />
-                <View>
-                  <Text style={styles.paymentRowLabel}>Payment Method</Text>
-                  <Text style={styles.paymentRowSub}>
-                    {subscription === "free"
-                      ? "No active subscription"
-                      : `${TIER_LABELS[subscription]} plan active`}
-                  </Text>
+            {subscription === "free" ? (
+              <TouchableOpacity
+                style={[styles.paymentRow, { opacity: 0.5 }]}
+                onPress={() => {
+                  Alert.alert(
+                    "Premium Feature",
+                    "Subscribe to a paid plan to manage your payment method.",
+                    [
+                      { text: "Upgrade", onPress: () => { setEditModalVisible(false); (router as any).push("/paywall"); } },
+                      { text: "Cancel", style: "cancel" },
+                    ]
+                  );
+                }}
+                activeOpacity={0.7}
+              >
+                <View style={styles.paymentRowLeft}>
+                  <IconSymbol name="lock.fill" size={20} color={TEXT_TERTIARY} />
+                  <View>
+                    <Text style={styles.paymentRowLabel}>Payment Method</Text>
+                    <Text style={styles.paymentRowSub}>Upgrade to manage payment</Text>
+                  </View>
                 </View>
-              </View>
-              <IconSymbol name="chevron.right" size={16} color={TEXT_TERTIARY} />
-            </TouchableOpacity>
+                <IconSymbol name="chevron.right" size={16} color={TEXT_TERTIARY} />
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                style={styles.paymentRow}
+                onPress={handleManagePayment}
+                activeOpacity={0.7}
+              >
+                <View style={styles.paymentRowLeft}>
+                  <IconSymbol name="creditcard.fill" size={20} color={ELECTRIC_BLUE} />
+                  <View>
+                    <Text style={styles.paymentRowLabel}>Payment Method</Text>
+                    <Text style={styles.paymentRowSub}>
+                      {`${TIER_LABELS[subscription]} plan active`}
+                    </Text>
+                  </View>
+                </View>
+                <IconSymbol name="chevron.right" size={16} color={TEXT_TERTIARY} />
+              </TouchableOpacity>
+            )}
           </View>
         </KeyboardAvoidingView>
       </Modal>
@@ -1087,6 +1146,22 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     fontSize: 16,
     color: TEXT_PRIMARY,
+  },
+  lockedField: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: SURFACE,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: BORDER,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    opacity: 0.5,
+  },
+  lockedFieldText: {
+    fontSize: 16,
+    color: TEXT_TERTIARY,
   },
   saveBtn: {
     borderRadius: 24,

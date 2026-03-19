@@ -81,3 +81,8 @@
 - [x] Persist profile photo URI in AsyncStorage
 - [x] Full launch-readiness polish pass (edge cases, error states, empty states)
 - [x] Ensure all navigation flows complete end-to-end with no dead ends
+
+## Subscription Gating for Profile Fields
+- [x] Lock email editing for free plan users (show upgrade prompt)
+- [x] Lock payment method management for free plan users (show upgrade prompt)
+- [x] Paid plan users (essential, pro, elite) can edit email and manage payment
