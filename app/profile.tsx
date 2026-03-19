@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useCallback } from "react";
+import { useEffect, useMemo, useCallback, useState } from "react";
 import {
   View,
   Text,
@@ -9,6 +9,12 @@ import {
   Platform,
   Alert,
   Dimensions,
+  TextInput,
+  Modal,
+  Image,
+  Linking,
+  KeyboardAvoidingView,
+  ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
@@ -16,6 +22,7 @@ import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useApp } from "@/lib/app-context";
 import type { GainsCardEntry, PersonalRecord } from "@/lib/app-context";
+import * as ImagePicker from "expo-image-picker";
 import * as Haptics from "expo-haptics";
 
 const ELECTRIC_BLUE = "#007AFF";
@@ -62,10 +69,21 @@ export default function ProfileScreen() {
     gainsCards,
     personalRecords,
     updatePersonalRecords,
+    updateProfile,
     removeGainsCard,
-    getTodayCalories,
-    getTodayMacros,
   } = useApp();
+
+  // ─── Edit Profile State ───
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [editName, setEditName] = useState(profile.name);
+  const [editEmail, setEditEmail] = useState(profile.email);
+  const [saving, setSaving] = useState(false);
+
+  // Sync edit fields when profile changes
+  useEffect(() => {
+    setEditName(profile.name);
+    setEditEmail(profile.email);
+  }, [profile.name, profile.email]);
 
   // Recalculate personal records when screen mounts
   useEffect(() => {
@@ -83,6 +101,157 @@ export default function ProfileScreen() {
     return { totalMeals, uniqueDays, totalProtein, avgAnabolic };
   }, [meals]);
 
+  // ─── Profile Photo Picker ───
+  const handlePickPhoto = () => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    Alert.alert("Update Profile Photo", "Choose a source", [
+      {
+        text: "Camera",
+        onPress: async () => {
+          const { status } = await ImagePicker.requestCameraPermissionsAsync();
+          if (status !== "granted") {
+            Alert.alert(
+              "Camera Permission Required",
+              "Please allow camera access in your device settings to take a profile photo.",
+              [{ text: "OK" }]
+            );
+            return;
+          }
+          const result = await ImagePicker.launchCameraAsync({
+            allowsEditing: true,
+            aspect: [1, 1],
+            quality: 0.8,
+          });
+          if (!result.canceled && result.assets[0]) {
+            await updateProfile({ profilePhotoUri: result.assets[0].uri });
+            if (Platform.OS !== "web") {
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            }
+          }
+        },
+      },
+      {
+        text: "Photo Library",
+        onPress: async () => {
+          const result = await ImagePicker.launchImageLibraryAsync({
+            allowsEditing: true,
+            aspect: [1, 1],
+            quality: 0.8,
+          });
+          if (!result.canceled && result.assets[0]) {
+            await updateProfile({ profilePhotoUri: result.assets[0].uri });
+            if (Platform.OS !== "web") {
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            }
+          }
+        },
+      },
+      ...(profile.profilePhotoUri
+        ? [
+            {
+              text: "Remove Photo",
+              style: "destructive" as const,
+              onPress: async () => {
+                await updateProfile({ profilePhotoUri: "" });
+              },
+            },
+          ]
+        : []),
+      { text: "Cancel", style: "cancel" as const },
+    ]);
+  };
+
+  // ─── Save Profile Edits ───
+  const handleSaveProfile = async () => {
+    const trimmedName = editName.trim();
+    const trimmedEmail = editEmail.trim();
+
+    if (!trimmedName) {
+      Alert.alert("Name Required", "Please enter your name.");
+      return;
+    }
+
+    if (trimmedEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      Alert.alert("Invalid Email", "Please enter a valid email address.");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await updateProfile({ name: trimmedName, email: trimmedEmail });
+      if (Platform.OS !== "web") {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+      setEditModalVisible(false);
+    } catch {
+      Alert.alert("Error", "Could not save your profile. Please try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // ─── Payment Method Management ───
+  const handleManagePayment = () => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+
+    if (subscription === "free") {
+      Alert.alert(
+        "No Active Subscription",
+        "Subscribe to a plan first, then you can manage your payment method here.",
+        [
+          { text: "Subscribe", onPress: () => (router as any).push("/paywall") },
+          { text: "Cancel", style: "cancel" },
+        ]
+      );
+      return;
+    }
+
+    if (Platform.OS === "ios") {
+      // iOS: Apple manages payment methods through Apple ID settings
+      Alert.alert(
+        "Update Payment Method",
+        "Your subscription is managed through your Apple ID. You can update your payment method in your Apple ID settings.",
+        [
+          {
+            text: "Open Apple ID Settings",
+            onPress: () => Linking.openURL("https://apps.apple.com/account/billing"),
+          },
+          { text: "Cancel", style: "cancel" },
+        ]
+      );
+    } else if (Platform.OS === "android") {
+      Alert.alert(
+        "Update Payment Method",
+        "Your subscription is managed through Google Play. You can update your payment method in Google Play settings.",
+        [
+          {
+            text: "Open Google Play",
+            onPress: () => Linking.openURL("https://play.google.com/store/paymentmethods"),
+          },
+          { text: "Cancel", style: "cancel" },
+        ]
+      );
+    } else {
+      // Web: Stripe Customer Portal
+      Alert.alert(
+        "Update Payment Method",
+        "You can update your payment method through the Stripe billing portal.",
+        [
+          {
+            text: "Open Billing Portal",
+            onPress: () => Linking.openURL("https://billing.stripe.com/p/login/test"),
+          },
+          { text: "Cancel", style: "cancel" },
+        ]
+      );
+    }
+  };
+
+  // ─── Gains Card Handlers ───
   const handleShareCard = useCallback(async (card: GainsCardEntry) => {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -121,6 +290,7 @@ export default function ProfileScreen() {
     (router as any).push("/gains-card");
   };
 
+  // ─── Render Helpers ───
   const renderGainsCard = useCallback(({ item }: { item: GainsCardEntry }) => {
     const date = new Date(item.date).toLocaleDateString("en-US", {
       month: "short",
@@ -203,21 +373,37 @@ export default function ProfileScreen() {
     );
   }, []);
 
-  const ListHeader = useMemo(() => (
-    <>
-      {/* ─── PROFILE HEADER ─── */}
-      <View style={styles.profileHeader}>
-        <View style={styles.avatarContainer}>
+  // ─── Avatar Component ───
+  const ProfileAvatar = useMemo(() => {
+    const initial = profile.name ? profile.name[0].toUpperCase() : "M";
+    return (
+      <TouchableOpacity onPress={handlePickPhoto} activeOpacity={0.8} style={styles.avatarTouchable}>
+        {profile.profilePhotoUri ? (
+          <Image source={{ uri: profile.profilePhotoUri }} style={styles.avatarImage} />
+        ) : (
           <LinearGradient
             colors={[ELECTRIC_BLUE, CYAN_GLOW]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.avatarGradient}
           >
-            <Text style={styles.avatarInitial}>
-              {profile.name ? profile.name[0].toUpperCase() : "M"}
-            </Text>
+            <Text style={styles.avatarInitial}>{initial}</Text>
           </LinearGradient>
+        )}
+        {/* Camera badge */}
+        <View style={styles.cameraBadge}>
+          <IconSymbol name="camera.fill" size={12} color="#FFFFFF" />
+        </View>
+      </TouchableOpacity>
+    );
+  }, [profile.profilePhotoUri, profile.name]);
+
+  const ListHeader = useMemo(() => (
+    <>
+      {/* ─── PROFILE HEADER ─── */}
+      <View style={styles.profileHeader}>
+        <View style={styles.avatarContainer}>
+          {ProfileAvatar}
           <View style={[styles.tierBadge, { borderColor: TIER_COLORS[subscription] || TEXT_TERTIARY }]}>
             <Text style={[styles.tierBadgeText, { color: TIER_COLORS[subscription] || TEXT_TERTIARY }]}>
               {TIER_LABELS[subscription] || "FREE"}
@@ -225,7 +411,27 @@ export default function ProfileScreen() {
           </View>
         </View>
         <Text style={styles.profileName}>{profile.name || "Muscle AI User"}</Text>
-        <Text style={styles.profileEmail}>{profile.email || "Set up your profile in Settings"}</Text>
+        <Text style={styles.profileEmail}>{profile.email || "Tap Edit Profile to set up"}</Text>
+
+        {/* Edit Profile & Payment Buttons */}
+        <View style={styles.profileActions}>
+          <TouchableOpacity
+            style={styles.editProfileBtn}
+            onPress={() => setEditModalVisible(true)}
+            activeOpacity={0.8}
+          >
+            <IconSymbol name="pencil" size={14} color={ELECTRIC_BLUE} />
+            <Text style={styles.editProfileBtnText}>Edit Profile</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.paymentBtn}
+            onPress={handleManagePayment}
+            activeOpacity={0.8}
+          >
+            <IconSymbol name="creditcard.fill" size={14} color={TEXT_PRIMARY} />
+            <Text style={styles.paymentBtnText}>Payment</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* ─── STATS SUMMARY ─── */}
@@ -302,7 +508,7 @@ export default function ProfileScreen() {
         </View>
       )}
     </>
-  ), [profile, subscription, stats, personalRecords, gainsCards.length, renderPR]);
+  ), [profile, subscription, stats, personalRecords, gainsCards.length, renderPR, ProfileAvatar]);
 
   return (
     <ScreenContainer edges={["top", "bottom", "left", "right"]}>
@@ -346,6 +552,108 @@ export default function ProfileScreen() {
           showsVerticalScrollIndicator={false}
         />
       )}
+
+      {/* ─── EDIT PROFILE MODAL ─── */}
+      <Modal
+        visible={editModalVisible}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setEditModalVisible(false)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.modalOverlay}
+        >
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Edit Profile</Text>
+              <TouchableOpacity
+                onPress={() => setEditModalVisible(false)}
+                style={styles.modalCloseBtn}
+                activeOpacity={0.7}
+              >
+                <IconSymbol name="xmark" size={20} color={TEXT_SECONDARY} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Avatar in modal */}
+            <View style={styles.modalAvatarRow}>
+              {ProfileAvatar}
+            </View>
+
+            {/* Name Field */}
+            <View style={styles.fieldContainer}>
+              <Text style={styles.fieldLabel}>NAME</Text>
+              <TextInput
+                style={styles.fieldInput}
+                value={editName}
+                onChangeText={setEditName}
+                placeholder="Your name"
+                placeholderTextColor={TEXT_TERTIARY}
+                autoCapitalize="words"
+                returnKeyType="next"
+              />
+            </View>
+
+            {/* Email Field */}
+            <View style={styles.fieldContainer}>
+              <Text style={styles.fieldLabel}>EMAIL</Text>
+              <TextInput
+                style={styles.fieldInput}
+                value={editEmail}
+                onChangeText={setEditEmail}
+                placeholder="your@email.com"
+                placeholderTextColor={TEXT_TERTIARY}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                returnKeyType="done"
+                onSubmitEditing={handleSaveProfile}
+              />
+            </View>
+
+            {/* Save Button */}
+            <TouchableOpacity
+              style={styles.saveBtn}
+              onPress={handleSaveProfile}
+              activeOpacity={0.8}
+              disabled={saving}
+            >
+              <LinearGradient
+                colors={[ELECTRIC_BLUE, CYAN_GLOW]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.saveGrad}
+              >
+                {saving ? (
+                  <ActivityIndicator color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.saveBtnText}>Save Changes</Text>
+                )}
+              </LinearGradient>
+            </TouchableOpacity>
+
+            {/* Payment Method Section */}
+            <TouchableOpacity
+              style={styles.paymentRow}
+              onPress={handleManagePayment}
+              activeOpacity={0.7}
+            >
+              <View style={styles.paymentRowLeft}>
+                <IconSymbol name="creditcard.fill" size={20} color={ELECTRIC_BLUE} />
+                <View>
+                  <Text style={styles.paymentRowLabel}>Payment Method</Text>
+                  <Text style={styles.paymentRowSub}>
+                    {subscription === "free"
+                      ? "No active subscription"
+                      : `${TIER_LABELS[subscription]} plan active`}
+                  </Text>
+                </View>
+              </View>
+              <IconSymbol name="chevron.right" size={16} color={TEXT_TERTIARY} />
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </ScreenContainer>
   );
 }
@@ -385,17 +693,40 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 8,
   },
+  avatarTouchable: {
+    position: "relative",
+  },
   avatarGradient: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 88,
+    height: 88,
+    borderRadius: 44,
     justifyContent: "center",
     alignItems: "center",
   },
+  avatarImage: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    borderWidth: 3,
+    borderColor: ELECTRIC_BLUE,
+  },
   avatarInitial: {
-    fontSize: 34,
+    fontSize: 36,
     fontWeight: "900",
     color: "#FFFFFF",
+  },
+  cameraBadge: {
+    position: "absolute",
+    bottom: 0,
+    right: 0,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: ELECTRIC_BLUE,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: "#0A0E14",
   },
   tierBadge: {
     marginTop: -12,
@@ -418,6 +749,42 @@ const styles = StyleSheet.create({
   profileEmail: {
     fontSize: 14,
     color: TEXT_SECONDARY,
+  },
+  profileActions: {
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 12,
+  },
+  editProfileBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: ELECTRIC_BLUE,
+  },
+  editProfileBtnText: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: ELECTRIC_BLUE,
+  },
+  paymentBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    backgroundColor: SURFACE,
+    borderWidth: 1,
+    borderColor: BORDER,
+  },
+  paymentBtnText: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: TEXT_PRIMARY,
   },
 
   /* Stats grid */
@@ -660,5 +1027,109 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.05)",
     justifyContent: "center",
     alignItems: "center",
+  },
+
+  /* Edit Profile Modal */
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.7)",
+    justifyContent: "flex-end",
+  },
+  modalContent: {
+    backgroundColor: "#0D1117",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 24,
+    paddingTop: 20,
+    paddingBottom: 40,
+    borderTopWidth: 1,
+    borderColor: BORDER,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "800",
+    color: TEXT_PRIMARY,
+  },
+  modalCloseBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: SURFACE,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalAvatarRow: {
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  fieldContainer: {
+    marginBottom: 16,
+  },
+  fieldLabel: {
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 1.5,
+    color: TEXT_SECONDARY,
+    marginBottom: 6,
+  },
+  fieldInput: {
+    backgroundColor: SURFACE,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: BORDER,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 16,
+    color: TEXT_PRIMARY,
+  },
+  saveBtn: {
+    borderRadius: 24,
+    overflow: "hidden",
+    marginTop: 4,
+    marginBottom: 20,
+  },
+  saveGrad: {
+    height: 50,
+    borderRadius: 24,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  saveBtnText: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: "#FFFFFF",
+    letterSpacing: 1,
+  },
+  paymentRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: SURFACE,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: BORDER,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+  paymentRowLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  paymentRowLabel: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: TEXT_PRIMARY,
+  },
+  paymentRowSub: {
+    fontSize: 12,
+    color: TEXT_SECONDARY,
+    marginTop: 2,
   },
 });

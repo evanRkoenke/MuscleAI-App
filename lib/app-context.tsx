@@ -6,6 +6,7 @@ type SubscriptionTier = "free" | "essential" | "pro" | "elite";
 interface UserProfile {
   name: string;
   email: string;
+  profilePhotoUri: string;
   targetWeight: number;
   currentWeight: number;
   calorieGoal: number;
@@ -85,6 +86,7 @@ interface AppContextType extends AppState {
 const defaultProfile: UserProfile = {
   name: "",
   email: "",
+  profilePhotoUri: "",
   targetWeight: 180,
   currentWeight: 175,
   calorieGoal: 2500,

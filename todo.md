@@ -71,3 +71,13 @@
 - [x] Add restore purchases functionality
 - [x] Handle purchase errors with branded error messages
 - [x] Graceful web fallback (Stripe links) since StoreKit only works on iOS
+
+## Profile Enhancements & Launch Readiness
+- [x] Replace logo in Dashboard header with tappable profile avatar (user photo or initials)
+- [x] Add profile photo picker (camera + gallery) using expo-image-picker
+- [x] Add editable Name field in Profile screen
+- [x] Add editable Email field in Profile screen
+- [x] Add payment method management (change card / payment method)
+- [x] Persist profile photo URI in AsyncStorage
+- [x] Full launch-readiness polish pass (edge cases, error states, empty states)
+- [x] Ensure all navigation flows complete end-to-end with no dead ends

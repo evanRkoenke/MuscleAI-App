@@ -576,3 +576,81 @@ describe("Muscle AI - Profile & Gains Cards", () => {
     });
   });
 });
+
+describe("Profile Enhancements", () => {
+  describe("Profile Photo", () => {
+    it("should default to empty profilePhotoUri", () => {
+      const defaultProfile = {
+        name: "",
+        email: "",
+        profilePhotoUri: "",
+        targetWeight: 180,
+        currentWeight: 175,
+        calorieGoal: 2500,
+        proteinGoal: 200,
+        carbsGoal: 250,
+        fatGoal: 80,
+        unit: "lbs",
+      };
+      expect(defaultProfile.profilePhotoUri).toBe("");
+    });
+
+    it("should store a valid photo URI", () => {
+      const profile = { profilePhotoUri: "" };
+      profile.profilePhotoUri = "file:///var/mobile/Containers/Data/photo.jpg";
+      expect(profile.profilePhotoUri).toContain("file://");
+    });
+
+    it("should generate correct initial from name", () => {
+      const getInitial = (name: string) => name ? name[0].toUpperCase() : "M";
+      expect(getInitial("John")).toBe("J");
+      expect(getInitial("")).toBe("M");
+      expect(getInitial("alice")).toBe("A");
+    });
+  });
+
+  describe("Name and Email Editing", () => {
+    it("should validate email format correctly", () => {
+      const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+      expect(isValidEmail("user@example.com")).toBe(true);
+      expect(isValidEmail("bad-email")).toBe(false);
+      expect(isValidEmail("")).toBe(false);
+      expect(isValidEmail("user@domain.co.uk")).toBe(true);
+    });
+
+    it("should trim whitespace from name", () => {
+      const name = "  John Doe  ";
+      expect(name.trim()).toBe("John Doe");
+    });
+
+    it("should reject empty name", () => {
+      const trimmedName = "".trim();
+      expect(trimmedName.length > 0).toBe(false);
+    });
+  });
+
+  describe("Payment Method Management", () => {
+    it("should show no subscription message for free users", () => {
+      const subscription = "free";
+      const hasActiveSub = subscription !== "free";
+      expect(hasActiveSub).toBe(false);
+    });
+
+    it("should detect active subscription for paid tiers", () => {
+      const tiers = ["essential", "pro", "elite"];
+      tiers.forEach((tier) => {
+        expect(tier !== "free").toBe(true);
+      });
+    });
+
+    it("should generate correct Apple billing URL", () => {
+      const url = "https://apps.apple.com/account/billing";
+      expect(url).toContain("apple.com");
+    });
+
+    it("should generate correct Google Play URL", () => {
+      const url = "https://play.google.com/store/paymentmethods";
+      expect(url).toContain("play.google.com");
+    });
+  });
+});

@@ -85,11 +85,23 @@ export default function HomeScreen() {
               style={styles.avatarBtn}
               activeOpacity={0.7}
             >
-              <Image
-                source={require("@/assets/images/icon.png")}
-                style={styles.headerLogo}
-                resizeMode="contain"
-              />
+              {profile.profilePhotoUri ? (
+                <Image
+                  source={{ uri: profile.profilePhotoUri }}
+                  style={styles.headerAvatar}
+                />
+              ) : (
+                <LinearGradient
+                  colors={[ELECTRIC_BLUE, CYAN_GLOW]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.headerAvatarGrad}
+                >
+                  <Text style={styles.headerAvatarInitial}>
+                    {profile.name ? profile.name[0].toUpperCase() : "M"}
+                  </Text>
+                </LinearGradient>
+              )}
             </TouchableOpacity>
             <Text style={styles.headerTitle}>MUSCLE AI</Text>
           </View>
@@ -312,15 +324,29 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   avatarBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 8,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     overflow: "hidden",
   },
-  headerLogo: {
-    width: 34,
-    height: 34,
-    borderRadius: 8,
+  headerAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 2,
+    borderColor: ELECTRIC_BLUE,
+  },
+  headerAvatarGrad: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  headerAvatarInitial: {
+    fontSize: 16,
+    fontWeight: "900",
+    color: "#FFFFFF",
   },
   headerTitle: {
     fontSize: 22,
