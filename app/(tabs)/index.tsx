@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Dimensions,
   Platform,
+  Image,
 } from "react-native";
 import { useRouter } from "expo-router";
 import Svg, {
@@ -82,6 +83,26 @@ export default function HomeScreen() {
       >
         {/* ═══ HEADER ═══ */}
         <View style={s.hdr}>
+          <TouchableOpacity
+            onPress={() => (router as any).push("/profile")}
+            style={s.hdrAvatar}
+            activeOpacity={0.7}
+          >
+            {profile.profilePhotoUri ? (
+              <Image source={{ uri: profile.profilePhotoUri }} style={s.hdrAvatarImg} />
+            ) : (
+              <LinearGradient
+                colors={[BLUE, CYAN]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={s.hdrAvatarFallback}
+              >
+                <Text style={s.hdrAvatarText}>
+                  {(profile.name || "M").charAt(0).toUpperCase()}
+                </Text>
+              </LinearGradient>
+            )}
+          </TouchableOpacity>
           <Text style={s.hdrTitle}>MUSCLE AI</Text>
           <TouchableOpacity
             onPress={() => (router as any).push("/settings")}
@@ -257,6 +278,26 @@ const s = StyleSheet.create({
     letterSpacing: 5,
     color: T1,
     fontStyle: "italic",
+  },
+  hdrAvatar: { padding: 2 },
+  hdrAvatarImg: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    borderWidth: 1.5,
+    borderColor: BLUE,
+  },
+  hdrAvatarFallback: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    justifyContent: "center" as const,
+    alignItems: "center" as const,
+  },
+  hdrAvatarText: {
+    fontSize: 15,
+    fontWeight: "800" as const,
+    color: "#FFFFFF",
   },
   hdrGear: { padding: 8 },
 

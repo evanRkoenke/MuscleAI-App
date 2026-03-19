@@ -95,3 +95,6 @@
 - [x] Fix Manage Subscription routing to Stripe Customer Portal
 - [x] Make Elite Annual $79.99 the dominant highlighted CTA on paywall
 - [x] Match Clinical Luxury dark aesthetic exactly (no generic UI elements)
+
+## Profile Button in Header
+- [x] Add profile avatar button/icon to the left of "MUSCLE AI" header on Dashboard
