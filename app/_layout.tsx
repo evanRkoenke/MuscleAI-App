@@ -87,6 +87,7 @@ export default function RootLayout() {
               <Stack.Screen name="support" options={{ presentation: "modal" }} />
               <Stack.Screen name="settings" />
               <Stack.Screen name="gains-card" options={{ presentation: "modal" }} />
+              <Stack.Screen name="profile" />
               <Stack.Screen name="scan-meal" options={{ presentation: "modal" }} />
               <Stack.Screen name="oauth/callback" />
             </Stack>

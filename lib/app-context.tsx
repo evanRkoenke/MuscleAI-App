@@ -34,6 +34,26 @@ interface WeightEntry {
   weight: number;
 }
 
+export interface GainsCardEntry {
+  id: string;
+  date: string;
+  weight: number;
+  protein: number;
+  calories: number;
+  daysTracked: number;
+  anabolicScore: number;
+  subscription: SubscriptionTier;
+}
+
+export interface PersonalRecord {
+  id: string;
+  category: "protein" | "calories" | "anabolic" | "streak" | "weight_gain" | "weight_loss";
+  label: string;
+  value: number;
+  unit: string;
+  date: string;
+}
+
 interface AppState {
   hasCompletedOnboarding: boolean;
   isAuthenticated: boolean;
@@ -41,6 +61,8 @@ interface AppState {
   profile: UserProfile;
   meals: MealEntry[];
   weightLog: WeightEntry[];
+  gainsCards: GainsCardEntry[];
+  personalRecords: PersonalRecord[];
 }
 
 interface AppContextType extends AppState {
@@ -51,6 +73,9 @@ interface AppContextType extends AppState {
   addMeal: (meal: MealEntry) => Promise<void>;
   removeMeal: (id: string) => Promise<void>;
   addWeight: (entry: WeightEntry) => Promise<void>;
+  saveGainsCard: (card: GainsCardEntry) => Promise<void>;
+  removeGainsCard: (id: string) => Promise<void>;
+  updatePersonalRecords: () => Promise<void>;
   getTodayMeals: () => MealEntry[];
   getTodayCalories: () => number;
   getTodayMacros: () => { protein: number; carbs: number; fat: number };
@@ -76,6 +101,8 @@ const defaultState: AppState = {
   profile: defaultProfile,
   meals: [],
   weightLog: [],
+  gainsCards: [],
+  personalRecords: [],
 };
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -164,6 +191,101 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  const saveGainsCard = useCallback(async (card: GainsCardEntry) => {
+    setState((prev) => {
+      const next = { ...prev, gainsCards: [card, ...prev.gainsCards].slice(0, 50) };
+      saveState(next);
+      return next;
+    });
+  }, []);
+
+  const removeGainsCard = useCallback(async (id: string) => {
+    setState((prev) => {
+      const next = { ...prev, gainsCards: prev.gainsCards.filter((c) => c.id !== id) };
+      saveState(next);
+      return next;
+    });
+  }, []);
+
+  const updatePersonalRecords = useCallback(async () => {
+    setState((prev) => {
+      const records: PersonalRecord[] = [];
+      const today = new Date().toISOString().split("T")[0];
+
+      // Highest protein in a single day
+      const mealsByDate = new Map<string, number>();
+      prev.meals.forEach((m) => {
+        mealsByDate.set(m.date, (mealsByDate.get(m.date) || 0) + m.protein);
+      });
+      let bestProteinDay = 0;
+      let bestProteinDate = today;
+      mealsByDate.forEach((v, d) => {
+        if (v > bestProteinDay) { bestProteinDay = v; bestProteinDate = d; }
+      });
+      if (bestProteinDay > 0) {
+        records.push({ id: "pr_protein", category: "protein", label: "Highest Protein Day", value: bestProteinDay, unit: "g", date: bestProteinDate });
+      }
+
+      // Highest calories in a single day
+      const calsByDate = new Map<string, number>();
+      prev.meals.forEach((m) => {
+        calsByDate.set(m.date, (calsByDate.get(m.date) || 0) + m.calories);
+      });
+      let bestCalDay = 0;
+      let bestCalDate = today;
+      calsByDate.forEach((v, d) => {
+        if (v > bestCalDay) { bestCalDay = v; bestCalDate = d; }
+      });
+      if (bestCalDay > 0) {
+        records.push({ id: "pr_calories", category: "calories", label: "Highest Calorie Day", value: bestCalDay, unit: "cal", date: bestCalDate });
+      }
+
+      // Highest anabolic score
+      const bestAnabolic = prev.meals.reduce((best, m) => m.anabolicScore > best.score ? { score: m.anabolicScore, date: m.date } : best, { score: 0, date: today });
+      if (bestAnabolic.score > 0) {
+        records.push({ id: "pr_anabolic", category: "anabolic", label: "Best Anabolic Score", value: bestAnabolic.score, unit: "/100", date: bestAnabolic.date });
+      }
+
+      // Tracking streak (consecutive days with meals)
+      const uniqueDates = [...new Set(prev.meals.map((m) => m.date))].sort();
+      let maxStreak = 0;
+      let currentStreak = 1;
+      for (let i = 1; i < uniqueDates.length; i++) {
+        const prev_d = new Date(uniqueDates[i - 1]);
+        const curr_d = new Date(uniqueDates[i]);
+        const diff = (curr_d.getTime() - prev_d.getTime()) / (1000 * 60 * 60 * 24);
+        if (diff === 1) { currentStreak++; } else { currentStreak = 1; }
+        if (currentStreak > maxStreak) maxStreak = currentStreak;
+      }
+      if (uniqueDates.length === 1) maxStreak = 1;
+      if (maxStreak > 0) {
+        records.push({ id: "pr_streak", category: "streak", label: "Longest Tracking Streak", value: maxStreak, unit: "days", date: today });
+      }
+
+      // Weight change records
+      if (prev.weightLog.length >= 2) {
+        const sorted = [...prev.weightLog].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        const first = sorted[0].weight;
+        const last = sorted[sorted.length - 1].weight;
+        const change = last - first;
+        if (change > 0) {
+          records.push({ id: "pr_weight_gain", category: "weight_gain", label: "Total Weight Gained", value: Math.round(change * 10) / 10, unit: prev.profile.unit, date: sorted[sorted.length - 1].date });
+        } else if (change < 0) {
+          records.push({ id: "pr_weight_loss", category: "weight_loss", label: "Total Weight Lost", value: Math.round(Math.abs(change) * 10) / 10, unit: prev.profile.unit, date: sorted[sorted.length - 1].date });
+        }
+      }
+
+      // Total meals tracked
+      if (prev.meals.length > 0) {
+        records.push({ id: "pr_meals", category: "calories", label: "Total Meals Tracked", value: prev.meals.length, unit: "meals", date: today });
+      }
+
+      const next = { ...prev, personalRecords: records };
+      saveState(next);
+      return next;
+    });
+  }, []);
+
   const getTodayMeals = useCallback(() => {
     const today = new Date().toISOString().split("T")[0];
     return state.meals.filter((m) => m.date === today);
@@ -193,6 +315,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         addMeal,
         removeMeal,
         addWeight,
+        saveGainsCard,
+        removeGainsCard,
+        updatePersonalRecords,
         getTodayMeals,
         getTodayCalories,
         getTodayMacros,

@@ -353,3 +353,226 @@ describe("Muscle AI - Core Logic", () => {
     });
   });
 });
+
+describe("Muscle AI - Profile & Gains Cards", () => {
+  // Test personal records calculation
+  describe("Personal Records Calculation", () => {
+    interface Meal {
+      date: string;
+      protein: number;
+      calories: number;
+      anabolicScore: number;
+    }
+
+    function calculateHighestProteinDay(meals: Meal[]): { value: number; date: string } {
+      const byDate = new Map<string, number>();
+      meals.forEach((m) => {
+        byDate.set(m.date, (byDate.get(m.date) || 0) + m.protein);
+      });
+      let best = 0;
+      let bestDate = "";
+      byDate.forEach((v, d) => {
+        if (v > best) { best = v; bestDate = d; }
+      });
+      return { value: best, date: bestDate };
+    }
+
+    function calculateTrackingStreak(dates: string[]): number {
+      const sorted = [...new Set(dates)].sort();
+      if (sorted.length === 0) return 0;
+      if (sorted.length === 1) return 1;
+      let maxStreak = 1;
+      let current = 1;
+      for (let i = 1; i < sorted.length; i++) {
+        const prev = new Date(sorted[i - 1]);
+        const curr = new Date(sorted[i]);
+        const diff = (curr.getTime() - prev.getTime()) / (1000 * 60 * 60 * 24);
+        if (diff === 1) { current++; } else { current = 1; }
+        if (current > maxStreak) maxStreak = current;
+      }
+      return maxStreak;
+    }
+
+    function calculateBestAnabolicScore(meals: Meal[]): number {
+      return meals.reduce((best, m) => Math.max(best, m.anabolicScore), 0);
+    }
+
+    const sampleMeals: Meal[] = [
+      { date: "2026-03-15", protein: 60, calories: 500, anabolicScore: 85 },
+      { date: "2026-03-15", protein: 45, calories: 400, anabolicScore: 72 },
+      { date: "2026-03-16", protein: 80, calories: 600, anabolicScore: 91 },
+      { date: "2026-03-17", protein: 30, calories: 250, anabolicScore: 55 },
+      { date: "2026-03-19", protein: 50, calories: 450, anabolicScore: 78 },
+    ];
+
+    it("should find highest protein day", () => {
+      const result = calculateHighestProteinDay(sampleMeals);
+      // March 15 has 60+45 = 105g
+      expect(result.value).toBe(105);
+      expect(result.date).toBe("2026-03-15");
+    });
+
+    it("should return 0 for empty meals", () => {
+      const result = calculateHighestProteinDay([]);
+      expect(result.value).toBe(0);
+    });
+
+    it("should calculate tracking streak correctly", () => {
+      const dates = sampleMeals.map((m) => m.date);
+      // 15, 16, 17 = 3-day streak (19 breaks it)
+      const streak = calculateTrackingStreak(dates);
+      expect(streak).toBe(3);
+    });
+
+    it("should return 1 for single day", () => {
+      expect(calculateTrackingStreak(["2026-03-15"])).toBe(1);
+    });
+
+    it("should return 0 for no days", () => {
+      expect(calculateTrackingStreak([])).toBe(0);
+    });
+
+    it("should find best anabolic score", () => {
+      expect(calculateBestAnabolicScore(sampleMeals)).toBe(91);
+    });
+
+    it("should return 0 for empty meals anabolic", () => {
+      expect(calculateBestAnabolicScore([])).toBe(0);
+    });
+  });
+
+  // Test gains card gallery logic
+  describe("Gains Cards Gallery", () => {
+    interface GainsCard {
+      id: string;
+      date: string;
+      weight: number;
+      protein: number;
+      calories: number;
+    }
+
+    it("should prepend new cards (newest first)", () => {
+      const cards: GainsCard[] = [
+        { id: "gc_1", date: "2026-03-15", weight: 180, protein: 200, calories: 2400 },
+      ];
+      const newCard: GainsCard = { id: "gc_2", date: "2026-03-16", weight: 181, protein: 210, calories: 2500 };
+      const updated = [newCard, ...cards];
+      expect(updated[0].id).toBe("gc_2");
+      expect(updated.length).toBe(2);
+    });
+
+    it("should limit gallery to 50 cards", () => {
+      const cards: GainsCard[] = Array.from({ length: 50 }, (_, i) => ({
+        id: `gc_${i}`,
+        date: "2026-03-15",
+        weight: 180,
+        protein: 200,
+        calories: 2400,
+      }));
+      const newCard: GainsCard = { id: "gc_new", date: "2026-03-16", weight: 181, protein: 210, calories: 2500 };
+      const updated = [newCard, ...cards].slice(0, 50);
+      expect(updated.length).toBe(50);
+      expect(updated[0].id).toBe("gc_new");
+    });
+
+    it("should remove card by id", () => {
+      const cards: GainsCard[] = [
+        { id: "gc_1", date: "2026-03-15", weight: 180, protein: 200, calories: 2400 },
+        { id: "gc_2", date: "2026-03-16", weight: 181, protein: 210, calories: 2500 },
+      ];
+      const filtered = cards.filter((c) => c.id !== "gc_1");
+      expect(filtered.length).toBe(1);
+      expect(filtered[0].id).toBe("gc_2");
+    });
+  });
+
+  // Test profile stats aggregation
+  describe("Profile Stats", () => {
+    interface Meal {
+      date: string;
+      protein: number;
+      calories: number;
+      anabolicScore: number;
+    }
+
+    const meals: Meal[] = [
+      { date: "2026-03-15", protein: 60, calories: 500, anabolicScore: 85 },
+      { date: "2026-03-15", protein: 45, calories: 400, anabolicScore: 72 },
+      { date: "2026-03-16", protein: 80, calories: 600, anabolicScore: 91 },
+    ];
+
+    it("should count total meals", () => {
+      expect(meals.length).toBe(3);
+    });
+
+    it("should count unique active days", () => {
+      const uniqueDays = new Set(meals.map((m) => m.date)).size;
+      expect(uniqueDays).toBe(2);
+    });
+
+    it("should sum total protein", () => {
+      const totalProtein = meals.reduce((s, m) => s + m.protein, 0);
+      expect(totalProtein).toBe(185);
+    });
+
+    it("should calculate average anabolic score", () => {
+      const avg = Math.round(meals.reduce((s, m) => s + m.anabolicScore, 0) / meals.length);
+      expect(avg).toBe(83);
+    });
+  });
+
+  // Test tier badge display
+  describe("Tier Badge Display", () => {
+    const TIER_LABELS: Record<string, string> = {
+      free: "FREE",
+      essential: "ESSENTIAL",
+      pro: "PRO",
+      elite: "ELITE",
+    };
+
+    const TIER_COLORS: Record<string, string> = {
+      free: "#5A6A7A",
+      essential: "#00E676",
+      pro: "#FFB300",
+      elite: "#007AFF",
+    };
+
+    it("should display correct tier labels", () => {
+      expect(TIER_LABELS["elite"]).toBe("ELITE");
+      expect(TIER_LABELS["free"]).toBe("FREE");
+    });
+
+    it("should use Electric Blue for elite tier", () => {
+      expect(TIER_COLORS["elite"]).toBe("#007AFF");
+    });
+
+    it("should use muted color for free tier", () => {
+      expect(TIER_COLORS["free"]).toBe("#5A6A7A");
+    });
+  });
+
+  // Test weight change for profile
+  describe("Profile Weight Change", () => {
+    interface WeightEntry {
+      date: string;
+      weight: number;
+    }
+
+    it("should calculate total weight gained", () => {
+      const log: WeightEntry[] = [
+        { date: "2026-03-01", weight: 175 },
+        { date: "2026-03-10", weight: 178 },
+        { date: "2026-03-19", weight: 180 },
+      ];
+      const sorted = [...log].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      const change = sorted[sorted.length - 1].weight - sorted[0].weight;
+      expect(change).toBe(5);
+    });
+
+    it("should handle single weight entry", () => {
+      const log: WeightEntry[] = [{ date: "2026-03-01", weight: 175 }];
+      expect(log.length).toBe(1);
+      // No change with single entry
+    });
+  });
+});

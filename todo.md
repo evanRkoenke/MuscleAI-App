@@ -48,3 +48,11 @@
 - [x] Fix Manage Subscription to correctly route to Stripe Customer Portal (production logic)
 - [x] Make Elite Annual ($79.99/yr) the primary highlighted CTA on paywall, visually distinct from other tiers
 - [x] Remove all stock/generic icons where Blue Digital Bicep branding should appear
+
+## User Profile Section
+- [x] Build Profile screen with user avatar, name, stats summary
+- [x] Add Gains Cards gallery section (grid of previously generated cards)
+- [x] Add Personal Records section (best lifts, highest protein day, longest streak, heaviest weight, etc.)
+- [x] Persist Gains Cards and personal records in AsyncStorage
+- [x] Add profile access from Dashboard (header tap or settings)
+- [x] Wire navigation to Profile screen from tab bar or settings

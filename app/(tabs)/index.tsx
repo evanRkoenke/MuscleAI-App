@@ -77,9 +77,27 @@ export default function HomeScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* ─── HEADER: "MUSCLE AI" + gear ─── */}
+        {/* ─── HEADER: avatar + "MUSCLE AI" + gear ─── */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>MUSCLE AI</Text>
+          <View style={styles.headerLeft}>
+            <TouchableOpacity
+              onPress={() => (router as any).push("/profile")}
+              style={styles.avatarBtn}
+              activeOpacity={0.7}
+            >
+              <LinearGradient
+                colors={[ELECTRIC_BLUE, CYAN_GLOW]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.avatarGrad}
+              >
+                <Text style={styles.avatarText}>
+                  {profile.name ? profile.name[0].toUpperCase() : "M"}
+                </Text>
+              </LinearGradient>
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>MUSCLE AI</Text>
+          </View>
           <TouchableOpacity
             onPress={() => (router as any).push("/settings")}
             style={styles.settingsBtn}
@@ -292,6 +310,29 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingVertical: 10,
+  },
+  headerLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  avatarBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    overflow: "hidden",
+  },
+  avatarGrad: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  avatarText: {
+    fontSize: 15,
+    fontWeight: "900",
+    color: "#FFFFFF",
   },
   headerTitle: {
     fontSize: 22,

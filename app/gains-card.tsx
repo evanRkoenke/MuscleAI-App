@@ -21,7 +21,7 @@ const PROTEIN_CYAN = "#00E5FF";
 
 export default function GainsCardScreen() {
   const router = useRouter();
-  const { profile, weightLog, getTodayCalories, getTodayMacros, subscription } = useApp();
+  const { profile, weightLog, getTodayCalories, getTodayMacros, subscription, saveGainsCard } = useApp();
 
   const todayCalories = getTodayCalories();
   const todayMacros = getTodayMacros();
@@ -39,6 +39,19 @@ export default function GainsCardScreen() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
     try {
+      // Save card to gallery
+      const card = {
+        id: `gc_${Date.now()}`,
+        date: new Date().toISOString().split("T")[0],
+        weight: stats.currentWeight,
+        protein: todayMacros.protein,
+        calories: todayCalories,
+        daysTracked: stats.daysTracked,
+        anabolicScore: 0,
+        subscription,
+      };
+      await saveGainsCard(card);
+
       await Share.share({
         message: `Check out my progress on Muscle AI!\n\nCurrent Weight: ${stats.currentWeight} ${profile.unit}\nToday's Protein: ${todayMacros.protein}g\nCalories Tracked: ${todayCalories}\n\nDownload Muscle AI to optimize your nutrition!\n\n@muscleai.app`,
         title: "My Muscle AI Gains Card",
