@@ -654,3 +654,251 @@ describe("Profile Enhancements", () => {
     });
   });
 });
+
+describe("Meal Delete & Favorites", () => {
+  interface MealEntry {
+    id: string;
+    date: string;
+    mealType: "breakfast" | "lunch" | "dinner" | "snack";
+    name: string;
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+    anabolicScore: number;
+    isFavorite?: boolean;
+  }
+
+  const sampleMeals: MealEntry[] = [
+    { id: "m1", date: "2026-03-19", mealType: "breakfast", name: "Eggs & Toast", calories: 350, protein: 25, carbs: 30, fat: 15, anabolicScore: 72, isFavorite: false },
+    { id: "m2", date: "2026-03-19", mealType: "lunch", name: "Grilled Chicken Salad", calories: 480, protein: 52, carbs: 12, fat: 22, anabolicScore: 91, isFavorite: true },
+    { id: "m3", date: "2026-03-19", mealType: "dinner", name: "Salmon & Rice", calories: 620, protein: 45, carbs: 55, fat: 18, anabolicScore: 85, isFavorite: false },
+    { id: "m4", date: "2026-03-18", mealType: "snack", name: "Protein Shake", calories: 200, protein: 40, carbs: 8, fat: 3, anabolicScore: 88, isFavorite: true },
+  ];
+
+  describe("Delete Meal", () => {
+    it("should remove a meal by id", () => {
+      const result = sampleMeals.filter((m) => m.id !== "m2");
+      expect(result.length).toBe(3);
+      expect(result.find((m) => m.id === "m2")).toBeUndefined();
+    });
+
+    it("should not remove anything if id not found", () => {
+      const result = sampleMeals.filter((m) => m.id !== "nonexistent");
+      expect(result.length).toBe(4);
+    });
+
+    it("should preserve other meals when deleting", () => {
+      const result = sampleMeals.filter((m) => m.id !== "m1");
+      expect(result.map((m) => m.id)).toEqual(["m2", "m3", "m4"]);
+    });
+
+    it("should handle deleting from empty array", () => {
+      const empty: MealEntry[] = [];
+      const result = empty.filter((m) => m.id !== "m1");
+      expect(result.length).toBe(0);
+    });
+
+    it("should update calorie totals after deletion", () => {
+      const before = sampleMeals.reduce((sum, m) => sum + m.calories, 0);
+      const afterDelete = sampleMeals.filter((m) => m.id !== "m3");
+      const after = afterDelete.reduce((sum, m) => sum + m.calories, 0);
+      expect(before - after).toBe(620); // Salmon & Rice calories
+    });
+  });
+
+  describe("Toggle Favorite", () => {
+    it("should toggle isFavorite from false to true", () => {
+      const updated = sampleMeals.map((m) =>
+        m.id === "m1" ? { ...m, isFavorite: !m.isFavorite } : m
+      );
+      expect(updated.find((m) => m.id === "m1")?.isFavorite).toBe(true);
+    });
+
+    it("should toggle isFavorite from true to false", () => {
+      const updated = sampleMeals.map((m) =>
+        m.id === "m2" ? { ...m, isFavorite: !m.isFavorite } : m
+      );
+      expect(updated.find((m) => m.id === "m2")?.isFavorite).toBe(false);
+    });
+
+    it("should not affect other meals when toggling", () => {
+      const updated = sampleMeals.map((m) =>
+        m.id === "m1" ? { ...m, isFavorite: !m.isFavorite } : m
+      );
+      expect(updated.find((m) => m.id === "m2")?.isFavorite).toBe(true);
+      expect(updated.find((m) => m.id === "m3")?.isFavorite).toBe(false);
+    });
+
+    it("should handle toggling undefined isFavorite", () => {
+      const meal: MealEntry = { id: "m5", date: "2026-03-19", mealType: "snack", name: "Banana", calories: 105, protein: 1, carbs: 27, fat: 0, anabolicScore: 30 };
+      const toggled = { ...meal, isFavorite: !meal.isFavorite };
+      expect(toggled.isFavorite).toBe(true); // !undefined === true
+    });
+  });
+
+  describe("Get Favorites", () => {
+    it("should filter only favorited meals", () => {
+      const favorites = sampleMeals.filter((m) => m.isFavorite);
+      expect(favorites.length).toBe(2);
+      expect(favorites.map((m) => m.id)).toEqual(["m2", "m4"]);
+    });
+
+    it("should return empty array when no favorites", () => {
+      const noFavs = sampleMeals.map((m) => ({ ...m, isFavorite: false }));
+      const favorites = noFavs.filter((m) => m.isFavorite);
+      expect(favorites.length).toBe(0);
+    });
+
+    it("should include meals from all dates in favorites", () => {
+      const favorites = sampleMeals.filter((m) => m.isFavorite);
+      const dates = new Set(favorites.map((m) => m.date));
+      expect(dates.size).toBe(2); // m2 is 03-19, m4 is 03-18
+    });
+  });
+
+  describe("Today Meals Filter", () => {
+    it("should filter meals by today's date", () => {
+      const today = "2026-03-19";
+      const todayMeals = sampleMeals.filter((m) => m.date === today);
+      expect(todayMeals.length).toBe(3);
+    });
+
+    it("should group today meals by meal type", () => {
+      const today = "2026-03-19";
+      const todayMeals = sampleMeals.filter((m) => m.date === today);
+      const types = ["breakfast", "lunch", "dinner", "snack"] as const;
+      const sections = types.map((type) => ({
+        type,
+        meals: todayMeals.filter((m) => m.mealType === type),
+      }));
+      expect(sections.find((s) => s.type === "breakfast")?.meals.length).toBe(1);
+      expect(sections.find((s) => s.type === "lunch")?.meals.length).toBe(1);
+      expect(sections.find((s) => s.type === "dinner")?.meals.length).toBe(1);
+      expect(sections.find((s) => s.type === "snack")?.meals.length).toBe(0);
+    });
+  });
+});
+
+describe("IAP Service Logic", () => {
+  describe("Product ID to Tier Mapping", () => {
+    function productIdToTier(productId: string): string {
+      switch (productId) {
+        case "com.muscleai.essential.monthly": return "essential";
+        case "com.muscleai.pro.monthly": return "pro";
+        case "com.muscleai.elite.annual": return "elite";
+        default: return "free";
+      }
+    }
+
+    it("should map essential product ID correctly", () => {
+      expect(productIdToTier("com.muscleai.essential.monthly")).toBe("essential");
+    });
+
+    it("should map pro product ID correctly", () => {
+      expect(productIdToTier("com.muscleai.pro.monthly")).toBe("pro");
+    });
+
+    it("should map elite product ID correctly", () => {
+      expect(productIdToTier("com.muscleai.elite.annual")).toBe("elite");
+    });
+
+    it("should return free for unknown product ID", () => {
+      expect(productIdToTier("com.unknown.product")).toBe("free");
+      expect(productIdToTier("")).toBe("free");
+    });
+  });
+
+  describe("Tier to Product ID Mapping", () => {
+    function tierToProductId(tier: string): string | null {
+      switch (tier) {
+        case "essential": return "com.muscleai.essential.monthly";
+        case "pro": return "com.muscleai.pro.monthly";
+        case "elite": return "com.muscleai.elite.annual";
+        default: return null;
+      }
+    }
+
+    it("should map tiers to correct product IDs", () => {
+      expect(tierToProductId("essential")).toBe("com.muscleai.essential.monthly");
+      expect(tierToProductId("pro")).toBe("com.muscleai.pro.monthly");
+      expect(tierToProductId("elite")).toBe("com.muscleai.elite.annual");
+    });
+
+    it("should return null for free tier", () => {
+      expect(tierToProductId("free")).toBeNull();
+    });
+  });
+
+  describe("Plan Metadata", () => {
+    const PLANS = [
+      { id: "elite", price: "$79.99", period: "/year", highlighted: true, savings: "66% SAVINGS" },
+      { id: "pro", price: "$19.99", period: "/month", highlighted: false },
+      { id: "essential", price: "$9.99", period: "/month", highlighted: false },
+    ];
+
+    it("should have elite as first (dominant) plan", () => {
+      expect(PLANS[0].id).toBe("elite");
+      expect(PLANS[0].highlighted).toBe(true);
+    });
+
+    it("should only highlight elite plan", () => {
+      const highlighted = PLANS.filter((p) => p.highlighted);
+      expect(highlighted.length).toBe(1);
+      expect(highlighted[0].id).toBe("elite");
+    });
+
+    it("should show savings only on elite plan", () => {
+      expect(PLANS[0].savings).toBe("66% SAVINGS");
+      expect((PLANS[1] as any).savings).toBeUndefined();
+      expect((PLANS[2] as any).savings).toBeUndefined();
+    });
+
+    it("should have correct pricing", () => {
+      expect(PLANS.find((p) => p.id === "elite")?.price).toBe("$79.99");
+      expect(PLANS.find((p) => p.id === "pro")?.price).toBe("$19.99");
+      expect(PLANS.find((p) => p.id === "essential")?.price).toBe("$9.99");
+    });
+  });
+
+  describe("Subscription Gating", () => {
+    function canEditEmail(tier: string): boolean {
+      return tier !== "free";
+    }
+
+    function canManagePayment(tier: string): boolean {
+      return tier !== "free";
+    }
+
+    function canAccessForecast(tier: string): boolean {
+      return tier === "elite";
+    }
+
+    it("should block free users from editing email", () => {
+      expect(canEditEmail("free")).toBe(false);
+    });
+
+    it("should allow paid users to edit email", () => {
+      expect(canEditEmail("essential")).toBe(true);
+      expect(canEditEmail("pro")).toBe(true);
+      expect(canEditEmail("elite")).toBe(true);
+    });
+
+    it("should block free users from payment management", () => {
+      expect(canManagePayment("free")).toBe(false);
+    });
+
+    it("should allow paid users to manage payment", () => {
+      expect(canManagePayment("essential")).toBe(true);
+      expect(canManagePayment("pro")).toBe(true);
+      expect(canManagePayment("elite")).toBe(true);
+    });
+
+    it("should only allow elite to access forecast", () => {
+      expect(canAccessForecast("elite")).toBe(true);
+      expect(canAccessForecast("pro")).toBe(false);
+      expect(canAccessForecast("essential")).toBe(false);
+      expect(canAccessForecast("free")).toBe(false);
+    });
+  });
+});

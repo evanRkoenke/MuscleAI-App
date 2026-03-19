@@ -33,7 +33,7 @@ const DARK_BG = "#0A0E14";
 /**
  * Paywall Screen — Clinical Luxury Design
  *
- * On iOS/Android: triggers native StoreKit 2 / Google Play purchase sheet.
+ * On iOS/Android: triggers native StoreKit 2 / Google Play purchase sheet via expo-iap.
  * On Web: falls back to Stripe Payment Links.
  *
  * The useIAP hook from expo-iap is conditionally imported only on native
@@ -41,16 +41,17 @@ const DARK_BG = "#0A0E14";
  */
 
 // ─── Conditional IAP hook (native only) ───
-// expo-iap crashes on web, so we use a stub for web platform
 let useIAPHook: any = null;
+let requestPurchaseFn: any = null;
 if (Platform.OS !== "web") {
   try {
-    // Dynamic require to avoid web bundling issues
     const expoIap = require("expo-iap");
     useIAPHook = expoIap.useIAP;
+    requestPurchaseFn = expoIap.requestPurchase;
   } catch {
     // expo-iap not available (e.g., Expo Go)
     useIAPHook = null;
+    requestPurchaseFn = null;
   }
 }
 
@@ -59,78 +60,7 @@ export default function PaywallScreen() {
   const { setSubscription } = useApp();
   const [subscribing, setSubscribing] = useState<string | null>(null);
   const [iapReady, setIapReady] = useState(false);
-  const [iapProducts, setIapProducts] = useState<any[]>([]);
   const [purchaseError, setPurchaseError] = useState<string | null>(null);
-
-  // ─── Native IAP setup ───
-  const iapCallbacks = {
-    onPurchaseSuccess: async (purchase: any) => {
-      try {
-        const tier = productIdToTier(purchase.productId);
-
-        // Validate receipt on server
-        try {
-          // In production, call server to validate:
-          // await trpc.iap.validateReceipt.mutate({
-          //   transactionId: purchase.transactionId || purchase.id,
-          //   productId: purchase.productId,
-          //   platform: Platform.OS as "ios" | "android",
-          //   receiptData: purchase.transactionReceipt,
-          // });
-          console.log("[IAP] Purchase validated:", purchase.productId);
-        } catch (e) {
-          console.warn("[IAP] Server validation failed, applying locally:", e);
-        }
-
-        // Update subscription locally
-        await setSubscription(tier);
-
-        // Finish the transaction
-        if (iapRef.current?.finishTransaction) {
-          await iapRef.current.finishTransaction({
-            purchase,
-            isConsumable: false,
-          });
-        }
-
-        if (Platform.OS !== "web") {
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        }
-
-        Alert.alert(
-          "Welcome to " + tier.charAt(0).toUpperCase() + tier.slice(1),
-          tier === "elite"
-            ? "Your 12-Month Muscle Forecast and Priority Sync are now unlocked!"
-            : "Your subscription is now active. Enjoy Muscle AI!",
-          [{ text: "Let's Go", onPress: () => router.replace("/(tabs)") }]
-        );
-      } catch (error) {
-        console.error("[IAP] Post-purchase error:", error);
-        setPurchaseError("Purchase completed but setup failed. Please restart the app.");
-      } finally {
-        setSubscribing(null);
-      }
-    },
-    onPurchaseError: (error: any) => {
-      console.error("[IAP] Purchase error:", error);
-      setSubscribing(null);
-
-      // Don't show error for user cancellation
-      if (error?.code === "E_USER_CANCELLED" || error?.message?.includes("cancel")) {
-        return;
-      }
-
-      setPurchaseError(
-        "Payment could not be processed. Please check your Apple ID payment method and try again."
-      );
-      if (Platform.OS !== "web") {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      }
-    },
-  };
-
-  // Store IAP ref for use in callbacks
-  const iapRef = { current: null as any };
 
   // Initialize native IAP if available
   useEffect(() => {
@@ -148,57 +78,44 @@ export default function PaywallScreen() {
     setSubscribing(plan.id);
 
     try {
-      if (isNativeIAPAvailable() && useIAPHook) {
-        // ─── NATIVE: Trigger StoreKit 2 / Google Play purchase sheet ───
-        // The useIAP hook handles the native purchase flow.
-        // In a real build with App Store Connect products configured,
-        // this triggers the native iOS purchase sheet with FaceID/Apple ID.
-        //
-        // For development/testing:
-        // 1. Configure products in App Store Connect
-        // 2. Use StoreKit Configuration file for local testing
-        // 3. Build with EAS (not Expo Go) for full IAP support
-
-        // Attempt native purchase
+      if (isNativeIAPAvailable() && iapReady && requestPurchaseFn) {
+        // ─── Native IAP path (iOS StoreKit 2 / Google Play Billing) ───
         try {
-          // This would be called via the useIAP hook in a real implementation
-          // For now, show what the flow looks like
+          await requestPurchaseFn({ sku: plan.productId });
+          // On success, the purchase listener (configured in a production build)
+          // would call finishTransaction and validate the receipt.
+          // For now, we apply the subscription locally.
+          const tier = plan.id as "essential" | "pro" | "elite";
+          await setSubscription(tier);
+
+          if (Platform.OS !== "web") {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          }
+
           Alert.alert(
-            "Native Purchase",
-            `This will trigger the Apple StoreKit purchase sheet for ${plan.name} (${plan.price}${plan.period}).\n\nTo enable native purchases:\n1. Configure products in App Store Connect\n2. Build with EAS (expo build)\n3. Test with StoreKit sandbox`,
-            [
-              {
-                text: "Use Stripe Instead",
-                onPress: async () => {
-                  await purchaseViaStripe(plan.productId);
-                  await setSubscription(plan.id as any);
-                  if (Platform.OS !== "web") {
-                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                  }
-                  router.replace("/(tabs)");
-                },
-              },
-              {
-                text: "Cancel",
-                style: "cancel",
-                onPress: () => setSubscribing(null),
-              },
-            ]
+            "Welcome to " + tier.charAt(0).toUpperCase() + tier.slice(1) + "!",
+            tier === "elite"
+              ? "Your 12-Month Muscle Forecast and Priority Sync are now unlocked!"
+              : "Your subscription is now active. Enjoy Muscle AI!",
+            [{ text: "Let's Go", onPress: () => router.replace("/(tabs)") }]
           );
-        } catch (e: any) {
-          throw e;
+        } catch (iapError: any) {
+          // User cancelled or IAP not configured — fall through to Stripe
+          if (
+            iapError?.code === "E_USER_CANCELLED" ||
+            iapError?.message?.includes("cancel")
+          ) {
+            setSubscribing(null);
+            return;
+          }
+
+          // IAP not configured in this build (Expo Go) — fall back to Stripe
+          console.warn("[IAP] Native purchase failed, falling back to Stripe:", iapError);
+          await handleStripeFallback(plan);
         }
       } else {
-        // ─── WEB FALLBACK: Open Stripe Payment Link ───
-        await purchaseViaStripe(plan.productId);
-
-        // Set subscription locally (in production, confirmed via webhook)
-        await setSubscription(plan.id as any);
-
-        if (Platform.OS !== "web") {
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        }
-        router.replace("/(tabs)");
+        // ─── Web / Stripe fallback path ───
+        await handleStripeFallback(plan);
       }
     } catch (error: any) {
       console.error("[Paywall] Subscribe error:", error);
@@ -209,10 +126,29 @@ export default function PaywallScreen() {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       }
     } finally {
-      if (!isNativeIAPAvailable()) {
-        setSubscribing(null);
-      }
+      setSubscribing(null);
     }
+  };
+
+  // ─── Stripe fallback ───
+  const handleStripeFallback = async (plan: PlanInfo) => {
+    await purchaseViaStripe(plan.productId);
+
+    // Set subscription locally (in production, confirmed via webhook/receipt validation)
+    const tier = plan.id as "essential" | "pro" | "elite";
+    await setSubscription(tier);
+
+    if (Platform.OS !== "web") {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }
+
+    Alert.alert(
+      "Welcome to " + tier.charAt(0).toUpperCase() + tier.slice(1) + "!",
+      tier === "elite"
+        ? "Your 12-Month Muscle Forecast and Priority Sync are now unlocked!"
+        : "Your subscription is now active. Enjoy Muscle AI!",
+      [{ text: "Let's Go", onPress: () => router.replace("/(tabs)") }]
+    );
   };
 
   // ─── Restore purchases ───
@@ -221,10 +157,7 @@ export default function PaywallScreen() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
 
-    if (isNativeIAPAvailable() && useIAPHook) {
-      // In production with real IAP:
-      // const purchases = await getAvailablePurchases();
-      // Find active subscription and restore tier
+    if (isNativeIAPAvailable() && iapReady) {
       Alert.alert(
         "Restore Purchases",
         "To restore purchases on a native build:\n1. Build with EAS\n2. Sign in with the Apple ID used for purchase\n3. Tap Restore again\n\nYour subscription will be automatically detected.",
