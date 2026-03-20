@@ -1,87 +1,34 @@
-import { useState, useCallback } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  ActivityIndicator,
-  Alert,
-  Modal,
-} from "react-native";
-import { useRouter } from "expo-router";
-import { LinearGradient } from "expo-linear-gradient";
 import { ScreenContainer } from "@/components/screen-container";
-import { IconSymbol } from "@/components/ui/icon-symbol";
-import { useColors } from "@/hooks/use-colors";
 import { useApp } from "@/lib/app-context";
+import { useColors } from "@/hooks/use-colors";
+import { useRouter } from "expo-router";
+import { useState } from "react";
+import { Text, View, TouchableOpacity, ActivityIndicator, Platform, StyleSheet } from "react-native";
+import { startOAuthLogin } from "@/constants/oauth";
 import * as Haptics from "expo-haptics";
+import { LinearGradient } from "expo-linear-gradient";
+import { IconSymbol } from "@/components/ui/icon-symbol";
 
 const ELECTRIC_BLUE = "#007AFF";
 
-type AuthMode = "login" | "signup" | "forgot";
-
 export default function AuthScreen() {
-  const [mode, setMode] = useState<AuthMode>("login");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
   const router = useRouter();
   const colors = useColors();
-  const { setAuthenticated, updateProfile } = useApp();
+  const { setAuthenticated } = useApp();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const clearMessages = useCallback(() => {
+  const handleSignIn = async () => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    setLoading(true);
     setError("");
-    setSuccessMessage("");
-  }, []);
-
-  const validateEmail = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
-
-  const handleAuth = async () => {
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-    clearMessages();
-
-    if (!email.trim()) {
-      setError("Please enter your email address.");
-      return;
-    }
-    if (!validateEmail(email.trim())) {
-      setError("Please enter a valid email address.");
-      return;
-    }
-    if (!password || password.length < 6) {
-      setError("Password must be at least 6 characters.");
-      return;
-    }
-    if (mode === "signup" && !name.trim()) {
-      setError("Please enter your full name.");
-      return;
-    }
-
-    setLoading(true);
     try {
-      // In production, this connects to Supabase Auth
-      // For now, simulates auth with local persistence via AsyncStorage
-      await new Promise((resolve) => setTimeout(resolve, 800));
-      await updateProfile({
-        email: email.trim(),
-        name: name.trim() || email.split("@")[0],
-      });
-      await setAuthenticated(true);
-      if (Platform.OS !== "web") {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      }
-      router.replace("/paywall");
+      await startOAuthLogin();
     } catch (e) {
-      setError("Authentication failed. Please check your credentials and try again.");
+      console.error("Auth error:", e);
+      setError("Sign in failed. Please try again.");
       if (Platform.OS !== "web") {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       }
@@ -90,434 +37,183 @@ export default function AuthScreen() {
     }
   };
 
-  const handleForgotPassword = async () => {
+  const handleSkip = async () => {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-    clearMessages();
-
-    if (!email.trim()) {
-      setError("Please enter your email address to reset your password.");
-      return;
-    }
-    if (!validateEmail(email.trim())) {
-      setError("Please enter a valid email address.");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      // In production: await supabase.auth.resetPasswordForEmail(email)
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setSuccessMessage(
-        "Password reset link sent! Check your inbox at " + email.trim() + " and follow the instructions."
-      );
-      if (Platform.OS !== "web") {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      }
-    } catch (e) {
-      setError("Unable to send reset email. Please try again later.");
-    } finally {
-      setLoading(false);
-    }
+    await setAuthenticated(true);
+    (router as any).replace("/(tabs)");
   };
-
-  const handleSocialAuth = async (provider: string) => {
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-    clearMessages();
-    setLoading(true);
-    try {
-      // In production: Supabase OAuth with Google/Apple
-      await new Promise((resolve) => setTimeout(resolve, 800));
-      const displayName = provider === "google" ? "Google User" : "Apple User";
-      await updateProfile({
-        email: `user@${provider}.com`,
-        name: displayName,
-      });
-      await setAuthenticated(true);
-      if (Platform.OS !== "web") {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      }
-      router.replace("/paywall");
-    } catch (e) {
-      setError(`${provider} sign-in failed. Please try again or use email.`);
-      if (Platform.OS !== "web") {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const switchMode = (newMode: AuthMode) => {
-    setMode(newMode);
-    clearMessages();
-  };
-
-  const isLogin = mode === "login";
-  const isForgot = mode === "forgot";
 
   return (
     <ScreenContainer edges={["top", "bottom", "left", "right"]}>
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-      >
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
+      <View style={styles.container}>
+        {/* Brand */}
+        <View style={styles.brand}>
+          <View style={styles.logoCircle}>
+            <Text style={styles.logoLetter}>M</Text>
+          </View>
+          <Text style={styles.appName}>MUSCLE AI</Text>
+          <Text style={[styles.tagline, { color: colors.muted }]}>
+            Hypertrophy-Optimized Nutrition
+          </Text>
+        </View>
+
+        {/* Description */}
+        <View style={styles.descContainer}>
+          <Text style={[styles.descTitle, { color: colors.foreground }]}>
+            Sign in to sync your data
+          </Text>
+          <Text style={[styles.descBody, { color: colors.muted }]}>
+            Track your nutrition with AI-powered scanning.{"\n"}Sign in to sync across all your devices.
+          </Text>
+        </View>
+
+        {/* Error */}
+        {error ? (
+          <View style={styles.errorBox}>
+            <IconSymbol name="xmark.circle.fill" size={18} color="#FF3D3D" />
+            <Text style={styles.errorText}>{error}</Text>
+          </View>
+        ) : null}
+
+        {/* Sign In Button */}
+        <TouchableOpacity
+          onPress={handleSignIn}
+          disabled={loading}
+          activeOpacity={0.8}
+          style={styles.signInButton}
         >
-          {/* Brand Header */}
-          <View style={styles.header}>
-            <Text style={styles.logo}>MUSCLE AI</Text>
-            <Text style={styles.tagline}>Hypertrophy-Optimized Nutrition</Text>
-          </View>
-
-          <View style={styles.form}>
-            {/* Title */}
-            <Text style={styles.formTitle}>
-              {isForgot ? "Reset Password" : isLogin ? "Welcome Back" : "Create Account"}
-            </Text>
-            {isForgot && (
-              <Text style={styles.forgotDesc}>
-                Enter your email and we'll send you a secure link to reset your password.
-              </Text>
+          <LinearGradient
+            colors={[ELECTRIC_BLUE, "#0055CC"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.signInGradient}
+          >
+            {loading ? (
+              <ActivityIndicator color="#FFFFFF" />
+            ) : (
+              <Text style={styles.signInText}>Sign In</Text>
             )}
+          </LinearGradient>
+        </TouchableOpacity>
 
-            {/* Name field (signup only) */}
-            {mode === "signup" && (
-              <View style={styles.inputContainer}>
-                <IconSymbol name="person.fill" size={20} color="#5A6A7A" />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Full Name"
-                  placeholderTextColor="#5A6A7A"
-                  value={name}
-                  onChangeText={setName}
-                  autoCapitalize="words"
-                />
-              </View>
-            )}
+        {/* Skip Button */}
+        <TouchableOpacity
+          onPress={handleSkip}
+          activeOpacity={0.7}
+          style={[styles.skipButton, { borderColor: colors.border }]}
+        >
+          <Text style={[styles.skipText, { color: colors.muted }]}>Continue Without Account</Text>
+        </TouchableOpacity>
 
-            {/* Email */}
-            <View style={styles.inputContainer}>
-              <IconSymbol name="paperplane.fill" size={20} color="#5A6A7A" />
-              <TextInput
-                style={styles.input}
-                placeholder="Email"
-                placeholderTextColor="#5A6A7A"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                returnKeyType={isForgot ? "done" : "next"}
-              />
-            </View>
-
-            {/* Password (not in forgot mode) */}
-            {!isForgot && (
-              <View style={styles.inputContainer}>
-                <IconSymbol name="lock.fill" size={20} color="#5A6A7A" />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Password"
-                  placeholderTextColor="#5A6A7A"
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry
-                  returnKeyType="done"
-                />
-              </View>
-            )}
-
-            {/* Error message */}
-            {error ? (
-              <View style={styles.errorBox}>
-                <IconSymbol name="xmark.circle.fill" size={18} color="#FF3D3D" />
-                <Text style={styles.errorText}>{error}</Text>
-              </View>
-            ) : null}
-
-            {/* Success message */}
-            {successMessage ? (
-              <View style={styles.successBox}>
-                <IconSymbol name="checkmark.circle.fill" size={18} color="#00E676" />
-                <Text style={styles.successText}>{successMessage}</Text>
-              </View>
-            ) : null}
-
-            {/* Forgot Password link (login mode only) */}
-            {isLogin && (
-              <TouchableOpacity
-                style={styles.forgotButton}
-                onPress={() => switchMode("forgot")}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.forgotLinkText}>Forgot Password?</Text>
-              </TouchableOpacity>
-            )}
-
-            {/* Primary CTA */}
-            <TouchableOpacity
-              style={styles.authButton}
-              onPress={isForgot ? handleForgotPassword : handleAuth}
-              activeOpacity={0.8}
-              disabled={loading}
-            >
-              <LinearGradient
-                colors={[ELECTRIC_BLUE, "#0055CC"]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.authButtonGradient}
-              >
-                {loading ? (
-                  <ActivityIndicator color="#FFFFFF" />
-                ) : (
-                  <Text style={styles.authButtonText}>
-                    {isForgot ? "Send Reset Link" : isLogin ? "Sign In" : "Create Account"}
-                  </Text>
-                )}
-              </LinearGradient>
-            </TouchableOpacity>
-
-            {/* Back to login from forgot */}
-            {isForgot && (
-              <TouchableOpacity
-                style={styles.backButton}
-                onPress={() => switchMode("login")}
-                activeOpacity={0.7}
-              >
-                <IconSymbol name="chevron.left.forwardslash.chevron.right" size={16} color={ELECTRIC_BLUE} />
-                <Text style={styles.backText}>Back to Sign In</Text>
-              </TouchableOpacity>
-            )}
-
-            {/* Social auth (not in forgot mode) */}
-            {!isForgot && (
-              <>
-                <View style={styles.divider}>
-                  <View style={styles.dividerLine} />
-                  <Text style={styles.dividerText}>OR</Text>
-                  <View style={styles.dividerLine} />
-                </View>
-
-                <TouchableOpacity
-                  style={styles.socialButton}
-                  onPress={() => handleSocialAuth("google")}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.socialIcon}>G</Text>
-                  <Text style={styles.socialButtonText}>Continue with Google</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.socialButton}
-                  onPress={() => handleSocialAuth("apple")}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.socialIcon}>{"\uF8FF"}</Text>
-                  <Text style={styles.socialButtonText}>Continue with Apple</Text>
-                </TouchableOpacity>
-
-                {/* Toggle login/signup */}
-                <TouchableOpacity
-                  style={styles.toggleButton}
-                  onPress={() => switchMode(isLogin ? "signup" : "login")}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.toggleText}>
-                    {isLogin ? "Don't have an account? " : "Already have an account? "}
-                    <Text style={styles.toggleHighlight}>
-                      {isLogin ? "Sign Up" : "Sign In"}
-                    </Text>
-                  </Text>
-                </TouchableOpacity>
-              </>
-            )}
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+        {/* Info */}
+        <Text style={[styles.infoText, { color: colors.muted }]}>
+          Without an account, your data stays on this device only.{"\n"}Sign in anytime later from Settings.
+        </Text>
+      </View>
     </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1 },
-  scrollContent: {
-    flexGrow: 1,
+  container: {
+    flex: 1,
     justifyContent: "center",
-    paddingHorizontal: 24,
-    paddingVertical: 40,
-  },
-  header: {
     alignItems: "center",
-    marginBottom: 40,
+    paddingHorizontal: 32,
   },
-  logo: {
-    fontSize: 36,
+  brand: {
+    alignItems: "center",
+    marginBottom: 32,
+  },
+  logoCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: "rgba(0,122,255,0.15)",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  logoLetter: {
+    fontSize: 40,
     fontWeight: "900",
-    letterSpacing: 4,
     color: ELECTRIC_BLUE,
-    fontStyle: "italic",
+  },
+  appName: {
+    fontSize: 28,
+    fontWeight: "800",
+    color: "#FFFFFF",
+    letterSpacing: 3,
   },
   tagline: {
     fontSize: 14,
-    marginTop: 8,
+    marginTop: 6,
     letterSpacing: 1,
-    color: "#7A8A99",
   },
-  form: {
-    gap: 14,
-  },
-  formTitle: {
-    fontSize: 26,
-    fontWeight: "800",
-    textAlign: "center",
-    marginBottom: 4,
-    color: "#ECEDEE",
-  },
-  forgotDesc: {
-    fontSize: 14,
-    textAlign: "center",
-    lineHeight: 20,
-    color: "#7A8A99",
-    marginBottom: 4,
-  },
-  inputContainer: {
-    flexDirection: "row",
+  descContainer: {
     alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#1A2533",
-    backgroundColor: "#111820",
-    borderRadius: 14,
-    paddingHorizontal: 16,
-    height: 54,
-    gap: 12,
+    marginBottom: 32,
   },
-  input: {
-    flex: 1,
-    fontSize: 16,
-    height: "100%",
-    color: "#ECEDEE",
+  descTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    marginBottom: 8,
+  },
+  descBody: {
+    fontSize: 15,
+    textAlign: "center",
+    lineHeight: 22,
   },
   errorBox: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    backgroundColor: "rgba(255,61,61,0.08)",
+    backgroundColor: "rgba(239,68,68,0.15)",
     borderRadius: 12,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: "rgba(255,61,61,0.2)",
+    padding: 14,
+    marginBottom: 20,
+    width: "100%",
+    gap: 8,
   },
   errorText: {
-    flex: 1,
-    fontSize: 14,
     color: "#FF3D3D",
-    lineHeight: 20,
-  },
-  successBox: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    backgroundColor: "rgba(0,230,118,0.08)",
-    borderRadius: 12,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: "rgba(0,230,118,0.2)",
-  },
-  successText: {
+    fontSize: 14,
     flex: 1,
-    fontSize: 14,
-    color: "#00E676",
-    lineHeight: 20,
   },
-  forgotButton: {
-    alignSelf: "flex-end",
-  },
-  forgotLinkText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: ELECTRIC_BLUE,
-  },
-  authButton: {
-    marginTop: 4,
-    borderRadius: 27,
+  signInButton: {
+    width: "100%",
+    borderRadius: 16,
     overflow: "hidden",
+    marginBottom: 16,
   },
-  authButtonGradient: {
-    height: 54,
-    borderRadius: 27,
+  signInGradient: {
+    height: 56,
     justifyContent: "center",
     alignItems: "center",
+    borderRadius: 16,
   },
-  authButtonText: {
+  signInText: {
     color: "#FFFFFF",
     fontSize: 17,
-    fontWeight: "800",
-    letterSpacing: 0.5,
-  },
-  backButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    marginTop: 4,
-  },
-  backText: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: ELECTRIC_BLUE,
-  },
-  divider: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginVertical: 4,
-    gap: 12,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: "#1A2533",
-  },
-  dividerText: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#5A6A7A",
-  },
-  socialButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    height: 54,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "#1A2533",
-    backgroundColor: "#111820",
-    gap: 10,
-  },
-  socialIcon: {
-    fontSize: 20,
     fontWeight: "700",
-    color: "#ECEDEE",
   },
-  socialButtonText: {
+  skipButton: {
+    width: "100%",
+    height: 52,
+    borderRadius: 16,
+    borderWidth: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 24,
+  },
+  skipText: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#ECEDEE",
   },
-  toggleButton: {
-    alignItems: "center",
-    marginTop: 8,
-  },
-  toggleText: {
-    fontSize: 15,
-    color: "#7A8A99",
-  },
-  toggleHighlight: {
-    color: ELECTRIC_BLUE,
-    fontWeight: "700",
+  infoText: {
+    fontSize: 12,
+    textAlign: "center",
+    lineHeight: 18,
   },
 });

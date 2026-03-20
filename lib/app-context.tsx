@@ -1,5 +1,7 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { trpc } from "@/lib/trpc";
+import { useAuth } from "@/hooks/use-auth";
 
 type SubscriptionTier = "free" | "essential" | "pro" | "elite";
 
@@ -83,6 +85,7 @@ interface AppContextType extends AppState {
   getTodayMeals: () => MealEntry[];
   getTodayCalories: () => number;
   getTodayMacros: () => { protein: number; carbs: number; fat: number };
+  syncFromCloud: () => Promise<void>;
   loading: boolean;
 }
 
@@ -117,6 +120,23 @@ const STORAGE_KEY = "muscle_ai_state";
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AppState>(defaultState);
   const [loading, setLoading] = useState(true);
+  const stateRef = useRef(state);
+  stateRef.current = state;
+
+  // Auth state for cloud sync
+  const { isAuthenticated: isLoggedIn } = useAuth({ autoFetch: true });
+
+  // tRPC mutations for cloud sync (fire-and-forget)
+  const upsertMealMut = trpc.sync.upsertMeal.useMutation();
+  const deleteMealMut = trpc.sync.deleteMeal.useMutation();
+  const toggleFavMut = trpc.sync.toggleFavorite.useMutation();
+  const upsertProfileMut = trpc.sync.upsertProfile.useMutation();
+  const addWeightMut = trpc.sync.addWeight.useMutation();
+
+  // tRPC queries for initial cloud pull
+  const cloudMeals = trpc.sync.getMeals.useQuery(undefined, { enabled: false });
+  const cloudProfile = trpc.sync.getProfile.useQuery(undefined, { enabled: false });
+  const cloudWeight = trpc.sync.getWeightLog.useQuery(undefined, { enabled: false });
 
   useEffect(() => {
     loadState();
@@ -144,6 +164,100 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // Cloud sync: pull data from server and merge with local
+  const syncFromCloud = useCallback(async () => {
+    if (!isLoggedIn) return;
+    try {
+      const [mealsResult, profileResult, weightResult] = await Promise.all([
+        cloudMeals.refetch(),
+        cloudProfile.refetch(),
+        cloudWeight.refetch(),
+      ]);
+
+      setState((prev) => {
+        const updates: Partial<AppState> = {};
+
+        // Merge meals: cloud meals override local by clientId
+        if (mealsResult.data && mealsResult.data.length > 0) {
+          const cloudMealMap = new Map<string, MealEntry>();
+          mealsResult.data.forEach((cm: any) => {
+            cloudMealMap.set(cm.clientId, {
+              id: cm.clientId,
+              date: cm.date,
+              mealType: cm.mealType,
+              name: cm.name,
+              calories: cm.calories,
+              protein: cm.protein,
+              carbs: cm.carbs,
+              fat: cm.fat,
+              anabolicScore: cm.anabolicScore,
+              imageUri: cm.imageUri ?? undefined,
+              isFavorite: cm.isFavorite ?? false,
+            });
+          });
+          // Add local meals that aren't in cloud
+          prev.meals.forEach((lm) => {
+            if (!cloudMealMap.has(lm.id)) {
+              cloudMealMap.set(lm.id, lm);
+            }
+          });
+          updates.meals = Array.from(cloudMealMap.values());
+        }
+
+        // Merge profile: cloud overrides local if present
+        if (profileResult.data) {
+          const cp = profileResult.data;
+          updates.profile = {
+            name: cp.name ?? prev.profile.name,
+            email: cp.email ?? prev.profile.email,
+            profilePhotoUri: cp.profilePhotoUri ?? prev.profile.profilePhotoUri,
+            targetWeight: cp.targetWeight ?? prev.profile.targetWeight,
+            currentWeight: cp.currentWeight ?? prev.profile.currentWeight,
+            calorieGoal: cp.calorieGoal ?? prev.profile.calorieGoal,
+            proteinGoal: cp.proteinGoal ?? prev.profile.proteinGoal,
+            carbsGoal: cp.carbsGoal ?? prev.profile.carbsGoal,
+            fatGoal: cp.fatGoal ?? prev.profile.fatGoal,
+            unit: (cp.unit as "lbs" | "kg") ?? prev.profile.unit,
+          };
+          if (cp.subscription) {
+            updates.subscription = cp.subscription as SubscriptionTier;
+          }
+        }
+
+        // Merge weight log: cloud overrides local by date
+        if (weightResult.data && weightResult.data.length > 0) {
+          const cloudWeightMap = new Map<string, WeightEntry>();
+          weightResult.data.forEach((cw: any) => {
+            cloudWeightMap.set(cw.date, {
+              id: `w_${cw.date}`,
+              date: cw.date,
+              weight: cw.weight,
+            });
+          });
+          prev.weightLog.forEach((lw) => {
+            if (!cloudWeightMap.has(lw.date)) {
+              cloudWeightMap.set(lw.date, lw);
+            }
+          });
+          updates.weightLog = Array.from(cloudWeightMap.values());
+        }
+
+        const next = { ...prev, ...updates };
+        saveState(next);
+        return next;
+      });
+    } catch (e) {
+      console.warn("Cloud sync failed (will retry later):", e);
+    }
+  }, [isLoggedIn]);
+
+  // Auto-sync from cloud when user logs in
+  useEffect(() => {
+    if (isLoggedIn && !loading) {
+      syncFromCloud();
+    }
+  }, [isLoggedIn, loading]);
+
   const updateState = useCallback(async (updates: Partial<AppState>) => {
     setState((prev) => {
       const next = { ...prev, ...updates };
@@ -162,7 +276,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const setSubscription = useCallback(async (tier: SubscriptionTier) => {
     await updateState({ subscription: tier });
-  }, [updateState]);
+    // Sync to cloud
+    if (isLoggedIn) {
+      try { upsertProfileMut.mutate({ subscription: tier }); } catch {}
+    }
+  }, [updateState, isLoggedIn]);
 
   const updateProfile = useCallback(async (updates: Partial<UserProfile>) => {
     setState((prev) => {
@@ -170,7 +288,26 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       saveState(next);
       return next;
     });
-  }, []);
+    // Sync to cloud
+    if (isLoggedIn) {
+      try {
+        const cloudUpdates: Record<string, any> = {};
+        if (updates.name !== undefined) cloudUpdates.name = updates.name;
+        if (updates.email !== undefined) cloudUpdates.email = updates.email;
+        if (updates.targetWeight !== undefined) cloudUpdates.targetWeight = updates.targetWeight;
+        if (updates.currentWeight !== undefined) cloudUpdates.currentWeight = updates.currentWeight;
+        if (updates.calorieGoal !== undefined) cloudUpdates.calorieGoal = updates.calorieGoal;
+        if (updates.proteinGoal !== undefined) cloudUpdates.proteinGoal = updates.proteinGoal;
+        if (updates.carbsGoal !== undefined) cloudUpdates.carbsGoal = updates.carbsGoal;
+        if (updates.fatGoal !== undefined) cloudUpdates.fatGoal = updates.fatGoal;
+        if (updates.unit !== undefined) cloudUpdates.unit = updates.unit;
+        if (updates.profilePhotoUri !== undefined) cloudUpdates.profilePhotoUri = updates.profilePhotoUri;
+        if (Object.keys(cloudUpdates).length > 0) {
+          upsertProfileMut.mutate(cloudUpdates);
+        }
+      } catch {}
+    }
+  }, [isLoggedIn]);
 
   const addMeal = useCallback(async (meal: MealEntry) => {
     setState((prev) => {
@@ -178,7 +315,25 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       saveState(next);
       return next;
     });
-  }, []);
+    // Sync to cloud
+    if (isLoggedIn) {
+      try {
+        upsertMealMut.mutate({
+          clientId: meal.id,
+          date: meal.date,
+          mealType: meal.mealType,
+          name: meal.name,
+          calories: meal.calories,
+          protein: meal.protein,
+          carbs: meal.carbs,
+          fat: meal.fat,
+          anabolicScore: meal.anabolicScore,
+          imageUri: meal.imageUri,
+          isFavorite: meal.isFavorite ?? false,
+        });
+      } catch {}
+    }
+  }, [isLoggedIn]);
 
   const removeMeal = useCallback(async (id: string) => {
     setState((prev) => {
@@ -186,23 +341,36 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       saveState(next);
       return next;
     });
-  }, []);
+    // Sync to cloud
+    if (isLoggedIn) {
+      try { deleteMealMut.mutate({ clientId: id }); } catch {}
+    }
+  }, [isLoggedIn]);
 
   const toggleFavoriteMeal = useCallback(async (id: string) => {
+    let newFavoriteState = false;
     setState((prev) => {
       const next = {
         ...prev,
-        meals: prev.meals.map((m) =>
-          m.id === id ? { ...m, isFavorite: !m.isFavorite } : m
-        ),
+        meals: prev.meals.map((m) => {
+          if (m.id === id) {
+            newFavoriteState = !m.isFavorite;
+            return { ...m, isFavorite: !m.isFavorite };
+          }
+          return m;
+        }),
       };
       saveState(next);
       return next;
     });
-  }, []);
+    // Sync to cloud
+    if (isLoggedIn) {
+      try { toggleFavMut.mutate({ clientId: id, isFavorite: newFavoriteState }); } catch {}
+    }
+  }, [isLoggedIn]);
 
   const getFavoriteMeals = useCallback(() => {
-    return state.meals.filter((m) => m.isFavorite);
+    return stateRef.current.meals.filter((m) => m.isFavorite);
   }, [state.meals]);
 
   const addWeight = useCallback(async (entry: WeightEntry) => {
@@ -211,7 +379,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       saveState(next);
       return next;
     });
-  }, []);
+    // Sync to cloud
+    if (isLoggedIn) {
+      try { addWeightMut.mutate({ date: entry.date, weight: entry.weight }); } catch {}
+    }
+  }, [isLoggedIn]);
 
   const saveGainsCard = useCallback(async (card: GainsCardEntry) => {
     setState((prev) => {
@@ -268,7 +440,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         records.push({ id: "pr_anabolic", category: "anabolic", label: "Best Anabolic Score", value: bestAnabolic.score, unit: "/100", date: bestAnabolic.date });
       }
 
-      // Tracking streak (consecutive days with meals)
+      // Tracking streak
       const uniqueDates = [...new Set(prev.meals.map((m) => m.date))].sort();
       let maxStreak = 0;
       let currentStreak = 1;
@@ -310,7 +482,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const getTodayMeals = useCallback(() => {
     const today = new Date().toISOString().split("T")[0];
-    return state.meals.filter((m) => m.date === today);
+    return stateRef.current.meals.filter((m) => m.date === today);
   }, [state.meals]);
 
   const getTodayCalories = useCallback(() => {
@@ -345,6 +517,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         getTodayMeals,
         getTodayCalories,
         getTodayMacros,
+        syncFromCloud,
         loading,
       }}
     >

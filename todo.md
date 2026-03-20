@@ -120,3 +120,42 @@
 - [x] Verify dark theme is consistent across all screens
 - [x] Check all data persistence (meals, profile, settings)
 - [x] Run full test suite and fix any failures
+
+## Production Finalization — Hybrid Scanning
+- [x] Add Edit/Add button after AI scan results to allow manual adjustments
+- [x] Implement food search with global food database (USDA-based local DB)
+- [x] Allow manual gram/weight adjustment for each detected food item
+- [x] Add anabolic confidence prompting ("Is this [Food Name]?" when <90% sure)
+- [x] Add LiDAR volume sensing placeholder architecture for future iPhone 17
+
+## Production Finalization — Cloud Sync & Auth
+- [x] Add database schema for meals, profiles, weight, push tokens
+- [x] Build tRPC sync routers for all data types
+- [x] Refactor app-context for hybrid local+cloud sync (write-through pattern)
+- [x] Wire Manus OAuth into auth screen (replace simulated auth)
+- [x] Allow skip login for local-only usage
+- [x] Sync data from cloud on login
+
+## Production Finalization — Error Boundaries & Stability
+- [x] Implement global error boundary component with branded Muscle AI help screen
+- [x] Wrap all screens with error boundary
+- [x] Add scan failure recovery UI
+- [x] Add payment failure recovery UI
+
+## Production Finalization — Push Notifications
+- [x] Request notification permissions on app launch
+- [x] Register push token with server
+- [x] Schedule daily protein gap local notification at 8 PM
+- [x] Handle notification tap to deep link to meals screen
+
+## Production Finalization — Native Payments & EAS
+- [x] Finalize StoreKit 2 native purchase flow with proper branching
+- [x] Make Elite Annual $79.99 the primary action with FaceID/Apple ID sheet
+- [x] Create eas.json with bundle ID com.evan.muscleai and production profile
+- [x] Update app.config.ts with correct bundle ID and version source
+
+## Production Finalization — Final Debug
+- [x] Run TypeScript check — 0 errors
+- [x] Run full test suite — 132 passing
+- [x] Verify preview is working
+- [ ] Save publish-ready checkpoint

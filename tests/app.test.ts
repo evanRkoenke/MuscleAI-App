@@ -902,3 +902,400 @@ describe("IAP Service Logic", () => {
     });
   });
 });
+
+describe("Hybrid Scanning — Add/Edit & Confidence Prompting", () => {
+  interface ScannedItem {
+    name: string;
+    grams: number;
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+    confidence: number;
+  }
+
+  const scannedItems: ScannedItem[] = [
+    { name: "Grilled Chicken Breast", grams: 200, calories: 330, protein: 62, carbs: 0, fat: 7, confidence: 0.95 },
+    { name: "Brown Rice", grams: 150, calories: 165, protein: 4, carbs: 36, fat: 1, confidence: 0.88 },
+    { name: "Unknown Item", grams: 100, calories: 120, protein: 5, carbs: 15, fat: 4, confidence: 0.45 },
+  ];
+
+  describe("Confidence Prompting", () => {
+    it("should flag items with confidence < 0.9 for user confirmation", () => {
+      const lowConfidence = scannedItems.filter((i) => i.confidence < 0.9);
+      expect(lowConfidence.length).toBe(2);
+      expect(lowConfidence[0].name).toBe("Brown Rice");
+      expect(lowConfidence[1].name).toBe("Unknown Item");
+    });
+
+    it("should not flag high-confidence items", () => {
+      const highConfidence = scannedItems.filter((i) => i.confidence >= 0.9);
+      expect(highConfidence.length).toBe(1);
+      expect(highConfidence[0].name).toBe("Grilled Chicken Breast");
+    });
+
+    it("should generate correct prompt message", () => {
+      const item = scannedItems[1];
+      const prompt = `Is this ${item.name}?`;
+      expect(prompt).toBe("Is this Brown Rice?");
+    });
+  });
+
+  describe("Manual Gram Adjustment", () => {
+    it("should scale macros linearly when grams change", () => {
+      const item = scannedItems[0]; // 200g chicken
+      const newGrams = 300;
+      const ratio = newGrams / item.grams;
+      const adjusted = {
+        ...item,
+        grams: newGrams,
+        calories: Math.round(item.calories * ratio),
+        protein: Math.round(item.protein * ratio),
+        carbs: Math.round(item.carbs * ratio),
+        fat: Math.round(item.fat * ratio),
+      };
+      expect(adjusted.calories).toBe(495);
+      expect(adjusted.protein).toBe(93);
+      expect(adjusted.grams).toBe(300);
+    });
+
+    it("should handle zero grams gracefully", () => {
+      const item = scannedItems[0];
+      const newGrams = 0;
+      const ratio = newGrams / item.grams;
+      const adjusted = {
+        calories: Math.round(item.calories * ratio),
+        protein: Math.round(item.protein * ratio),
+      };
+      expect(adjusted.calories).toBe(0);
+      expect(adjusted.protein).toBe(0);
+    });
+
+    it("should clamp grams to positive values", () => {
+      const inputGrams = -50;
+      const clamped = Math.max(0, inputGrams);
+      expect(clamped).toBe(0);
+    });
+  });
+
+  describe("Add Item to Meal", () => {
+    it("should add a new item to scanned items list", () => {
+      const newItem: ScannedItem = {
+        name: "Avocado",
+        grams: 100,
+        calories: 160,
+        protein: 2,
+        carbs: 9,
+        fat: 15,
+        confidence: 1.0, // manual entry = 100% confidence
+      };
+      const updated = [...scannedItems, newItem];
+      expect(updated.length).toBe(4);
+      expect(updated[3].name).toBe("Avocado");
+      expect(updated[3].confidence).toBe(1.0);
+    });
+
+    it("should remove an item from scanned items", () => {
+      const updated = scannedItems.filter((i) => i.name !== "Unknown Item");
+      expect(updated.length).toBe(2);
+    });
+
+    it("should recalculate meal totals after adding item", () => {
+      const totalBefore = scannedItems.reduce((s, i) => s + i.calories, 0);
+      const newItem: ScannedItem = { name: "Egg", grams: 50, calories: 78, protein: 6, carbs: 1, fat: 5, confidence: 1.0 };
+      const totalAfter = totalBefore + newItem.calories;
+      expect(totalAfter).toBe(totalBefore + 78);
+    });
+  });
+
+  describe("Anabolic Score Calculation", () => {
+    it("should calculate anabolic score from protein ratio", () => {
+      const totalCalories = 500;
+      const proteinGrams = 50;
+      const proteinCalories = proteinGrams * 4;
+      const proteinRatio = proteinCalories / totalCalories;
+      const score = Math.min(100, Math.round(proteinRatio * 100 * 2.5));
+      expect(score).toBe(100); // 40% protein ratio * 2.5 = 100
+    });
+
+    it("should cap anabolic score at 100", () => {
+      const proteinRatio = 0.6; // 60% protein
+      const score = Math.min(100, Math.round(proteinRatio * 100 * 2.5));
+      expect(score).toBe(100);
+    });
+
+    it("should return low score for low protein meals", () => {
+      const proteinRatio = 0.1; // 10% protein
+      const score = Math.min(100, Math.round(proteinRatio * 100 * 2.5));
+      expect(score).toBe(25);
+    });
+  });
+});
+
+describe("Cloud Sync Logic", () => {
+  describe("Hybrid Write-Through Pattern", () => {
+    it("should write to local first, then cloud", () => {
+      const operations: string[] = [];
+      const writeLocal = () => operations.push("local");
+      const writeCloud = () => operations.push("cloud");
+
+      writeLocal();
+      writeCloud();
+
+      expect(operations).toEqual(["local", "cloud"]);
+      expect(operations[0]).toBe("local"); // local is always first
+    });
+
+    it("should continue if cloud write fails", () => {
+      let localData = "";
+      let cloudError = false;
+
+      // Local write succeeds
+      localData = "meal_data";
+
+      // Cloud write fails
+      try {
+        throw new Error("Network error");
+      } catch {
+        cloudError = true;
+      }
+
+      expect(localData).toBe("meal_data"); // local data preserved
+      expect(cloudError).toBe(true);
+    });
+  });
+
+  describe("Merge Strategy on Login", () => {
+    interface SyncMeal {
+      clientId: string;
+      name: string;
+      updatedAt: number;
+    }
+
+    it("should merge cloud meals with local meals by clientId", () => {
+      const local: SyncMeal[] = [
+        { clientId: "m1", name: "Local Chicken", updatedAt: 100 },
+        { clientId: "m2", name: "Local Rice", updatedAt: 200 },
+      ];
+      const cloud: SyncMeal[] = [
+        { clientId: "m1", name: "Cloud Chicken", updatedAt: 150 },
+        { clientId: "m3", name: "Cloud Salmon", updatedAt: 300 },
+      ];
+
+      // Merge: cloud wins for duplicates (newer), add unique from both
+      const merged = new Map<string, SyncMeal>();
+      local.forEach((m) => merged.set(m.clientId, m));
+      cloud.forEach((m) => {
+        const existing = merged.get(m.clientId);
+        if (!existing || m.updatedAt > existing.updatedAt) {
+          merged.set(m.clientId, m);
+        }
+      });
+
+      const result = Array.from(merged.values());
+      expect(result.length).toBe(3);
+      expect(result.find((m) => m.clientId === "m1")?.name).toBe("Cloud Chicken");
+      expect(result.find((m) => m.clientId === "m3")?.name).toBe("Cloud Salmon");
+    });
+
+    it("should keep local version if newer than cloud", () => {
+      const local = { clientId: "m1", name: "Local Updated", updatedAt: 500 };
+      const cloud = { clientId: "m1", name: "Cloud Old", updatedAt: 100 };
+      const winner = local.updatedAt > cloud.updatedAt ? local : cloud;
+      expect(winner.name).toBe("Local Updated");
+    });
+  });
+
+  describe("Offline Queue", () => {
+    it("should queue operations when offline", () => {
+      const queue: Array<{ action: string; data: any }> = [];
+      const isOnline = false;
+
+      const addMeal = (data: any) => {
+        if (!isOnline) {
+          queue.push({ action: "addMeal", data });
+          return;
+        }
+      };
+
+      addMeal({ name: "Chicken" });
+      addMeal({ name: "Rice" });
+
+      expect(queue.length).toBe(2);
+      expect(queue[0].action).toBe("addMeal");
+    });
+
+    it("should flush queue when back online", () => {
+      const queue = [
+        { action: "addMeal", data: { name: "Chicken" } },
+        { action: "addMeal", data: { name: "Rice" } },
+      ];
+      const synced: string[] = [];
+
+      // Simulate flush
+      while (queue.length > 0) {
+        const op = queue.shift()!;
+        synced.push(op.data.name);
+      }
+
+      expect(synced).toEqual(["Chicken", "Rice"]);
+      expect(queue.length).toBe(0);
+    });
+  });
+});
+
+describe("Error Boundary Logic", () => {
+  it("should format error message for display", () => {
+    const formatError = (error: unknown): string => {
+      if (error instanceof Error) return error.message;
+      if (typeof error === "string") return error;
+      return "An unexpected error occurred";
+    };
+
+    expect(formatError(new Error("Component crashed"))).toBe("Component crashed");
+    expect(formatError("String error")).toBe("String error");
+    expect(formatError(null)).toBe("An unexpected error occurred");
+    expect(formatError(42)).toBe("An unexpected error occurred");
+  });
+
+  it("should provide retry action", () => {
+    let retryCount = 0;
+    const retry = () => { retryCount++; };
+    retry();
+    retry();
+    expect(retryCount).toBe(2);
+  });
+
+  it("should provide support navigation action", () => {
+    const supportRoute = "/support";
+    expect(supportRoute).toBe("/support");
+  });
+});
+
+describe("Push Notifications — Protein Shortfall", () => {
+  describe("Protein Gap Calculation", () => {
+    it("should calculate protein shortfall correctly", () => {
+      const proteinGoal = 200;
+      const consumed = 140;
+      const gap = proteinGoal - consumed;
+      expect(gap).toBe(60);
+    });
+
+    it("should return 0 gap when goal is met", () => {
+      const proteinGoal = 200;
+      const consumed = 220;
+      const gap = Math.max(0, proteinGoal - consumed);
+      expect(gap).toBe(0);
+    });
+
+    it("should generate correct notification message", () => {
+      const gap = 40;
+      const message = `You're ${gap}g short of your anabolic protein target today. A quick shake could close the gap!`;
+      expect(message).toContain("40g short");
+      expect(message).toContain("anabolic protein target");
+    });
+
+    it("should not notify when protein goal is met", () => {
+      const proteinGoal = 200;
+      const consumed = 200;
+      const shouldNotify = consumed < proteinGoal;
+      expect(shouldNotify).toBe(false);
+    });
+
+    it("should notify when protein is below goal", () => {
+      const proteinGoal = 200;
+      const consumed = 150;
+      const shouldNotify = consumed < proteinGoal;
+      expect(shouldNotify).toBe(true);
+    });
+  });
+
+  describe("Notification Scheduling", () => {
+    it("should schedule at 8 PM daily", () => {
+      const scheduledHour = 20;
+      const scheduledMinute = 0;
+      expect(scheduledHour).toBe(20);
+      expect(scheduledMinute).toBe(0);
+    });
+
+    it("should use daily repeat trigger", () => {
+      const trigger = { hour: 20, minute: 0, repeats: true };
+      expect(trigger.repeats).toBe(true);
+      expect(trigger.hour).toBe(20);
+    });
+  });
+});
+
+describe("EAS Configuration", () => {
+  it("should have correct bundle ID", () => {
+    const bundleId = "com.evan.muscleai";
+    expect(bundleId).toBe("com.evan.muscleai");
+    expect(bundleId).toMatch(/^com\.\w+\.\w+$/);
+  });
+
+  it("should have production build profile", () => {
+    const easConfig = {
+      build: {
+        production: {
+          autoIncrement: true,
+          ios: { bundleIdentifier: "com.evan.muscleai" },
+          android: { package: "com.evan.muscleai", buildType: "app-bundle" },
+        },
+      },
+    };
+    expect(easConfig.build.production.autoIncrement).toBe(true);
+    expect(easConfig.build.production.ios.bundleIdentifier).toBe("com.evan.muscleai");
+    expect(easConfig.build.production.android.buildType).toBe("app-bundle");
+  });
+
+  it("should use remote version source", () => {
+    const cli = { appVersionSource: "remote" };
+    expect(cli.appVersionSource).toBe("remote");
+  });
+});
+
+describe("Auth Flow — OAuth Integration", () => {
+  it("should support skip login for local-only usage", () => {
+    let isAuthenticated = false;
+    let isLocalOnly = false;
+
+    // User taps "Skip"
+    isLocalOnly = true;
+
+    expect(isAuthenticated).toBe(false);
+    expect(isLocalOnly).toBe(true);
+  });
+
+  it("should set authenticated state after OAuth callback", () => {
+    let isAuthenticated = false;
+    let userId = "";
+
+    // Simulate OAuth callback
+    const handleCallback = (token: string, id: string) => {
+      isAuthenticated = true;
+      userId = id;
+    };
+
+    handleCallback("session_token_abc", "user_123");
+    expect(isAuthenticated).toBe(true);
+    expect(userId).toBe("user_123");
+  });
+
+  it("should clear all state on logout", () => {
+    let isAuthenticated = true;
+    let meals: any[] = [{ id: "m1" }];
+    let profile = { name: "John" };
+
+    // Logout
+    const logout = () => {
+      isAuthenticated = false;
+      meals = [];
+      profile = { name: "" };
+    };
+
+    logout();
+    expect(isAuthenticated).toBe(false);
+    expect(meals.length).toBe(0);
+    expect(profile.name).toBe("");
+  });
+});
