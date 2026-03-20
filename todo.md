@@ -104,19 +104,3 @@
 
 ## iOS Status Bar Background Fix (Real Device)
 - [x] Fix iOS status bar area to show dark background on real device (not just web preview)
-
-## Meal Delete & Favorites
-- [x] Add delete meal functionality (swipe or tap to delete)
-- [x] Add favorite meal functionality (star/heart toggle)
-- [x] Show favorites section at top of meals list
-- [x] Persist favorites and deletions in AsyncStorage
-- [x] Add confirmation dialog before deleting a meal
-
-## Pre-Launch Debug Pass
-- [x] Verify all navigation flows end-to-end (no dead ends)
-- [x] Verify all onPress handlers work (no empty handlers)
-- [x] Check error states on all screens (scan fail, network error, empty states)
-- [x] Verify subscription gating works correctly (free vs paid)
-- [x] Verify dark theme is consistent across all screens
-- [x] Check all data persistence (meals, profile, settings)
-- [x] Run full test suite and fix any failures

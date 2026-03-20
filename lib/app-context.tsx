@@ -27,7 +27,6 @@ interface MealEntry {
   fat: number;
   anabolicScore: number;
   imageUri?: string;
-  isFavorite?: boolean;
 }
 
 interface WeightEntry {
@@ -74,8 +73,6 @@ interface AppContextType extends AppState {
   updateProfile: (updates: Partial<UserProfile>) => Promise<void>;
   addMeal: (meal: MealEntry) => Promise<void>;
   removeMeal: (id: string) => Promise<void>;
-  toggleFavoriteMeal: (id: string) => Promise<void>;
-  getFavoriteMeals: () => MealEntry[];
   addWeight: (entry: WeightEntry) => Promise<void>;
   saveGainsCard: (card: GainsCardEntry) => Promise<void>;
   removeGainsCard: (id: string) => Promise<void>;
@@ -187,23 +184,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       return next;
     });
   }, []);
-
-  const toggleFavoriteMeal = useCallback(async (id: string) => {
-    setState((prev) => {
-      const next = {
-        ...prev,
-        meals: prev.meals.map((m) =>
-          m.id === id ? { ...m, isFavorite: !m.isFavorite } : m
-        ),
-      };
-      saveState(next);
-      return next;
-    });
-  }, []);
-
-  const getFavoriteMeals = useCallback(() => {
-    return state.meals.filter((m) => m.isFavorite);
-  }, [state.meals]);
 
   const addWeight = useCallback(async (entry: WeightEntry) => {
     setState((prev) => {
@@ -336,8 +316,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         updateProfile,
         addMeal,
         removeMeal,
-        toggleFavoriteMeal,
-        getFavoriteMeals,
         addWeight,
         saveGainsCard,
         removeGainsCard,
