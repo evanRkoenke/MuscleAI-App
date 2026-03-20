@@ -145,3 +145,10 @@
 - [x] Set correct iOS bundle identifier and Android package
 - [x] Add submit configuration for App Store Connect
 - [x] Add iOS camera and photo library permission descriptions
+
+## Bundle ID & Build Cleanup
+- [x] Set ios.bundleIdentifier to com.evan.muscleai
+- [x] Set android.package to com.evan.muscleai
+- [x] Update eas.json submit config with correct bundle ID
+- [x] Clean up stale native folders (ios/, android/) — none present
+- [x] Remove build blockers (fixed stale scheme reference in oauth.ts, cleaned .expo/web cache)
