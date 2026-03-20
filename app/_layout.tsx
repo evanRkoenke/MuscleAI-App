@@ -23,8 +23,6 @@ import type { EdgeInsets, Metrics, Rect } from "react-native-safe-area-context";
 import { trpc, createTRPCClient } from "@/lib/trpc";
 import { initManusRuntime, subscribeSafeAreaInsets } from "@/lib/_core/manus-runtime";
 import { AppProvider } from "@/lib/app-context";
-import { ErrorBoundary } from "@/components/error-boundary";
-import { NotificationInitializer } from "@/components/notification-initializer";
 
 const DEFAULT_WEB_INSETS: EdgeInsets = { top: 0, right: 0, bottom: 0, left: 0 };
 const DEFAULT_WEB_FRAME: Rect = { x: 0, y: 0, width: 0, height: 0 };
@@ -82,7 +80,6 @@ export default function RootLayout() {
 
   const content = (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <ErrorBoundary>
       <trpc.Provider client={trpcClient} queryClient={queryClient}>
         <QueryClientProvider client={queryClient}>
           <AppProvider>
@@ -98,12 +95,10 @@ export default function RootLayout() {
               <Stack.Screen name="scan-meal" options={{ presentation: "modal" }} />
               <Stack.Screen name="oauth/callback" />
             </Stack>
-            <NotificationInitializer />
             <StatusBar style="light" />
           </AppProvider>
         </QueryClientProvider>
       </trpc.Provider>
-      </ErrorBoundary>
     </GestureHandlerRootView>
   );
 
