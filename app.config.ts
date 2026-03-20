@@ -55,6 +55,8 @@ const config: ExpoConfig = {
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
       UIUserInterfaceStyle: "Dark",
+      NSCameraUsageDescription: "Muscle AI needs camera access to scan and analyze your meals.",
+      NSPhotoLibraryUsageDescription: "Muscle AI needs photo library access to select meal photos for analysis.",
     },
   },
   android: {

@@ -132,3 +132,16 @@
 
 ## App Rename
 - [x] Rename app to "Muscle AI | Calorie Tracker" in app.config.ts
+
+## Food Editing & Addition Enhancement
+- [x] Enhance quantity/gram editing UX on scan results (inline editable fields)
+- [x] Add manual food addition with name, grams, calories, protein, carbs, fat, sugar
+- [x] Recalculate meal totals when items are edited or added
+- [x] Allow removing individual food items from scan results
+
+## Apple TestFlight / EAS Build Configuration
+- [x] Create eas.json with development, preview, and production build profiles
+- [x] Configure for internal TestFlight distribution (not Expo Go)
+- [x] Set correct iOS bundle identifier and Android package
+- [x] Add submit configuration for App Store Connect
+- [x] Add iOS camera and photo library permission descriptions
