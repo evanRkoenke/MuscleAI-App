@@ -18,7 +18,6 @@ import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
 import { useApp } from "@/lib/app-context";
-import { performFullLogout } from "@/lib/logout-helper";
 import * as Haptics from "expo-haptics";
 
 const ELECTRIC_BLUE = "#007AFF";
@@ -81,7 +80,6 @@ export default function SettingsScreen() {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
-    await performFullLogout();
     await setAuthenticated(false);
     router.replace("/auth");
   };

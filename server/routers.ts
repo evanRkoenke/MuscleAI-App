@@ -4,7 +4,6 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import { aiRouter } from "./ai";
 import { iapRouter } from "./iap";
-import { profileRouter, mealsRouter, weightRouter, pushRouter } from "./sync";
 
 export const appRouter = router({
   system: systemRouter,
@@ -20,10 +19,6 @@ export const appRouter = router({
   }),
   ai: aiRouter,
   iap: iapRouter,
-  profile: profileRouter,
-  meals: mealsRouter,
-  weight: weightRouter,
-  push: pushRouter,
 });
 
 export type AppRouter = typeof appRouter;
