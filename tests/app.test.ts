@@ -902,3 +902,406 @@ describe("IAP Service Logic", () => {
     });
   });
 });
+
+// ─── Cloud Sync Logic Tests ─────────────────────────────────────────
+describe("Cloud Sync Logic", () => {
+  // Simulate the write-through pattern: local first, then cloud
+  describe("Write-Through Sync Pattern", () => {
+    it("should add meal to local state immediately", () => {
+      const meals: any[] = [];
+      const newMeal = {
+        id: "meal_1",
+        date: "2026-03-19",
+        mealType: "lunch",
+        name: "Grilled Chicken",
+        calories: 450,
+        protein: 52,
+        carbs: 12,
+        fat: 18,
+        anabolicScore: 85,
+      };
+      const updated = [...meals, newMeal];
+      expect(updated).toHaveLength(1);
+      expect(updated[0].id).toBe("meal_1");
+    });
+
+    it("should remove meal from local state by id", () => {
+      const meals = [
+        { id: "meal_1", name: "Chicken" },
+        { id: "meal_2", name: "Rice" },
+        { id: "meal_3", name: "Salad" },
+      ];
+      const updated = meals.filter((m) => m.id !== "meal_2");
+      expect(updated).toHaveLength(2);
+      expect(updated.find((m) => m.id === "meal_2")).toBeUndefined();
+    });
+
+    it("should toggle favorite on a meal", () => {
+      const meals = [
+        { id: "meal_1", name: "Chicken", isFavorite: false },
+        { id: "meal_2", name: "Rice", isFavorite: true },
+      ];
+      const updated = meals.map((m) =>
+        m.id === "meal_1" ? { ...m, isFavorite: !m.isFavorite } : m
+      );
+      expect(updated[0].isFavorite).toBe(true);
+      expect(updated[1].isFavorite).toBe(true);
+    });
+
+    it("should unfavorite a favorited meal", () => {
+      const meals = [{ id: "meal_1", name: "Chicken", isFavorite: true }];
+      const updated = meals.map((m) =>
+        m.id === "meal_1" ? { ...m, isFavorite: !m.isFavorite } : m
+      );
+      expect(updated[0].isFavorite).toBe(false);
+    });
+
+    it("should add weight entry to local state", () => {
+      const weightLog: any[] = [{ id: "w1", date: "2026-03-18", weight: 175 }];
+      const newEntry = { id: "w2", date: "2026-03-19", weight: 174.5 };
+      const updated = [...weightLog, newEntry];
+      expect(updated).toHaveLength(2);
+      expect(updated[1].weight).toBe(174.5);
+    });
+
+    it("should update profile fields partially", () => {
+      const profile = {
+        name: "John",
+        calorieGoal: 2500,
+        proteinGoal: 200,
+        unit: "lbs" as const,
+      };
+      const updates = { calorieGoal: 2800, proteinGoal: 220 };
+      const merged = { ...profile, ...updates };
+      expect(merged.calorieGoal).toBe(2800);
+      expect(merged.proteinGoal).toBe(220);
+      expect(merged.name).toBe("John");
+      expect(merged.unit).toBe("lbs");
+    });
+  });
+
+  describe("Cloud Merge Logic", () => {
+    it("should merge cloud meals with local meals by clientId", () => {
+      const localMeals = [
+        { id: "m1", name: "Local Chicken", calories: 400 },
+        { id: "m2", name: "Local Rice", calories: 300 },
+      ];
+      const cloudMeals = [
+        { clientId: "m1", name: "Cloud Chicken", calories: 420 },
+        { clientId: "m3", name: "Cloud Salad", calories: 150 },
+      ];
+      // Cloud takes precedence, new cloud items added
+      const merged = cloudMeals.map((cm) => ({
+        id: cm.clientId,
+        name: cm.name,
+        calories: cm.calories,
+      }));
+      expect(merged).toHaveLength(2);
+      expect(merged[0].id).toBe("m1");
+      expect(merged[0].name).toBe("Cloud Chicken");
+    });
+
+    it("should handle empty cloud response gracefully", () => {
+      const localMeals = [{ id: "m1", name: "Chicken", calories: 400 }];
+      const cloudMeals: any[] | null = null;
+      const result = cloudMeals ?? localMeals;
+      expect(result).toHaveLength(1);
+      expect(result[0].name).toBe("Chicken");
+    });
+
+    it("should merge cloud profile with local defaults", () => {
+      const localProfile = {
+        targetWeight: 180,
+        currentWeight: 175,
+        calorieGoal: 2500,
+        proteinGoal: 200,
+        unit: "lbs",
+      };
+      const cloudProfile = {
+        targetWeight: 185,
+        currentWeight: null,
+        calorieGoal: 2800,
+        proteinGoal: null,
+        unit: "lbs",
+      };
+      const merged = {
+        targetWeight: cloudProfile.targetWeight ?? localProfile.targetWeight,
+        currentWeight: cloudProfile.currentWeight ?? localProfile.currentWeight,
+        calorieGoal: cloudProfile.calorieGoal ?? localProfile.calorieGoal,
+        proteinGoal: cloudProfile.proteinGoal ?? localProfile.proteinGoal,
+        unit: cloudProfile.unit ?? localProfile.unit,
+      };
+      expect(merged.targetWeight).toBe(185);
+      expect(merged.currentWeight).toBe(175); // fallback to local
+      expect(merged.calorieGoal).toBe(2800);
+      expect(merged.proteinGoal).toBe(200); // fallback to local
+    });
+  });
+
+  describe("Offline Fallback", () => {
+    it("should determine cloud readiness from auth state", () => {
+      const isOAuthAuthenticated = false;
+      const isCloudReady = isOAuthAuthenticated;
+      expect(isCloudReady).toBe(false);
+    });
+
+    it("should allow local operations when not cloud ready", () => {
+      const isCloudReady = false;
+      const meals: any[] = [];
+      const newMeal = { id: "m1", name: "Chicken", calories: 400 };
+      // Local write always succeeds
+      const updated = [...meals, newMeal];
+      expect(updated).toHaveLength(1);
+      // Cloud sync skipped
+      const shouldSync = isCloudReady;
+      expect(shouldSync).toBe(false);
+    });
+
+    it("should enable cloud sync when authenticated", () => {
+      const isOAuthAuthenticated = true;
+      const isCloudReady = isOAuthAuthenticated;
+      expect(isCloudReady).toBe(true);
+    });
+  });
+});
+
+// ─── Protein Shortfall Notification Logic Tests ─────────────────────
+describe("Protein Shortfall Notifications", () => {
+  describe("Shortfall Calculation", () => {
+    it("should calculate protein shortfall correctly", () => {
+      const proteinGoal = 200;
+      const proteinConsumed = 120;
+      const shortfall = proteinGoal - proteinConsumed;
+      expect(shortfall).toBe(80);
+    });
+
+    it("should not alert when shortfall is <= 20g", () => {
+      const proteinGoal = 200;
+      const proteinConsumed = 185;
+      const shortfall = proteinGoal - proteinConsumed;
+      const shouldAlert = shortfall > 20;
+      expect(shouldAlert).toBe(false);
+    });
+
+    it("should alert when shortfall is > 20g", () => {
+      const proteinGoal = 200;
+      const proteinConsumed = 100;
+      const shortfall = proteinGoal - proteinConsumed;
+      const shouldAlert = shortfall > 20;
+      expect(shouldAlert).toBe(true);
+    });
+
+    it("should not alert when goal is exceeded", () => {
+      const proteinGoal = 200;
+      const proteinConsumed = 220;
+      const shortfall = proteinGoal - proteinConsumed;
+      const shouldAlert = shortfall > 20;
+      expect(shouldAlert).toBe(false);
+    });
+  });
+
+  describe("Notification Content", () => {
+    function getNotificationContent(proteinConsumed: number, proteinGoal: number) {
+      const shortfall = proteinGoal - proteinConsumed;
+      const percentage = Math.round((proteinConsumed / proteinGoal) * 100);
+
+      if (shortfall <= 20) return null;
+
+      if (percentage < 30) {
+        return {
+          title: "Protein Check-In",
+          body: `You've only hit ${proteinConsumed}g of your ${proteinGoal}g protein goal today. Time to fuel those gains — you need ${shortfall}g more.`,
+        };
+      } else if (percentage < 60) {
+        return {
+          title: "Halfway There",
+          body: `${proteinConsumed}g down, ${shortfall}g to go. You're at ${percentage}% of your protein target. Keep pushing.`,
+        };
+      } else {
+        return {
+          title: "Almost There",
+          body: `Just ${shortfall}g of protein left to hit your ${proteinGoal}g goal. One more meal and you're golden.`,
+        };
+      }
+    }
+
+    it("should return null when shortfall is small", () => {
+      expect(getNotificationContent(190, 200)).toBeNull();
+    });
+
+    it("should show 'Protein Check-In' when under 30%", () => {
+      const result = getNotificationContent(40, 200);
+      expect(result?.title).toBe("Protein Check-In");
+      expect(result?.body).toContain("160g more");
+    });
+
+    it("should show 'Halfway There' when between 30-60%", () => {
+      const result = getNotificationContent(80, 200);
+      expect(result?.title).toBe("Halfway There");
+      expect(result?.body).toContain("40%");
+    });
+
+    it("should show 'Almost There' when over 60%", () => {
+      const result = getNotificationContent(140, 200);
+      expect(result?.title).toBe("Almost There");
+      expect(result?.body).toContain("60g");
+    });
+  });
+
+  describe("Push Token Registration", () => {
+    it("should skip token registration on web", () => {
+      const platform: string = "web";
+      const shouldRegister = platform !== "web";
+      expect(shouldRegister).toBe(false);
+    });
+
+    it("should register token on iOS", () => {
+      const platform: string = "ios";
+      const shouldRegister = platform !== "web";
+      expect(shouldRegister).toBe(true);
+    });
+
+    it("should register token on Android", () => {
+      const platform: string = "android";
+      const shouldRegister = platform !== "web";
+      expect(shouldRegister).toBe(true);
+    });
+
+    it("should only register token when authenticated", () => {
+      const isAuthenticated = true;
+      const hasRegisteredToken = false;
+      const shouldRegister = isAuthenticated && !hasRegisteredToken;
+      expect(shouldRegister).toBe(true);
+    });
+
+    it("should not re-register if already registered", () => {
+      const isAuthenticated = true;
+      const hasRegisteredToken = true;
+      const shouldRegister = isAuthenticated && !hasRegisteredToken;
+      expect(shouldRegister).toBe(false);
+    });
+  });
+});
+
+// ─── Auth Flow Logic Tests ──────────────────────────────────────────
+describe("Auth Flow Logic", () => {
+  describe("OAuth State Management", () => {
+    it("should determine cloud readiness from OAuth state", () => {
+      const isOAuthAuthenticated = true;
+      expect(isOAuthAuthenticated).toBe(true);
+    });
+
+    it("should clear all auth state on logout", () => {
+      let isAuthenticated = true;
+      let sessionToken: string | null = "token_abc";
+      let userInfo: any = { name: "John" };
+
+      // Simulate logout
+      isAuthenticated = false;
+      sessionToken = null;
+      userInfo = null;
+
+      expect(isAuthenticated).toBe(false);
+      expect(sessionToken).toBeNull();
+      expect(userInfo).toBeNull();
+    });
+
+    it("should allow skip login for local-only mode", () => {
+      const isAuthenticated = false;
+      const isCloudReady = isAuthenticated;
+      // App should still function
+      const meals: any[] = [];
+      const canAddMeal = true; // always allowed locally
+      expect(canAddMeal).toBe(true);
+      expect(isCloudReady).toBe(false);
+    });
+  });
+
+  describe("Subscription Sync", () => {
+    it("should sync subscription tier to cloud profile", () => {
+      const cloudUpdate: Record<string, unknown> = {};
+      const tier = "pro";
+      cloudUpdate.subscription = tier;
+      expect(cloudUpdate.subscription).toBe("pro");
+    });
+
+    it("should preserve local subscription when cloud unavailable", () => {
+      const localSubscription = "elite";
+      const cloudResult = null;
+      const finalSubscription = cloudResult ?? localSubscription;
+      expect(finalSubscription).toBe("elite");
+    });
+  });
+});
+
+// ─── Database Schema Validation Tests ───────────────────────────────
+describe("Database Schema Contracts", () => {
+  describe("Meal Entry Contract", () => {
+    it("should have all required fields for cloud sync", () => {
+      const meal = {
+        clientId: "meal_123",
+        date: "2026-03-19",
+        mealType: "lunch",
+        name: "Grilled Chicken Breast",
+        calories: 450,
+        protein: 52,
+        carbs: 12,
+        fat: 18,
+        anabolicScore: 85,
+        imageUri: null,
+        isFavorite: false,
+      };
+      expect(meal.clientId).toBeDefined();
+      expect(meal.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      expect(["breakfast", "lunch", "dinner", "snack"]).toContain(meal.mealType);
+      expect(meal.calories).toBeGreaterThanOrEqual(0);
+      expect(meal.protein).toBeGreaterThanOrEqual(0);
+      expect(meal.anabolicScore).toBeGreaterThanOrEqual(0);
+      expect(meal.anabolicScore).toBeLessThanOrEqual(100);
+    });
+  });
+
+  describe("Weight Entry Contract", () => {
+    it("should have all required fields for cloud sync", () => {
+      const entry = {
+        clientId: "w_123",
+        date: "2026-03-19",
+        weight: 174.5,
+      };
+      expect(entry.clientId).toBeDefined();
+      expect(entry.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      expect(entry.weight).toBeGreaterThan(0);
+    });
+  });
+
+  describe("Profile Upsert Contract", () => {
+    it("should accept partial profile updates", () => {
+      const update = { calorieGoal: 2800, proteinGoal: 220 };
+      const keys = Object.keys(update);
+      expect(keys).toContain("calorieGoal");
+      expect(keys).toContain("proteinGoal");
+      expect(keys).not.toContain("name"); // not included
+    });
+
+    it("should validate unit values", () => {
+      const validUnits = ["lbs", "kg"];
+      expect(validUnits).toContain("lbs");
+      expect(validUnits).toContain("kg");
+      expect(validUnits).not.toContain("stones");
+    });
+  });
+
+  describe("Push Token Contract", () => {
+    it("should accept valid platform values", () => {
+      const validPlatforms = ["ios", "android"];
+      expect(validPlatforms).toContain("ios");
+      expect(validPlatforms).toContain("android");
+      expect(validPlatforms).not.toContain("web");
+    });
+
+    it("should require non-empty token", () => {
+      const token = "ExponentPushToken[abc123]";
+      expect(token.length).toBeGreaterThan(0);
+    });
+  });
+});

@@ -120,3 +120,27 @@
 - [x] Verify dark theme is consistent across all screens
 - [x] Check all data persistence (meals, profile, settings)
 - [x] Run full test suite and fix any failures
+
+## Cloud Backend — Database & Sync
+- [x] Add meals table to Drizzle schema (userId, date, mealType, name, calories, protein, carbs, fat, anabolicScore, imageUri, isFavorite)
+- [x] Add userProfiles table to Drizzle schema (userId, targetWeight, currentWeight, calorieGoal, proteinGoal, carbsGoal, fatGoal, unit, profilePhotoUri, subscription)
+- [x] Add weightLog table to Drizzle schema (userId, date, weight)
+- [x] Add pushTokens table to Drizzle schema (userId, token, platform)
+- [x] Run database migrations (pnpm db:push)
+- [x] Build server-side query helpers in server/db.ts for all tables
+- [x] Build tRPC sync routers (meals CRUD, profile upsert, weight CRUD, push token registration)
+- [x] Refactor app-context to use tRPC for cloud sync (write-through: local + cloud)
+- [x] Handle offline/unauthenticated gracefully (fallback to local AsyncStorage)
+
+## Manus OAuth Auth Integration
+- [x] Wire useAuth hook into app navigation (auto-redirect to auth screen if not logged in)
+- [x] Sync user profile from cloud on login
+- [x] Sync meals from cloud on login
+- [x] Sync weight log from cloud on login
+
+## Push Notifications — Protein Shortfall Alerts
+- [x] Request notification permissions on app launch
+- [x] Register Expo push token with server
+- [x] Schedule daily local notification for protein shortfall check (8 PM)
+- [x] Implement protein shortfall calculation and notification content
+- [x] Handle notification tap to open meals screen
