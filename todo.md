@@ -129,3 +129,6 @@
 - [x] Write tests for new features (delete, favorite, add item, sugar tracking)
 - [x] Verify preview is working correctly
 - [x] Verify all navigation flows end-to-end
+
+## App Rename
+- [x] Rename app to "Muscle AI | Calorie Tracker" in app.config.ts
