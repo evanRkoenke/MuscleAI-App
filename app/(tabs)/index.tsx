@@ -166,6 +166,7 @@ export default function HomeScreen() {
             { val: mac.protein, unit: "g", label: "PROTEIN", color: PROT },
             { val: mac.carbs, unit: "g", label: "CARBS", color: CARB },
             { val: mac.fat, unit: "g", label: "FAT", color: FATR },
+            { val: mac.sugar, unit: "g", label: "SUGAR", color: "#C084FC" },
           ].map((m) => (
             <View key={m.label} style={s.macCard}>
               <Text style={s.macVal}>

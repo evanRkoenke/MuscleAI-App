@@ -25,8 +25,10 @@ interface MealEntry {
   protein: number;
   carbs: number;
   fat: number;
+  sugar: number;
   anabolicScore: number;
   imageUri?: string;
+  isFavorite?: boolean;
 }
 
 interface WeightEntry {
@@ -73,13 +75,15 @@ interface AppContextType extends AppState {
   updateProfile: (updates: Partial<UserProfile>) => Promise<void>;
   addMeal: (meal: MealEntry) => Promise<void>;
   removeMeal: (id: string) => Promise<void>;
+  toggleFavoriteMeal: (id: string) => Promise<void>;
   addWeight: (entry: WeightEntry) => Promise<void>;
   saveGainsCard: (card: GainsCardEntry) => Promise<void>;
   removeGainsCard: (id: string) => Promise<void>;
   updatePersonalRecords: () => Promise<void>;
   getTodayMeals: () => MealEntry[];
   getTodayCalories: () => number;
-  getTodayMacros: () => { protein: number; carbs: number; fat: number };
+  getTodayMacros: () => { protein: number; carbs: number; fat: number; sugar: number };
+  getFavoriteMeals: () => MealEntry[];
   loading: boolean;
 }
 
@@ -124,6 +128,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const stored = await AsyncStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
+        // Migrate old meals without sugar field
+        if (parsed.meals) {
+          parsed.meals = parsed.meals.map((m: any) => ({
+            ...m,
+            sugar: m.sugar ?? 0,
+            isFavorite: m.isFavorite ?? false,
+          }));
+        }
         setState({ ...defaultState, ...parsed });
       }
     } catch (e) {
@@ -170,8 +182,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const addMeal = useCallback(async (meal: MealEntry) => {
+    const mealWithDefaults = { ...meal, sugar: meal.sugar ?? 0, isFavorite: meal.isFavorite ?? false };
     setState((prev) => {
-      const next = { ...prev, meals: [...prev.meals, meal] };
+      const next = { ...prev, meals: [...prev.meals, mealWithDefaults] };
       saveState(next);
       return next;
     });
@@ -180,6 +193,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const removeMeal = useCallback(async (id: string) => {
     setState((prev) => {
       const next = { ...prev, meals: prev.meals.filter((m) => m.id !== id) };
+      saveState(next);
+      return next;
+    });
+  }, []);
+
+  const toggleFavoriteMeal = useCallback(async (id: string) => {
+    setState((prev) => {
+      const next = {
+        ...prev,
+        meals: prev.meals.map((m) =>
+          m.id === id ? { ...m, isFavorite: !m.isFavorite } : m
+        ),
+      };
       saveState(next);
       return next;
     });
@@ -214,7 +240,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const records: PersonalRecord[] = [];
       const today = new Date().toISOString().split("T")[0];
 
-      // Highest protein in a single day
       const mealsByDate = new Map<string, number>();
       prev.meals.forEach((m) => {
         mealsByDate.set(m.date, (mealsByDate.get(m.date) || 0) + m.protein);
@@ -228,7 +253,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         records.push({ id: "pr_protein", category: "protein", label: "Highest Protein Day", value: bestProteinDay, unit: "g", date: bestProteinDate });
       }
 
-      // Highest calories in a single day
       const calsByDate = new Map<string, number>();
       prev.meals.forEach((m) => {
         calsByDate.set(m.date, (calsByDate.get(m.date) || 0) + m.calories);
@@ -242,13 +266,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         records.push({ id: "pr_calories", category: "calories", label: "Highest Calorie Day", value: bestCalDay, unit: "cal", date: bestCalDate });
       }
 
-      // Highest anabolic score
       const bestAnabolic = prev.meals.reduce((best, m) => m.anabolicScore > best.score ? { score: m.anabolicScore, date: m.date } : best, { score: 0, date: today });
       if (bestAnabolic.score > 0) {
         records.push({ id: "pr_anabolic", category: "anabolic", label: "Best Anabolic Score", value: bestAnabolic.score, unit: "/100", date: bestAnabolic.date });
       }
 
-      // Tracking streak (consecutive days with meals)
       const uniqueDates = [...new Set(prev.meals.map((m) => m.date))].sort();
       let maxStreak = 0;
       let currentStreak = 1;
@@ -264,7 +286,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         records.push({ id: "pr_streak", category: "streak", label: "Longest Tracking Streak", value: maxStreak, unit: "days", date: today });
       }
 
-      // Weight change records
       if (prev.weightLog.length >= 2) {
         const sorted = [...prev.weightLog].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
         const first = sorted[0].weight;
@@ -277,7 +298,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
-      // Total meals tracked
       if (prev.meals.length > 0) {
         records.push({ id: "pr_meals", category: "calories", label: "Total Meals Tracked", value: prev.meals.length, unit: "meals", date: today });
       }
@@ -303,8 +323,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       protein: todayMeals.reduce((sum, m) => sum + m.protein, 0),
       carbs: todayMeals.reduce((sum, m) => sum + m.carbs, 0),
       fat: todayMeals.reduce((sum, m) => sum + m.fat, 0),
+      sugar: todayMeals.reduce((sum, m) => sum + (m.sugar ?? 0), 0),
     };
   }, [getTodayMeals]);
+
+  const getFavoriteMeals = useCallback(() => {
+    return state.meals.filter((m) => m.isFavorite);
+  }, [state.meals]);
 
   return (
     <AppContext.Provider
@@ -316,6 +341,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         updateProfile,
         addMeal,
         removeMeal,
+        toggleFavoriteMeal,
         addWeight,
         saveGainsCard,
         removeGainsCard,
@@ -323,6 +349,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         getTodayMeals,
         getTodayCalories,
         getTodayMacros,
+        getFavoriteMeals,
         loading,
       }}
     >

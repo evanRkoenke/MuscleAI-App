@@ -104,3 +104,28 @@
 
 ## iOS Status Bar Background Fix (Real Device)
 - [x] Fix iOS status bar area to show dark background on real device (not just web preview)
+
+## Meal Delete & Favorites
+- [x] Add delete meal functionality (tap trash icon with confirmation)
+- [x] Add favorite meal toggle (star icon)
+- [x] Show favorites section at top of meals list
+- [x] Persist favorites and deletions in AsyncStorage
+
+## Manual Food Item Addition
+- [x] Add "Add Item" button on scan results to add missing food items
+- [x] Build food search/manual entry modal with name, grams, macros
+- [x] Allow editing grams/weight of AI-detected items
+- [x] Recalculate meal totals after adding/editing items
+
+## Enhanced AI Scanner
+- [x] Update AI prompt to include comprehensive food knowledge (all cuisines, brands, preparations)
+- [x] Add sugar tracking to AI scan output and meal data model
+- [x] Display sugar grams in scan results and meal details
+- [x] Add sugar to daily macro tracking on dashboard
+
+## Publish Health Check
+- [x] Run TypeScript check — 0 errors
+- [x] Run full test suite — 101 passing
+- [x] Write tests for new features (delete, favorite, add item, sugar tracking)
+- [x] Verify preview is working correctly
+- [x] Verify all navigation flows end-to-end

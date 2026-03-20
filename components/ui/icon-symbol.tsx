@@ -37,6 +37,10 @@ const MAPPING = {
   "heart.fill": "favorite",
   "scalemass.fill": "fitness-center",
   "flame.fill": "local-fire-department",
+  "trash.fill": "delete",
+  "pencil": "edit",
+  "minus.circle.fill": "remove-circle",
+  "questionmark.circle": "help-outline",
 } as IconMapping;
 
 /**

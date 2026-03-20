@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   View,
   Text,
@@ -12,8 +12,10 @@ import { useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useApp } from "@/lib/app-context";
+import * as Haptics from "expo-haptics";
 
 const ELECTRIC_BLUE = "#007AFF";
+const SUGAR_PURPLE = "#C084FC";
 
 const MEAL_TYPES = ["breakfast", "lunch", "dinner", "snack"] as const;
 const MEAL_LABELS: Record<string, string> = {
@@ -29,13 +31,17 @@ const MEAL_ICONS: Record<string, string> = {
   snack: "⚡",
 };
 
+type TabMode = "today" | "favorites";
+
 export default function MealsScreen() {
   const router = useRouter();
-  const { getTodayMeals, getTodayCalories, getTodayMacros, removeMeal, profile } = useApp();
+  const { getTodayMeals, getTodayCalories, getTodayMacros, removeMeal, toggleFavoriteMeal, getFavoriteMeals, profile } = useApp();
+  const [activeTab, setActiveTab] = useState<TabMode>("today");
 
   const todayMeals = getTodayMeals();
   const todayCalories = getTodayCalories();
   const todayMacros = getTodayMacros();
+  const favoriteMeals = getFavoriteMeals();
 
   const mealSections = useMemo(() => {
     return MEAL_TYPES.map((type) => ({
@@ -47,17 +53,74 @@ export default function MealsScreen() {
   }, [todayMeals]);
 
   const handleDeleteMeal = useCallback(
-    (id: string) => {
+    (id: string, name: string) => {
       if (Platform.OS === "web") {
         removeMeal(id);
       } else {
-        Alert.alert("Remove Meal", "Are you sure you want to remove this meal?", [
+        Alert.alert("Remove Meal", `Are you sure you want to remove "${name}"?`, [
           { text: "Cancel", style: "cancel" },
-          { text: "Remove", style: "destructive", onPress: () => removeMeal(id) },
+          {
+            text: "Remove",
+            style: "destructive",
+            onPress: () => {
+              removeMeal(id);
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            },
+          },
         ]);
       }
     },
     [removeMeal]
+  );
+
+  const handleToggleFavorite = useCallback(
+    (id: string) => {
+      toggleFavoriteMeal(id);
+      if (Platform.OS !== "web") {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
+    },
+    [toggleFavoriteMeal]
+  );
+
+  const renderMealItem = (meal: any) => (
+    <View key={meal.id} style={styles.mealItem}>
+      <View style={styles.mealInfo}>
+        <View style={styles.mealNameRow}>
+          <Text style={styles.mealName} numberOfLines={1}>{meal.name}</Text>
+          {meal.isFavorite && (
+            <IconSymbol name="star.fill" size={14} color="#FFB300" />
+          )}
+        </View>
+        <Text style={styles.mealMacros}>
+          P: {meal.protein}g · C: {meal.carbs}g · F: {meal.fat}g{meal.sugar > 0 ? ` · S: ${meal.sugar}g` : ""}
+        </Text>
+      </View>
+      <View style={styles.mealActions}>
+        <TouchableOpacity
+          onPress={() => handleToggleFavorite(meal.id)}
+          style={styles.actionButton}
+          activeOpacity={0.6}
+        >
+          <IconSymbol
+            name="star.fill"
+            size={18}
+            color={meal.isFavorite ? "#FFB300" : "#3A4A5A"}
+          />
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => handleDeleteMeal(meal.id, meal.name)}
+          style={styles.actionButton}
+          activeOpacity={0.6}
+        >
+          <IconSymbol name="trash.fill" size={18} color="#FF3D3D" />
+        </TouchableOpacity>
+        <View style={styles.mealCalContainer}>
+          <Text style={styles.mealCalories}>{meal.calories}</Text>
+          <Text style={styles.mealCalLabel}>cal</Text>
+        </View>
+      </View>
+    </View>
   );
 
   const renderSection = ({ item }: { item: typeof mealSections[0] }) => (
@@ -70,25 +133,7 @@ export default function MealsScreen() {
         </Text>
       </View>
       {item.meals.length > 0 ? (
-        item.meals.map((meal) => (
-          <TouchableOpacity
-            key={meal.id}
-            style={styles.mealItem}
-            onLongPress={() => handleDeleteMeal(meal.id)}
-            activeOpacity={0.7}
-          >
-            <View style={styles.mealInfo}>
-              <Text style={styles.mealName}>{meal.name}</Text>
-              <Text style={styles.mealMacros}>
-                P: {meal.protein}g · C: {meal.carbs}g · F: {meal.fat}g
-              </Text>
-            </View>
-            <View style={styles.mealRight}>
-              <Text style={styles.mealCalories}>{meal.calories}</Text>
-              <Text style={styles.mealCalLabel}>cal</Text>
-            </View>
-          </TouchableOpacity>
-        ))
+        item.meals.map(renderMealItem)
       ) : (
         <TouchableOpacity
           style={styles.addMealButton}
@@ -102,54 +147,142 @@ export default function MealsScreen() {
     </View>
   );
 
+  const renderFavoriteItem = ({ item: meal }: { item: any }) => (
+    <View style={styles.section}>
+      {renderMealItem(meal)}
+    </View>
+  );
+
   return (
     <ScreenContainer>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Today's Meals</Text>
+        <Text style={styles.headerTitle}>
+          {activeTab === "today" ? "Today's Meals" : "Favorite Meals"}
+        </Text>
         <Text style={styles.headerDate}>
-          {new Date().toLocaleDateString("en-US", {
-            weekday: "long",
-            month: "short",
-            day: "numeric",
-          })}
+          {activeTab === "today"
+            ? new Date().toLocaleDateString("en-US", {
+                weekday: "long",
+                month: "short",
+                day: "numeric",
+              })
+            : `${favoriteMeals.length} saved`}
         </Text>
       </View>
 
-      {/* Daily Summary */}
-      <View style={styles.summaryCard}>
-        <View style={styles.summaryItem}>
-          <Text style={styles.summaryValue}>{todayCalories}</Text>
-          <Text style={styles.summaryLabel}>Eaten</Text>
-        </View>
-        <View style={styles.summaryDivider} />
-        <View style={styles.summaryItem}>
-          <Text style={[styles.summaryValue, { color: ELECTRIC_BLUE }]}>
-            {Math.max(0, profile.calorieGoal - todayCalories)}
+      {/* Tab Switcher */}
+      <View style={styles.tabRow}>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === "today" && styles.tabActive]}
+          onPress={() => setActiveTab("today")}
+          activeOpacity={0.7}
+        >
+          <Text style={[styles.tabText, activeTab === "today" && styles.tabTextActive]}>
+            Today
           </Text>
-          <Text style={styles.summaryLabel}>Remaining</Text>
-        </View>
-        <View style={styles.summaryDivider} />
-        <View style={styles.summaryItem}>
-          <Text style={styles.summaryValue}>{profile.calorieGoal}</Text>
-          <Text style={styles.summaryLabel}>Goal</Text>
-        </View>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === "favorites" && styles.tabActive]}
+          onPress={() => setActiveTab("favorites")}
+          activeOpacity={0.7}
+        >
+          <IconSymbol name="star.fill" size={14} color={activeTab === "favorites" ? ELECTRIC_BLUE : "#5A6A7A"} />
+          <Text style={[styles.tabText, activeTab === "favorites" && styles.tabTextActive]}>
+            Favorites
+          </Text>
+        </TouchableOpacity>
       </View>
 
-      <FlatList
-        data={mealSections}
-        renderItem={renderSection}
-        keyExtractor={(item) => item.type}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-      />
+      {activeTab === "today" ? (
+        <>
+          {/* Daily Summary */}
+          <View style={styles.summaryCard}>
+            <View style={styles.summaryItem}>
+              <Text style={styles.summaryValue}>{todayCalories}</Text>
+              <Text style={styles.summaryLabel}>Eaten</Text>
+            </View>
+            <View style={styles.summaryDivider} />
+            <View style={styles.summaryItem}>
+              <Text style={[styles.summaryValue, { color: ELECTRIC_BLUE }]}>
+                {Math.max(0, profile.calorieGoal - todayCalories)}
+              </Text>
+              <Text style={styles.summaryLabel}>Remaining</Text>
+            </View>
+            <View style={styles.summaryDivider} />
+            <View style={styles.summaryItem}>
+              <Text style={styles.summaryValue}>{profile.calorieGoal}</Text>
+              <Text style={styles.summaryLabel}>Goal</Text>
+            </View>
+          </View>
+
+          {/* Sugar Tracker */}
+          {todayMacros.sugar > 0 && (
+            <View style={styles.sugarBanner}>
+              <Text style={styles.sugarLabel}>Sugar Today</Text>
+              <Text style={styles.sugarValue}>{todayMacros.sugar}g</Text>
+            </View>
+          )}
+
+          <FlatList
+            data={mealSections}
+            renderItem={renderSection}
+            keyExtractor={(item) => item.type}
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
+          />
+        </>
+      ) : (
+        <FlatList
+          data={favoriteMeals}
+          renderItem={renderFavoriteItem}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            <View style={styles.emptyState}>
+              <IconSymbol name="star.fill" size={48} color="#1A2533" />
+              <Text style={styles.emptyTitle}>No Favorites Yet</Text>
+              <Text style={styles.emptySubtext}>
+                Tap the star icon on any meal to save it as a favorite
+              </Text>
+            </View>
+          }
+        />
+      )}
     </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  header: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 12 },
+  header: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 8 },
   headerTitle: { fontSize: 26, fontWeight: "900", color: "#ECEDEE" },
   headerDate: { fontSize: 14, marginTop: 4, color: "#5A6A7A" },
+
+  // Tab switcher
+  tabRow: {
+    flexDirection: "row",
+    marginHorizontal: 20,
+    marginBottom: 12,
+    borderRadius: 12,
+    backgroundColor: "#111820",
+    borderWidth: 1,
+    borderColor: "#1A2533",
+    padding: 3,
+  },
+  tab: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
+  tabActive: { backgroundColor: "rgba(0,122,255,0.12)" },
+  tabText: { fontSize: 14, fontWeight: "700", color: "#5A6A7A" },
+  tabTextActive: { color: ELECTRIC_BLUE },
+
+  // Summary
   summaryCard: {
     flexDirection: "row",
     marginHorizontal: 20,
@@ -158,12 +291,31 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#1A2533",
     backgroundColor: "#111820",
-    marginBottom: 16,
+    marginBottom: 12,
   },
   summaryItem: { flex: 1, alignItems: "center" },
   summaryValue: { fontSize: 22, fontWeight: "900", color: "#ECEDEE" },
   summaryLabel: { fontSize: 12, marginTop: 4, fontWeight: "600", color: "#5A6A7A" },
   summaryDivider: { width: 1, height: "100%", backgroundColor: "#1A2533" },
+
+  // Sugar banner
+  sugarBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginHorizontal: 20,
+    marginBottom: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 12,
+    backgroundColor: "rgba(192,132,252,0.08)",
+    borderWidth: 1,
+    borderColor: "rgba(192,132,252,0.2)",
+  },
+  sugarLabel: { fontSize: 13, fontWeight: "700", color: SUGAR_PURPLE },
+  sugarValue: { fontSize: 16, fontWeight: "900", color: SUGAR_PURPLE },
+
+  // List
   listContent: { paddingHorizontal: 20, paddingBottom: 100, gap: 12 },
   section: {
     borderRadius: 16,
@@ -176,6 +328,8 @@ const styles = StyleSheet.create({
   sectionIcon: { fontSize: 18 },
   sectionTitle: { fontSize: 16, fontWeight: "700", flex: 1, color: "#ECEDEE" },
   sectionCalories: { fontSize: 14, fontWeight: "600", color: "#5A6A7A" },
+
+  // Meal item
   mealItem: {
     flexDirection: "row",
     alignItems: "center",
@@ -185,12 +339,23 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: "#1A2533",
   },
-  mealInfo: { flex: 1, gap: 2 },
-  mealName: { fontSize: 15, fontWeight: "600", color: "#ECEDEE" },
+  mealInfo: { flex: 1, gap: 2, marginRight: 8 },
+  mealNameRow: { flexDirection: "row", alignItems: "center", gap: 6 },
+  mealName: { fontSize: 15, fontWeight: "600", color: "#ECEDEE", flexShrink: 1 },
   mealMacros: { fontSize: 12, color: "#7A8A99" },
-  mealRight: { alignItems: "flex-end" },
+  mealActions: { flexDirection: "row", alignItems: "center", gap: 4 },
+  actionButton: {
+    width: 36,
+    height: 36,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 18,
+  },
+  mealCalContainer: { alignItems: "flex-end", marginLeft: 4 },
   mealCalories: { fontSize: 18, fontWeight: "800", color: "#ECEDEE" },
   mealCalLabel: { fontSize: 11, color: "#5A6A7A" },
+
+  // Add meal
   addMealButton: {
     flexDirection: "row",
     alignItems: "center",
@@ -201,4 +366,13 @@ const styles = StyleSheet.create({
     borderTopColor: "#1A2533",
   },
   addMealText: { fontSize: 14, fontWeight: "600", color: ELECTRIC_BLUE },
+
+  // Empty state
+  emptyState: {
+    alignItems: "center",
+    paddingVertical: 60,
+    gap: 12,
+  },
+  emptyTitle: { fontSize: 18, fontWeight: "800", color: "#ECEDEE" },
+  emptySubtext: { fontSize: 14, color: "#5A6A7A", textAlign: "center", maxWidth: 260 },
 });

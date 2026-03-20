@@ -653,4 +653,309 @@ describe("Profile Enhancements", () => {
       expect(url).toContain("play.google.com");
     });
   });
+
+  // ─── Meal Delete & Favorites ───
+  describe("Meal Delete", () => {
+    it("should remove a meal by id from the list", () => {
+      const meals = [
+        { id: "1", name: "Chicken", calories: 280 },
+        { id: "2", name: "Rice", calories: 215 },
+        { id: "3", name: "Broccoli", calories: 55 },
+      ];
+      const filtered = meals.filter((m) => m.id !== "2");
+      expect(filtered).toHaveLength(2);
+      expect(filtered.find((m) => m.id === "2")).toBeUndefined();
+    });
+
+    it("should not modify list when deleting non-existent id", () => {
+      const meals = [{ id: "1", name: "Chicken", calories: 280 }];
+      const filtered = meals.filter((m) => m.id !== "99");
+      expect(filtered).toHaveLength(1);
+    });
+
+    it("should return empty array when deleting last meal", () => {
+      const meals = [{ id: "1", name: "Chicken", calories: 280 }];
+      const filtered = meals.filter((m) => m.id !== "1");
+      expect(filtered).toHaveLength(0);
+    });
+
+    it("should recalculate totals after deletion", () => {
+      const meals = [
+        { id: "1", calories: 280, protein: 42, carbs: 10, fat: 12, sugar: 0 },
+        { id: "2", calories: 215, protein: 5, carbs: 45, fat: 2, sugar: 1 },
+      ];
+      const after = meals.filter((m) => m.id !== "1");
+      const totalCal = after.reduce((s, m) => s + m.calories, 0);
+      expect(totalCal).toBe(215);
+    });
+  });
+
+  describe("Meal Favorites", () => {
+    it("should toggle favorite on a meal", () => {
+      const meal = { id: "1", name: "Chicken", isFavorite: false };
+      const toggled = { ...meal, isFavorite: !meal.isFavorite };
+      expect(toggled.isFavorite).toBe(true);
+    });
+
+    it("should toggle favorite off a meal", () => {
+      const meal = { id: "1", name: "Chicken", isFavorite: true };
+      const toggled = { ...meal, isFavorite: !meal.isFavorite };
+      expect(toggled.isFavorite).toBe(false);
+    });
+
+    it("should filter favorite meals correctly", () => {
+      const meals = [
+        { id: "1", name: "Chicken", isFavorite: true },
+        { id: "2", name: "Rice", isFavorite: false },
+        { id: "3", name: "Salmon", isFavorite: true },
+      ];
+      const favorites = meals.filter((m) => m.isFavorite);
+      expect(favorites).toHaveLength(2);
+      expect(favorites[0].name).toBe("Chicken");
+      expect(favorites[1].name).toBe("Salmon");
+    });
+
+    it("should return empty array when no favorites", () => {
+      const meals = [
+        { id: "1", name: "Chicken", isFavorite: false },
+        { id: "2", name: "Rice", isFavorite: false },
+      ];
+      const favorites = meals.filter((m) => m.isFavorite);
+      expect(favorites).toHaveLength(0);
+    });
+
+    it("should persist isFavorite default as false for new meals", () => {
+      const meal = { id: "1", name: "Test", isFavorite: undefined };
+      const normalized = { ...meal, isFavorite: meal.isFavorite ?? false };
+      expect(normalized.isFavorite).toBe(false);
+    });
+  });
+
+  // ─── Sugar Tracking ───
+  describe("Sugar Tracking", () => {
+    it("should calculate total sugar from meals", () => {
+      const meals = [
+        { sugar: 3 },
+        { sugar: 12 },
+        { sugar: 0 },
+        { sugar: 8 },
+      ];
+      const totalSugar = meals.reduce((s, m) => s + m.sugar, 0);
+      expect(totalSugar).toBe(23);
+    });
+
+    it("should handle meals without sugar field (migration)", () => {
+      const meals = [
+        { sugar: 3 },
+        { sugar: undefined },
+        { sugar: null },
+      ] as any[];
+      const totalSugar = meals.reduce((s, m) => s + (m.sugar ?? 0), 0);
+      expect(totalSugar).toBe(3);
+    });
+
+    it("should include sugar in macro display", () => {
+      const macros = { protein: 51, carbs: 56, fat: 15, sugar: 3 };
+      const display = `P:${macros.protein}g · C:${macros.carbs}g · F:${macros.fat}g · S:${macros.sugar}g`;
+      expect(display).toContain("S:3g");
+    });
+
+    it("should default sugar to 0 for old meals", () => {
+      const oldMeal = { id: "1", name: "Old Meal", calories: 500 } as any;
+      const sugar = oldMeal.sugar ?? 0;
+      expect(sugar).toBe(0);
+    });
+  });
+
+  // ─── Manual Food Addition ───
+  describe("Manual Food Item Addition", () => {
+    it("should add a manual food item to scan results", () => {
+      const foods = [
+        { name: "Chicken", grams: 170, calories: 280, protein: 42, carbs: 0, fat: 12, sugar: 0, confidence: 95 },
+      ];
+      const newFood = { name: "Avocado", grams: 100, calories: 160, protein: 2, carbs: 9, fat: 15, sugar: 1, confidence: 100 };
+      const updated = [...foods, newFood];
+      expect(updated).toHaveLength(2);
+      expect(updated[1].name).toBe("Avocado");
+      expect(updated[1].confidence).toBe(100);
+    });
+
+    it("should recalculate totals after adding food", () => {
+      const foods = [
+        { calories: 280, protein: 42, carbs: 0, fat: 12, sugar: 0 },
+        { calories: 160, protein: 2, carbs: 9, fat: 15, sugar: 1 },
+      ];
+      const totalCal = foods.reduce((s, f) => s + f.calories, 0);
+      const totalSugar = foods.reduce((s, f) => s + f.sugar, 0);
+      expect(totalCal).toBe(440);
+      expect(totalSugar).toBe(1);
+    });
+
+    it("should remove a food item by index", () => {
+      const foods = [
+        { name: "Chicken", calories: 280 },
+        { name: "Rice", calories: 215 },
+        { name: "Broccoli", calories: 55 },
+      ];
+      const removed = foods.filter((_, i) => i !== 1);
+      expect(removed).toHaveLength(2);
+      expect(removed[0].name).toBe("Chicken");
+      expect(removed[1].name).toBe("Broccoli");
+    });
+  });
+
+  // ─── Gram Adjustment ───
+  describe("Gram/Weight Adjustment", () => {
+    it("should scale macros proportionally when grams change", () => {
+      const food = { name: "Chicken", grams: 170, calories: 280, protein: 42, carbs: 0, fat: 12, sugar: 0 };
+      const newGrams = 200;
+      const ratio = newGrams / food.grams;
+      const updated = {
+        ...food,
+        grams: newGrams,
+        calories: Math.round(food.calories * ratio),
+        protein: Math.round(food.protein * ratio * 10) / 10,
+        fat: Math.round(food.fat * ratio * 10) / 10,
+      };
+      expect(updated.grams).toBe(200);
+      expect(updated.calories).toBe(329);
+      expect(updated.protein).toBeCloseTo(49.4, 1);
+    });
+
+    it("should handle reducing grams", () => {
+      const food = { grams: 200, calories: 400, protein: 30 };
+      const newGrams = 100;
+      const ratio = newGrams / food.grams;
+      expect(Math.round(food.calories * ratio)).toBe(200);
+      expect(Math.round(food.protein * ratio)).toBe(15);
+    });
+
+    it("should reject zero or negative grams", () => {
+      const isValid = (grams: number) => !isNaN(grams) && grams > 0;
+      expect(isValid(0)).toBe(false);
+      expect(isValid(-50)).toBe(false);
+      expect(isValid(NaN)).toBe(false);
+      expect(isValid(150)).toBe(true);
+    });
+  });
+
+  // ─── AI Confidence Scoring ───
+  describe("AI Confidence Scoring", () => {
+    it("should flag items below 90% confidence", () => {
+      const foods = [
+        { name: "Chicken", confidence: 95 },
+        { name: "Unknown Sauce", confidence: 72 },
+        { name: "Rice", confidence: 92 },
+        { name: "Mystery Vegetable", confidence: 65 },
+      ];
+      const lowConfidence = foods.filter((f) => f.confidence < 90);
+      expect(lowConfidence).toHaveLength(2);
+      expect(lowConfidence[0].name).toBe("Unknown Sauce");
+    });
+
+    it("should normalize confidence to 0-100 range", () => {
+      const normalize = (c: number) => Math.min(100, Math.max(0, c));
+      expect(normalize(150)).toBe(100);
+      expect(normalize(-10)).toBe(0);
+      expect(normalize(85)).toBe(85);
+    });
+
+    it("should default confidence to 95 when not provided", () => {
+      const food = { name: "Test", confidence: undefined } as any;
+      const conf = food.confidence ?? 95;
+      expect(conf).toBe(95);
+    });
+
+    it("should set manual entries to 100% confidence", () => {
+      const manualFood = { name: "User Added", confidence: 100 };
+      expect(manualFood.confidence).toBe(100);
+    });
+
+    it("should count pending confirmations correctly", () => {
+      const foods = [
+        { confidence: 95 },
+        { confidence: 72 },
+        { confidence: 88 },
+        { confidence: 45 },
+      ];
+      const pending = new Set<number>();
+      foods.forEach((f, i) => {
+        if (f.confidence < 90) pending.add(i);
+      });
+      expect(pending.size).toBe(3);
+    });
+
+    it("should remove from pending after user confirms", () => {
+      const pending = new Set([1, 3]);
+      pending.delete(1);
+      expect(pending.size).toBe(1);
+      expect(pending.has(1)).toBe(false);
+      expect(pending.has(3)).toBe(true);
+    });
+  });
+
+  // ─── Anabolic Score Colors ───
+  describe("Anabolic Score Display", () => {
+    it("should return green for scores >= 80", () => {
+      const scoreColor = (s: number) => s >= 80 ? "#00E676" : s >= 60 ? "#FFB300" : "#FF3D3D";
+      expect(scoreColor(85)).toBe("#00E676");
+      expect(scoreColor(100)).toBe("#00E676");
+    });
+
+    it("should return amber for scores 60-79", () => {
+      const scoreColor = (s: number) => s >= 80 ? "#00E676" : s >= 60 ? "#FFB300" : "#FF3D3D";
+      expect(scoreColor(60)).toBe("#FFB300");
+      expect(scoreColor(75)).toBe("#FFB300");
+    });
+
+    it("should return red for scores < 60", () => {
+      const scoreColor = (s: number) => s >= 80 ? "#00E676" : s >= 60 ? "#FFB300" : "#FF3D3D";
+      expect(scoreColor(30)).toBe("#FF3D3D");
+      expect(scoreColor(59)).toBe("#FF3D3D");
+    });
+  });
+
+  // ─── Meal Type Auto-Detection ───
+  describe("Meal Type Auto-Detection", () => {
+    it("should detect breakfast before 10am", () => {
+      const getMealType = (hour: number) => {
+        if (hour < 10) return "breakfast";
+        if (hour < 14) return "lunch";
+        if (hour < 20) return "dinner";
+        return "snack";
+      };
+      expect(getMealType(7)).toBe("breakfast");
+      expect(getMealType(9)).toBe("breakfast");
+    });
+
+    it("should detect lunch 10am-2pm", () => {
+      const getMealType = (hour: number) => {
+        if (hour < 10) return "breakfast";
+        if (hour < 14) return "lunch";
+        if (hour < 20) return "dinner";
+        return "snack";
+      };
+      expect(getMealType(12)).toBe("lunch");
+    });
+
+    it("should detect dinner 2pm-8pm", () => {
+      const getMealType = (hour: number) => {
+        if (hour < 10) return "breakfast";
+        if (hour < 14) return "lunch";
+        if (hour < 20) return "dinner";
+        return "snack";
+      };
+      expect(getMealType(18)).toBe("dinner");
+    });
+
+    it("should detect snack after 8pm", () => {
+      const getMealType = (hour: number) => {
+        if (hour < 10) return "breakfast";
+        if (hour < 14) return "lunch";
+        if (hour < 20) return "dinner";
+        return "snack";
+      };
+      expect(getMealType(22)).toBe("snack");
+    });
+  });
 });

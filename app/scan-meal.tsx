@@ -8,6 +8,9 @@ import {
   ScrollView,
   Platform,
   Image,
+  TextInput,
+  Modal,
+  Alert,
 } from "react-native";
 import { useRouter } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
@@ -23,13 +26,26 @@ const CYAN_GLOW = "#00D4FF";
 const PROTEIN_CYAN = "#00E5FF";
 const CARBS_AMBER = "#FFB300";
 const FAT_RED = "#FF6B6B";
+const SUGAR_PURPLE = "#C084FC";
+
+interface FoodItem {
+  name: string;
+  grams: number;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  sugar: number;
+  confidence: number;
+}
 
 interface ScanResult {
-  foods: { name: string; calories: number; protein: number; carbs: number; fat: number }[];
+  foods: FoodItem[];
   totalCalories: number;
   totalProtein: number;
   totalCarbs: number;
   totalFat: number;
+  totalSugar: number;
   anabolicScore: number;
   mealName: string;
 }
@@ -42,6 +58,21 @@ export default function ScanMealScreen() {
   const [result, setResult] = useState<ScanResult | null>(null);
   const [error, setError] = useState("");
   const [errorType, setErrorType] = useState<"camera" | "scan" | "network" | "">("");
+
+  // Edit/Add state
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [editGrams, setEditGrams] = useState("");
+  const [addName, setAddName] = useState("");
+  const [addGrams, setAddGrams] = useState("");
+  const [addCalories, setAddCalories] = useState("");
+  const [addProtein, setAddProtein] = useState("");
+  const [addCarbs, setAddCarbs] = useState("");
+  const [addFat, setAddFat] = useState("");
+  const [addSugar, setAddSugar] = useState("");
+
+  // Confidence confirmation state
+  const [pendingConfirmations, setPendingConfirmations] = useState<Set<number>>(new Set());
 
   const analyzeMutation = trpc.ai.analyzeMeal.useMutation();
 
@@ -81,6 +112,7 @@ export default function ScanMealScreen() {
         const asset = pickerResult.assets[0];
         setImageUri(asset.uri);
         setResult(null);
+        setPendingConfirmations(new Set());
         await analyzeImage(asset.base64 || "", asset.uri);
       }
     } catch (e) {
@@ -98,7 +130,24 @@ export default function ScanMealScreen() {
       clearError();
       try {
         const response = await analyzeMutation.mutateAsync({ imageBase64: base64 });
-        setResult(response as ScanResult);
+        const scanResult = response as ScanResult;
+        // Normalize: ensure sugar and grams exist
+        scanResult.foods = scanResult.foods.map((f) => ({
+          ...f,
+          sugar: f.sugar ?? 0,
+          grams: f.grams ?? 100,
+          confidence: f.confidence ?? 95,
+        }));
+        scanResult.totalSugar = scanResult.totalSugar ?? scanResult.foods.reduce((s, f) => s + f.sugar, 0);
+        setResult(scanResult);
+
+        // Check for low-confidence items
+        const lowConfidence = new Set<number>();
+        scanResult.foods.forEach((f, i) => {
+          if (f.confidence < 90) lowConfidence.add(i);
+        });
+        setPendingConfirmations(lowConfidence);
+
         if (Platform.OS !== "web") {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         }
@@ -106,18 +155,20 @@ export default function ScanMealScreen() {
         // Fallback to local analysis when server unavailable
         const mockResult: ScanResult = {
           foods: [
-            { name: "Grilled Chicken Breast", calories: 280, protein: 42, carbs: 0, fat: 12 },
-            { name: "Brown Rice", calories: 215, protein: 5, carbs: 45, fat: 2 },
-            { name: "Steamed Broccoli", calories: 55, protein: 4, carbs: 11, fat: 1 },
+            { name: "Grilled Chicken Breast", grams: 170, calories: 280, protein: 42, carbs: 0, fat: 12, sugar: 0, confidence: 95 },
+            { name: "Brown Rice", grams: 150, calories: 215, protein: 5, carbs: 45, fat: 2, sugar: 1, confidence: 92 },
+            { name: "Steamed Broccoli", grams: 100, calories: 55, protein: 4, carbs: 11, fat: 1, sugar: 2, confidence: 94 },
           ],
           totalCalories: 550,
           totalProtein: 51,
           totalCarbs: 56,
           totalFat: 15,
+          totalSugar: 3,
           anabolicScore: 87,
           mealName: "Grilled Chicken & Rice Bowl",
         };
         setResult(mockResult);
+        setPendingConfirmations(new Set());
         if (Platform.OS !== "web") {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         }
@@ -127,6 +178,103 @@ export default function ScanMealScreen() {
     },
     [analyzeMutation]
   );
+
+  const recalculateTotals = (foods: FoodItem[]): Partial<ScanResult> => {
+    return {
+      totalCalories: foods.reduce((s, f) => s + f.calories, 0),
+      totalProtein: foods.reduce((s, f) => s + f.protein, 0),
+      totalCarbs: foods.reduce((s, f) => s + f.carbs, 0),
+      totalFat: foods.reduce((s, f) => s + f.fat, 0),
+      totalSugar: foods.reduce((s, f) => s + f.sugar, 0),
+    };
+  };
+
+  const handleUpdateGrams = (index: number) => {
+    if (!result) return;
+    const newGrams = parseFloat(editGrams);
+    if (isNaN(newGrams) || newGrams <= 0) return;
+
+    const food = result.foods[index];
+    const ratio = newGrams / food.grams;
+    const updatedFood: FoodItem = {
+      ...food,
+      grams: newGrams,
+      calories: Math.round(food.calories * ratio),
+      protein: Math.round(food.protein * ratio * 10) / 10,
+      carbs: Math.round(food.carbs * ratio * 10) / 10,
+      fat: Math.round(food.fat * ratio * 10) / 10,
+      sugar: Math.round(food.sugar * ratio * 10) / 10,
+    };
+
+    const newFoods = [...result.foods];
+    newFoods[index] = updatedFood;
+    setResult({ ...result, ...recalculateTotals(newFoods), foods: newFoods });
+    setEditingIndex(null);
+    setEditGrams("");
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+  };
+
+  const handleRemoveFood = (index: number) => {
+    if (!result) return;
+    const newFoods = result.foods.filter((_, i) => i !== index);
+    if (newFoods.length === 0) {
+      handleReset();
+      return;
+    }
+    setResult({ ...result, ...recalculateTotals(newFoods), foods: newFoods });
+    // Remove from pending confirmations
+    const newPending = new Set<number>();
+    pendingConfirmations.forEach((i) => {
+      if (i < index) newPending.add(i);
+      else if (i > index) newPending.add(i - 1);
+    });
+    setPendingConfirmations(newPending);
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+  };
+
+  const handleConfirmFood = (index: number) => {
+    const newPending = new Set(pendingConfirmations);
+    newPending.delete(index);
+    setPendingConfirmations(newPending);
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+  };
+
+  const handleAddFood = () => {
+    if (!result || !addName.trim()) return;
+    const newFood: FoodItem = {
+      name: addName.trim(),
+      grams: parseFloat(addGrams) || 100,
+      calories: parseInt(addCalories) || 0,
+      protein: parseFloat(addProtein) || 0,
+      carbs: parseFloat(addCarbs) || 0,
+      fat: parseFloat(addFat) || 0,
+      sugar: parseFloat(addSugar) || 0,
+      confidence: 100, // Manual entry = 100% confidence
+    };
+    const newFoods = [...result.foods, newFood];
+    setResult({ ...result, ...recalculateTotals(newFoods), foods: newFoods });
+    setShowAddModal(false);
+    resetAddForm();
+    if (Platform.OS !== "web") {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }
+  };
+
+  const resetAddForm = () => {
+    setAddName("");
+    setAddGrams("");
+    setAddCalories("");
+    setAddProtein("");
+    setAddCarbs("");
+    setAddFat("");
+    setAddSugar("");
+  };
 
   const handleConfirm = useCallback(async () => {
     if (!result) return;
@@ -149,6 +297,7 @@ export default function ScanMealScreen() {
       protein: result.totalProtein,
       carbs: result.totalCarbs,
       fat: result.totalFat,
+      sugar: result.totalSugar,
       anabolicScore: result.anabolicScore,
       imageUri: imageUri || undefined,
     });
@@ -159,6 +308,8 @@ export default function ScanMealScreen() {
     setImageUri(null);
     setResult(null);
     clearError();
+    setEditingIndex(null);
+    setPendingConfirmations(new Set());
   };
 
   return (
@@ -253,7 +404,7 @@ export default function ScanMealScreen() {
             </View>
             <Text style={styles.scanningText}>Analyzing with AI...</Text>
             <Text style={styles.scanningSubtext}>
-              Identifying protein density and anabolic score
+              Identifying foods, macros, sugar content, and anabolic score
             </Text>
           </View>
         )}
@@ -298,15 +449,121 @@ export default function ScanMealScreen() {
               </View>
             </View>
 
+            {/* Sugar Row */}
+            <View style={styles.sugarRow}>
+              <Text style={styles.sugarIcon}>🍬</Text>
+              <Text style={styles.sugarLabel}>Sugar</Text>
+              <Text style={styles.sugarValue}>{result.totalSugar}g</Text>
+            </View>
+
+            {/* Confidence Alerts */}
+            {pendingConfirmations.size > 0 && (
+              <View style={styles.confidenceBanner}>
+                <IconSymbol name="questionmark.circle" size={18} color="#FFB300" />
+                <Text style={styles.confidenceText}>
+                  {pendingConfirmations.size} item{pendingConfirmations.size > 1 ? "s need" : " needs"} confirmation
+                </Text>
+              </View>
+            )}
+
             {/* Food Items */}
             <View style={styles.foodList}>
-              <Text style={styles.foodListTitle}>Detected Foods</Text>
+              <View style={styles.foodListHeader}>
+                <Text style={styles.foodListTitle}>Detected Foods</Text>
+                <TouchableOpacity
+                  style={styles.addItemButton}
+                  onPress={() => setShowAddModal(true)}
+                  activeOpacity={0.7}
+                >
+                  <IconSymbol name="plus" size={16} color={ELECTRIC_BLUE} />
+                  <Text style={styles.addItemText}>Add Item</Text>
+                </TouchableOpacity>
+              </View>
+
               {result.foods.map((food, i) => (
                 <View key={i} style={styles.foodItem}>
-                  <Text style={styles.foodName}>{food.name}</Text>
-                  <Text style={styles.foodMacros}>
-                    {food.calories} cal · P:{food.protein}g · C:{food.carbs}g · F:{food.fat}g
-                  </Text>
+                  {/* Confidence prompt */}
+                  {pendingConfirmations.has(i) && (
+                    <View style={styles.confirmPrompt}>
+                      <Text style={styles.confirmPromptText}>
+                        Is this <Text style={styles.confirmFoodName}>{food.name}</Text>?
+                      </Text>
+                      <View style={styles.confirmActions}>
+                        <TouchableOpacity
+                          style={styles.confirmYes}
+                          onPress={() => handleConfirmFood(i)}
+                          activeOpacity={0.7}
+                        >
+                          <Text style={styles.confirmYesText}>Yes</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={styles.confirmNo}
+                          onPress={() => handleRemoveFood(i)}
+                          activeOpacity={0.7}
+                        >
+                          <Text style={styles.confirmNoText}>Remove</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  )}
+
+                  <View style={styles.foodItemRow}>
+                    <View style={styles.foodInfo}>
+                      <View style={styles.foodNameRow}>
+                        <Text style={styles.foodName}>{food.name}</Text>
+                        {food.confidence < 90 && (
+                          <View style={styles.lowConfBadge}>
+                            <Text style={styles.lowConfText}>{food.confidence}%</Text>
+                          </View>
+                        )}
+                      </View>
+                      <Text style={styles.foodMacros}>
+                        {food.calories} cal · P:{food.protein}g · C:{food.carbs}g · F:{food.fat}g · S:{food.sugar}g
+                      </Text>
+                    </View>
+                    <View style={styles.foodActions}>
+                      {/* Grams edit */}
+                      {editingIndex === i ? (
+                        <View style={styles.gramsEditRow}>
+                          <TextInput
+                            style={styles.gramsInput}
+                            value={editGrams}
+                            onChangeText={setEditGrams}
+                            keyboardType="numeric"
+                            placeholder={String(food.grams)}
+                            placeholderTextColor="#5A6A7A"
+                            returnKeyType="done"
+                            onSubmitEditing={() => handleUpdateGrams(i)}
+                            autoFocus
+                          />
+                          <Text style={styles.gramsUnit}>g</Text>
+                          <TouchableOpacity onPress={() => handleUpdateGrams(i)} activeOpacity={0.7}>
+                            <IconSymbol name="checkmark" size={16} color="#00E676" />
+                          </TouchableOpacity>
+                          <TouchableOpacity onPress={() => { setEditingIndex(null); setEditGrams(""); }} activeOpacity={0.7}>
+                            <IconSymbol name="xmark" size={16} color="#FF3D3D" />
+                          </TouchableOpacity>
+                        </View>
+                      ) : (
+                        <TouchableOpacity
+                          style={styles.gramsButton}
+                          onPress={() => { setEditingIndex(i); setEditGrams(String(food.grams)); }}
+                          activeOpacity={0.7}
+                        >
+                          <Text style={styles.gramsText}>{food.grams}g</Text>
+                          <IconSymbol name="pencil" size={12} color="#5A6A7A" />
+                        </TouchableOpacity>
+                      )}
+                      {/* Remove button */}
+                      <TouchableOpacity
+                        onPress={() => handleRemoveFood(i)}
+                        style={styles.removeFoodButton}
+                        activeOpacity={0.6}
+                      >
+                        <IconSymbol name="minus.circle.fill" size={18} color="#FF3D3D" />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
                 </View>
               ))}
             </View>
@@ -339,6 +596,131 @@ export default function ScanMealScreen() {
           </View>
         )}
       </ScrollView>
+
+      {/* Add Food Item Modal */}
+      <Modal
+        visible={showAddModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowAddModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Add Food Item</Text>
+              <TouchableOpacity onPress={() => { setShowAddModal(false); resetAddForm(); }} activeOpacity={0.7}>
+                <IconSymbol name="xmark" size={22} color="#ECEDEE" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={false}>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Food Name *</Text>
+                <TextInput
+                  style={styles.modalInput}
+                  value={addName}
+                  onChangeText={setAddName}
+                  placeholder="e.g., Grilled Salmon"
+                  placeholderTextColor="#5A6A7A"
+                  returnKeyType="next"
+                />
+              </View>
+
+              <View style={styles.inputRow}>
+                <View style={[styles.inputGroup, { flex: 1 }]}>
+                  <Text style={styles.inputLabel}>Grams</Text>
+                  <TextInput
+                    style={styles.modalInput}
+                    value={addGrams}
+                    onChangeText={setAddGrams}
+                    placeholder="100"
+                    placeholderTextColor="#5A6A7A"
+                    keyboardType="numeric"
+                  />
+                </View>
+                <View style={[styles.inputGroup, { flex: 1 }]}>
+                  <Text style={styles.inputLabel}>Calories</Text>
+                  <TextInput
+                    style={styles.modalInput}
+                    value={addCalories}
+                    onChangeText={setAddCalories}
+                    placeholder="0"
+                    placeholderTextColor="#5A6A7A"
+                    keyboardType="numeric"
+                  />
+                </View>
+              </View>
+
+              <View style={styles.inputRow}>
+                <View style={[styles.inputGroup, { flex: 1 }]}>
+                  <Text style={styles.inputLabel}>Protein (g)</Text>
+                  <TextInput
+                    style={styles.modalInput}
+                    value={addProtein}
+                    onChangeText={setAddProtein}
+                    placeholder="0"
+                    placeholderTextColor="#5A6A7A"
+                    keyboardType="numeric"
+                  />
+                </View>
+                <View style={[styles.inputGroup, { flex: 1 }]}>
+                  <Text style={styles.inputLabel}>Carbs (g)</Text>
+                  <TextInput
+                    style={styles.modalInput}
+                    value={addCarbs}
+                    onChangeText={setAddCarbs}
+                    placeholder="0"
+                    placeholderTextColor="#5A6A7A"
+                    keyboardType="numeric"
+                  />
+                </View>
+              </View>
+
+              <View style={styles.inputRow}>
+                <View style={[styles.inputGroup, { flex: 1 }]}>
+                  <Text style={styles.inputLabel}>Fat (g)</Text>
+                  <TextInput
+                    style={styles.modalInput}
+                    value={addFat}
+                    onChangeText={setAddFat}
+                    placeholder="0"
+                    placeholderTextColor="#5A6A7A"
+                    keyboardType="numeric"
+                  />
+                </View>
+                <View style={[styles.inputGroup, { flex: 1 }]}>
+                  <Text style={[styles.inputLabel, { color: SUGAR_PURPLE }]}>Sugar (g)</Text>
+                  <TextInput
+                    style={[styles.modalInput, { borderColor: "rgba(192,132,252,0.3)" }]}
+                    value={addSugar}
+                    onChangeText={setAddSugar}
+                    placeholder="0"
+                    placeholderTextColor="#5A6A7A"
+                    keyboardType="numeric"
+                  />
+                </View>
+              </View>
+            </ScrollView>
+
+            <TouchableOpacity
+              style={[styles.modalAddButton, !addName.trim() && { opacity: 0.5 }]}
+              onPress={handleAddFood}
+              disabled={!addName.trim()}
+              activeOpacity={0.8}
+            >
+              <LinearGradient
+                colors={[ELECTRIC_BLUE, "#0055CC"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.modalAddGradient}
+              >
+                <IconSymbol name="plus" size={20} color="#FFFFFF" />
+                <Text style={styles.modalAddText}>Add to Meal</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </ScreenContainer>
   );
 }
@@ -468,6 +850,38 @@ const styles = StyleSheet.create({
   },
   totalValue: { fontSize: 18, fontWeight: "900", color: "#ECEDEE" },
   totalLabel: { fontSize: 10, fontWeight: "600", marginTop: 4, color: "#5A6A7A" },
+
+  // Sugar row
+  sugarRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 12,
+    backgroundColor: "rgba(192,132,252,0.08)",
+    borderWidth: 1,
+    borderColor: "rgba(192,132,252,0.2)",
+  },
+  sugarIcon: { fontSize: 16 },
+  sugarLabel: { fontSize: 14, fontWeight: "700", flex: 1, color: SUGAR_PURPLE },
+  sugarValue: { fontSize: 18, fontWeight: "900", color: SUGAR_PURPLE },
+
+  // Confidence banner
+  confidenceBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 12,
+    backgroundColor: "rgba(255,179,0,0.08)",
+    borderWidth: 1,
+    borderColor: "rgba(255,179,0,0.2)",
+  },
+  confidenceText: { fontSize: 13, fontWeight: "600", color: "#FFB300" },
+
+  // Food list
   foodList: {
     borderRadius: 16,
     borderWidth: 1,
@@ -475,15 +889,114 @@ const styles = StyleSheet.create({
     backgroundColor: "#111820",
     overflow: "hidden",
   },
-  foodListTitle: { fontSize: 15, fontWeight: "700", padding: 14, color: "#ECEDEE" },
+  foodListHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: 14,
+  },
+  foodListTitle: { fontSize: 15, fontWeight: "700", color: "#ECEDEE" },
+  addItemButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    backgroundColor: "rgba(0,122,255,0.1)",
+  },
+  addItemText: { fontSize: 13, fontWeight: "700", color: ELECTRIC_BLUE },
+
+  // Food item
   foodItem: {
-    paddingHorizontal: 14,
-    paddingVertical: 12,
     borderTopWidth: 1,
     borderTopColor: "#1A2533",
   },
-  foodName: { fontSize: 15, fontWeight: "600", color: "#ECEDEE" },
+  foodItemRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  foodInfo: { flex: 1, gap: 2, marginRight: 8 },
+  foodNameRow: { flexDirection: "row", alignItems: "center", gap: 6 },
+  foodName: { fontSize: 15, fontWeight: "600", color: "#ECEDEE", flexShrink: 1 },
+  lowConfBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    backgroundColor: "rgba(255,179,0,0.15)",
+  },
+  lowConfText: { fontSize: 10, fontWeight: "700", color: "#FFB300" },
   foodMacros: { fontSize: 12, marginTop: 4, color: "#7A8A99" },
+  foodActions: { flexDirection: "row", alignItems: "center", gap: 8 },
+
+  // Grams editing
+  gramsButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    backgroundColor: "rgba(255,255,255,0.05)",
+  },
+  gramsText: { fontSize: 13, fontWeight: "600", color: "#ECEDEE" },
+  gramsEditRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  gramsInput: {
+    width: 50,
+    height: 28,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: "#1A2533",
+    backgroundColor: "#0A0F14",
+    color: "#ECEDEE",
+    fontSize: 13,
+    fontWeight: "600",
+    textAlign: "center",
+    paddingHorizontal: 4,
+  },
+  gramsUnit: { fontSize: 12, color: "#5A6A7A" },
+  removeFoodButton: {
+    width: 28,
+    height: 28,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  // Confidence prompt
+  confirmPrompt: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    backgroundColor: "rgba(255,179,0,0.06)",
+  },
+  confirmPromptText: { fontSize: 13, color: "#FFB300", flex: 1 },
+  confirmFoodName: { fontWeight: "800" },
+  confirmActions: { flexDirection: "row", gap: 8 },
+  confirmYes: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 6,
+    backgroundColor: "rgba(0,230,118,0.15)",
+  },
+  confirmYesText: { fontSize: 12, fontWeight: "700", color: "#00E676" },
+  confirmNo: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 6,
+    backgroundColor: "rgba(255,61,61,0.15)",
+  },
+  confirmNoText: { fontSize: 12, fontWeight: "700", color: "#FF3D3D" },
+
+  // Confirm button
   confirmButton: { borderRadius: 27, overflow: "hidden" },
   confirmGradient: {
     flexDirection: "row",
@@ -496,4 +1009,50 @@ const styles = StyleSheet.create({
   confirmButtonText: { color: "#FFFFFF", fontSize: 17, fontWeight: "800" },
   rescanButton: { alignItems: "center", padding: 12 },
   rescanText: { fontSize: 15, fontWeight: "600", color: ELECTRIC_BLUE },
+
+  // Modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.7)",
+    justifyContent: "flex-end",
+  },
+  modalContent: {
+    backgroundColor: "#111820",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 20,
+    maxHeight: "80%",
+  },
+  modalHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 16,
+  },
+  modalTitle: { fontSize: 20, fontWeight: "800", color: "#ECEDEE" },
+  modalScroll: { marginBottom: 16 },
+  inputGroup: { marginBottom: 12 },
+  inputLabel: { fontSize: 12, fontWeight: "700", color: "#7A8A99", marginBottom: 6 },
+  inputRow: { flexDirection: "row", gap: 12 },
+  modalInput: {
+    height: 44,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#1A2533",
+    backgroundColor: "#0A0F14",
+    color: "#ECEDEE",
+    fontSize: 15,
+    fontWeight: "600",
+    paddingHorizontal: 14,
+  },
+  modalAddButton: { borderRadius: 14, overflow: "hidden" },
+  modalAddGradient: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    height: 50,
+    borderRadius: 14,
+  },
+  modalAddText: { color: "#FFFFFF", fontSize: 16, fontWeight: "700" },
 });
