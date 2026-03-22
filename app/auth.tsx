@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
   Alert,
   Modal,
+  Image,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
@@ -171,6 +172,11 @@ export default function AuthScreen() {
         >
           {/* Brand Header */}
           <View style={styles.header}>
+            <Image
+              source={require("../assets/images/icon.png")}
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
             <Text style={styles.logo}>MUSCLE AI</Text>
             <Text style={styles.tagline}>Hypertrophy-Optimized Nutrition</Text>
           </View>
@@ -353,7 +359,12 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: "center",
-    marginBottom: 40,
+    marginBottom: 32,
+  },
+  logoImage: {
+    width: 120,
+    height: 120,
+    marginBottom: 16,
   },
   logo: {
     fontSize: 36,

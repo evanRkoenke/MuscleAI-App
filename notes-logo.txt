@@ -1,0 +1,3 @@
+icon.png is the correct black/white geometric flexing arm logo on black background, 1024x1536 PNG.
+Need to add Image import and show this logo on the auth screen above the MUSCLE AI title.
+The logo file path for require: @/assets/images/icon.png or require("../assets/images/icon.png")

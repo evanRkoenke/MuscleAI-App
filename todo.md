@@ -158,3 +158,6 @@
 - [x] Update theme.config.js to monochrome black/white/silver palette matching logo
 - [x] Update all hardcoded colors across 14 screen files to monochrome palette
 - [x] Update app.config.ts logoUrl and splash background colors to pure black
+
+## Auth Screen Logo
+- [x] Add geometric arm logo prominently on auth/login screen above MUSCLE AI title
