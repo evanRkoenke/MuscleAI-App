@@ -9,7 +9,7 @@ import { Platform } from "react-native";
 import * as SystemUI from "expo-system-ui";
 
 // Set root view background to dark immediately on app load
-SystemUI.setBackgroundColorAsync("#0A0E14");
+SystemUI.setBackgroundColorAsync("#000000");
 import "@/lib/_core/nativewind-pressable";
 import { ThemeProvider } from "@/lib/theme-provider";
 import {
@@ -83,7 +83,7 @@ export default function RootLayout() {
       <trpc.Provider client={trpcClient} queryClient={queryClient}>
         <QueryClientProvider client={queryClient}>
           <AppProvider>
-            <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: "#0A0E14" } }}>
+            <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: "#000000" } }}>
               <Stack.Screen name="(tabs)" />
               <Stack.Screen name="onboarding" options={{ gestureEnabled: false }} />
               <Stack.Screen name="auth" options={{ gestureEnabled: false }} />

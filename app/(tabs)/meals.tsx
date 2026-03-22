@@ -14,8 +14,8 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useApp } from "@/lib/app-context";
 import * as Haptics from "expo-haptics";
 
-const ELECTRIC_BLUE = "#007AFF";
-const SUGAR_PURPLE = "#C084FC";
+const PRIMARY_WHITE = "#FFFFFF";
+const SUGAR_GRAY = "#A0A0A0";
 
 const MEAL_TYPES = ["breakfast", "lunch", "dinner", "snack"] as const;
 const MEAL_LABELS: Record<string, string> = {
@@ -89,7 +89,7 @@ export default function MealsScreen() {
         <View style={styles.mealNameRow}>
           <Text style={styles.mealName} numberOfLines={1}>{meal.name}</Text>
           {meal.isFavorite && (
-            <IconSymbol name="star.fill" size={14} color="#FFB300" />
+            <IconSymbol name="star.fill" size={14} color="#B0B0B0" />
           )}
         </View>
         <Text style={styles.mealMacros}>
@@ -105,7 +105,7 @@ export default function MealsScreen() {
           <IconSymbol
             name="star.fill"
             size={18}
-            color={meal.isFavorite ? "#FFB300" : "#3A4A5A"}
+            color={meal.isFavorite ? "#B0B0B0" : "#444444"}
           />
         </TouchableOpacity>
         <TouchableOpacity
@@ -140,7 +140,7 @@ export default function MealsScreen() {
           onPress={() => (router as any).push("/scan-meal")}
           activeOpacity={0.7}
         >
-          <IconSymbol name="plus" size={18} color={ELECTRIC_BLUE} />
+          <IconSymbol name="plus" size={18} color={"#FFFFFF"} />
           <Text style={styles.addMealText}>Add {item.label}</Text>
         </TouchableOpacity>
       )}
@@ -186,7 +186,7 @@ export default function MealsScreen() {
           onPress={() => setActiveTab("favorites")}
           activeOpacity={0.7}
         >
-          <IconSymbol name="star.fill" size={14} color={activeTab === "favorites" ? ELECTRIC_BLUE : "#5A6A7A"} />
+          <IconSymbol name="star.fill" size={14} color={activeTab === "favorites" ? "#FFFFFF" : "#666666"} />
           <Text style={[styles.tabText, activeTab === "favorites" && styles.tabTextActive]}>
             Favorites
           </Text>
@@ -203,7 +203,7 @@ export default function MealsScreen() {
             </View>
             <View style={styles.summaryDivider} />
             <View style={styles.summaryItem}>
-              <Text style={[styles.summaryValue, { color: ELECTRIC_BLUE }]}>
+              <Text style={[styles.summaryValue, { color: "#FFFFFF" }]}>
                 {Math.max(0, profile.calorieGoal - todayCalories)}
               </Text>
               <Text style={styles.summaryLabel}>Remaining</Text>
@@ -240,7 +240,7 @@ export default function MealsScreen() {
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
             <View style={styles.emptyState}>
-              <IconSymbol name="star.fill" size={48} color="#1A2533" />
+              <IconSymbol name="star.fill" size={48} color="#222222" />
               <Text style={styles.emptyTitle}>No Favorites Yet</Text>
               <Text style={styles.emptySubtext}>
                 Tap the star icon on any meal to save it as a favorite
@@ -255,8 +255,8 @@ export default function MealsScreen() {
 
 const styles = StyleSheet.create({
   header: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 8 },
-  headerTitle: { fontSize: 26, fontWeight: "900", color: "#ECEDEE" },
-  headerDate: { fontSize: 14, marginTop: 4, color: "#5A6A7A" },
+  headerTitle: { fontSize: 26, fontWeight: "900", color: "#F0F0F0" },
+  headerDate: { fontSize: 14, marginTop: 4, color: "#666666" },
 
   // Tab switcher
   tabRow: {
@@ -264,9 +264,9 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     marginBottom: 12,
     borderRadius: 12,
-    backgroundColor: "#111820",
+    backgroundColor: "#111111",
     borderWidth: 1,
-    borderColor: "#1A2533",
+    borderColor: "#222222",
     padding: 3,
   },
   tab: {
@@ -279,8 +279,8 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   tabActive: { backgroundColor: "rgba(0,122,255,0.12)" },
-  tabText: { fontSize: 14, fontWeight: "700", color: "#5A6A7A" },
-  tabTextActive: { color: ELECTRIC_BLUE },
+  tabText: { fontSize: 14, fontWeight: "700", color: "#666666" },
+  tabTextActive: { color: "#FFFFFF" },
 
   // Summary
   summaryCard: {
@@ -289,14 +289,14 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: "#1A2533",
-    backgroundColor: "#111820",
+    borderColor: "#222222",
+    backgroundColor: "#111111",
     marginBottom: 12,
   },
   summaryItem: { flex: 1, alignItems: "center" },
-  summaryValue: { fontSize: 22, fontWeight: "900", color: "#ECEDEE" },
-  summaryLabel: { fontSize: 12, marginTop: 4, fontWeight: "600", color: "#5A6A7A" },
-  summaryDivider: { width: 1, height: "100%", backgroundColor: "#1A2533" },
+  summaryValue: { fontSize: 22, fontWeight: "900", color: "#F0F0F0" },
+  summaryLabel: { fontSize: 12, marginTop: 4, fontWeight: "600", color: "#666666" },
+  summaryDivider: { width: 1, height: "100%", backgroundColor: "#222222" },
 
   // Sugar banner
   sugarBanner: {
@@ -312,8 +312,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(192,132,252,0.2)",
   },
-  sugarLabel: { fontSize: 13, fontWeight: "700", color: SUGAR_PURPLE },
-  sugarValue: { fontSize: 16, fontWeight: "900", color: SUGAR_PURPLE },
+  sugarLabel: { fontSize: 13, fontWeight: "700", color: "#A0A0A0" },
+  sugarValue: { fontSize: 16, fontWeight: "900", color: "#A0A0A0" },
 
   // List
   listContent: { paddingHorizontal: 20, paddingBottom: 100, gap: 12 },
@@ -321,13 +321,13 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: "#1A2533",
-    backgroundColor: "#111820",
+    borderColor: "#222222",
+    backgroundColor: "#111111",
   },
   sectionHeader: { flexDirection: "row", alignItems: "center", padding: 14, gap: 8 },
   sectionIcon: { fontSize: 18 },
-  sectionTitle: { fontSize: 16, fontWeight: "700", flex: 1, color: "#ECEDEE" },
-  sectionCalories: { fontSize: 14, fontWeight: "600", color: "#5A6A7A" },
+  sectionTitle: { fontSize: 16, fontWeight: "700", flex: 1, color: "#F0F0F0" },
+  sectionCalories: { fontSize: 14, fontWeight: "600", color: "#666666" },
 
   // Meal item
   mealItem: {
@@ -337,12 +337,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
     borderTopWidth: 1,
-    borderTopColor: "#1A2533",
+    borderTopColor: "#222222",
   },
   mealInfo: { flex: 1, gap: 2, marginRight: 8 },
   mealNameRow: { flexDirection: "row", alignItems: "center", gap: 6 },
-  mealName: { fontSize: 15, fontWeight: "600", color: "#ECEDEE", flexShrink: 1 },
-  mealMacros: { fontSize: 12, color: "#7A8A99" },
+  mealName: { fontSize: 15, fontWeight: "600", color: "#F0F0F0", flexShrink: 1 },
+  mealMacros: { fontSize: 12, color: "#888888" },
   mealActions: { flexDirection: "row", alignItems: "center", gap: 4 },
   actionButton: {
     width: 36,
@@ -352,8 +352,8 @@ const styles = StyleSheet.create({
     borderRadius: 18,
   },
   mealCalContainer: { alignItems: "flex-end", marginLeft: 4 },
-  mealCalories: { fontSize: 18, fontWeight: "800", color: "#ECEDEE" },
-  mealCalLabel: { fontSize: 11, color: "#5A6A7A" },
+  mealCalories: { fontSize: 18, fontWeight: "800", color: "#F0F0F0" },
+  mealCalLabel: { fontSize: 11, color: "#666666" },
 
   // Add meal
   addMealButton: {
@@ -363,9 +363,9 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingVertical: 14,
     borderTopWidth: 1,
-    borderTopColor: "#1A2533",
+    borderTopColor: "#222222",
   },
-  addMealText: { fontSize: 14, fontWeight: "600", color: ELECTRIC_BLUE },
+  addMealText: { fontSize: 14, fontWeight: "600", color: "#FFFFFF" },
 
   // Empty state
   emptyState: {
@@ -373,6 +373,6 @@ const styles = StyleSheet.create({
     paddingVertical: 60,
     gap: 12,
   },
-  emptyTitle: { fontSize: 18, fontWeight: "800", color: "#ECEDEE" },
-  emptySubtext: { fontSize: 14, color: "#5A6A7A", textAlign: "center", maxWidth: 260 },
+  emptyTitle: { fontSize: 18, fontWeight: "800", color: "#F0F0F0" },
+  emptySubtext: { fontSize: 14, color: "#666666", textAlign: "center", maxWidth: 260 },
 });

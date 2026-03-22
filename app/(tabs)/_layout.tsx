@@ -4,10 +4,10 @@ import { HapticTab } from "@/components/haptic-tab";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Platform } from "react-native";
 
-const ELECTRIC_BLUE = "#007AFF";
-const TAB_BAR_BG = "#060A10";
-const TAB_INACTIVE = "#5A6A7A";
-const TAB_BORDER = "#111820";
+;
+const TAB_BAR_BG = "#000000";
+const TAB_INACTIVE = "#666666";
+const TAB_BORDER = "#111111";
 
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
@@ -17,7 +17,7 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: ELECTRIC_BLUE,
+        tabBarActiveTintColor: "#FFFFFF",
         tabBarInactiveTintColor: TAB_INACTIVE,
         headerShown: false,
         tabBarButton: HapticTab,

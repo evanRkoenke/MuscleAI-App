@@ -34,15 +34,15 @@ const PT = 20;
 const PB = 32;
 
 // Brand palette
-const BLUE = "#007AFF";
-const CYAN = "#00D4FF";
-const BG = "#060A10";
-const SURF = "#0D1219";
-const SURF2 = "#111820";
-const BDR = "#1A2533";
-const T1 = "#ECEDEE";
-const T2 = "#7A8A99";
-const T3 = "#3A4A5C";
+const ACCENT = "#FFFFFF";
+const SILVER = "#C0C0C0";
+const BG = "#000000";
+const SURF = "#0A0A0A";
+const SURF2 = "#111111";
+const BDR = "#222222";
+const T1 = "#F0F0F0";
+const T2 = "#888888";
+const T3 = "#444444";
 
 export default function ForecastScreen() {
   const { subscription, profile } = useApp();
@@ -112,7 +112,7 @@ export default function ForecastScreen() {
   return (
     <ScreenContainer containerClassName="bg-transparent">
       <View style={StyleSheet.absoluteFill}>
-        <LinearGradient colors={[BG, "#080D14", BG]} style={StyleSheet.absoluteFill} />
+        <LinearGradient colors={[BG, "#000000", BG]} style={StyleSheet.absoluteFill} />
       </View>
 
       <ScrollView
@@ -122,7 +122,7 @@ export default function ForecastScreen() {
         {/* ═══ HEADER ═══ */}
         <View style={st.hdr}>
           <View style={st.hdrLeft}>
-            <IconSymbol name="chart.line.uptrend.xyaxis" size={18} color={BLUE} />
+            <IconSymbol name="chart.line.uptrend.xyaxis" size={18} color={ACCENT} />
             <Text style={st.hdrTitle}>ANABOLIC FORECAST</Text>
           </View>
           <TouchableOpacity
@@ -149,8 +149,8 @@ export default function ForecastScreen() {
             <Svg width={CHART_W} height={CHART_H}>
               <Defs>
                 <SvgGrad id="fillG" x1="0" y1="0" x2="0" y2="1">
-                  <Stop offset="0" stopColor={BLUE} stopOpacity="0.25" />
-                  <Stop offset="1" stopColor={BLUE} stopOpacity="0" />
+                  <Stop offset="0" stopColor={ACCENT} stopOpacity="0.25" />
+                  <Stop offset="1" stopColor={ACCENT} stopOpacity="0" />
                 </SvgGrad>
               </Defs>
 
@@ -228,7 +228,7 @@ export default function ForecastScreen() {
           {!isElite && (
             <View style={st.lockOverlay}>
               <View style={st.lockCircle}>
-                <IconSymbol name="lock.fill" size={28} color={BLUE} />
+                <IconSymbol name="lock.fill" size={28} color={ACCENT} />
               </View>
               <Text style={st.lockLbl}>Premium Feature</Text>
             </View>
@@ -282,7 +282,7 @@ export default function ForecastScreen() {
             >
               <View style={st.unlockGlow} />
               <LinearGradient
-                colors={[BLUE, "#FF3B30"]}
+                colors={[ACCENT, "#FF3B30"]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={st.unlockGrad}
@@ -409,7 +409,7 @@ const st = StyleSheet.create({
     borderRadius: 20,
     padding: 24,
     borderWidth: 1.5,
-    borderColor: BLUE,
+    borderColor: ACCENT,
     backgroundColor: SURF2,
     alignItems: "center",
     gap: 10,
@@ -436,7 +436,7 @@ const st = StyleSheet.create({
     letterSpacing: 1,
     color: T1,
   },
-  priceSave: { fontSize: 13, fontWeight: "700", color: "#00E676" },
+  priceSave: { fontSize: 13, fontWeight: "700", color: "#C0C0C0" },
   unlockBtn: {
     width: "100%",
     marginTop: 6,
@@ -449,7 +449,7 @@ const st = StyleSheet.create({
     right: "10%",
     height: 60,
     borderRadius: 30,
-    backgroundColor: BLUE,
+    backgroundColor: ACCENT,
     opacity: 0.2,
   },
   unlockGrad: {
@@ -457,7 +457,7 @@ const st = StyleSheet.create({
     borderRadius: 26,
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: BLUE,
+    shadowColor: ACCENT,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.5,
     shadowRadius: 16,
@@ -485,10 +485,10 @@ const st = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: BLUE,
+    backgroundColor: ACCENT,
   },
   msInfo: { flex: 1 },
-  msMonth: { fontSize: 14, fontWeight: "700", color: BLUE },
+  msMonth: { fontSize: 14, fontWeight: "700", color: ACCENT },
   msLabel: { fontSize: 13, marginTop: 2, color: T2 },
   msWeight: { fontSize: 16, fontWeight: "700", color: T1 },
 });

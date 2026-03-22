@@ -26,9 +26,9 @@ import {
 } from "@/lib/iap-service";
 import * as Haptics from "expo-haptics";
 
-const ELECTRIC_BLUE = "#007AFF";
-const CYAN_GLOW = "#00D4FF";
-const DARK_BG = "#0A0E14";
+const PRIMARY_WHITE = "#FFFFFF";
+const SILVER = "#C0C0C0";
+const DARK_BG = "#000000";
 
 /**
  * Paywall Screen — Clinical Luxury Design
@@ -269,7 +269,7 @@ export default function PaywallScreen() {
           </Text>
           {isNativeIAPAvailable() && (
             <View style={styles.nativeBadge}>
-              <IconSymbol name="checkmark" size={10} color="#00E676" />
+              <IconSymbol name="checkmark" size={10} color="#C0C0C0" />
               <Text style={styles.nativeBadgeText}>
                 Secure In-App Purchase via {Platform.OS === "ios" ? "Apple" : "Google Play"}
               </Text>
@@ -283,7 +283,7 @@ export default function PaywallScreen() {
             <IconSymbol name="xmark.circle.fill" size={16} color="#FF3D3D" />
             <Text style={styles.errorText}>{purchaseError}</Text>
             <TouchableOpacity onPress={() => setPurchaseError(null)}>
-              <IconSymbol name="xmark" size={14} color="#7A8A99" />
+              <IconSymbol name="xmark" size={14} color="#888888" />
             </TouchableOpacity>
           </View>
         )}
@@ -308,7 +308,7 @@ export default function PaywallScreen() {
               )}
               {plan.highlighted && (
                 <LinearGradient
-                  colors={[ELECTRIC_BLUE, CYAN_GLOW]}
+                  colors={["#FFFFFF", "#C0C0C0"]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={styles.badge}
@@ -332,7 +332,7 @@ export default function PaywallScreen() {
                     <IconSymbol
                       name="checkmark"
                       size={14}
-                      color={plan.highlighted ? CYAN_GLOW : ELECTRIC_BLUE}
+                      color={plan.highlighted ? "#C0C0C0" : "#FFFFFF"}
                     />
                     <Text style={styles.featureText}>{feature}</Text>
                   </View>
@@ -349,7 +349,7 @@ export default function PaywallScreen() {
               >
                 {plan.highlighted ? (
                   <LinearGradient
-                    colors={[ELECTRIC_BLUE, "#FF3B30"]}
+                    colors={["#FFFFFF", "#FF3B30"]}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 0 }}
                     style={styles.subscribeGradient}
@@ -366,7 +366,7 @@ export default function PaywallScreen() {
                     )}
                   </LinearGradient>
                 ) : subscribing === plan.id ? (
-                  <ActivityIndicator color={ELECTRIC_BLUE} />
+                  <ActivityIndicator color={"#FFFFFF"} />
                 ) : (
                   <Text style={styles.subscribeTextBlue}>Subscribe</Text>
                 )}
@@ -423,20 +423,20 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: "800",
-    color: "#ECEDEE",
+    color: "#F0F0F0",
   },
   titleHighlight: {
     fontSize: 32,
     fontWeight: "900",
     letterSpacing: 1,
-    color: ELECTRIC_BLUE,
+    color: "#FFFFFF",
   },
   subtitle: {
     fontSize: 15,
     textAlign: "center",
     marginTop: 8,
     lineHeight: 22,
-    color: "#7A8A99",
+    color: "#888888",
   },
   nativeBadge: {
     flexDirection: "row",
@@ -453,7 +453,7 @@ const styles = StyleSheet.create({
   nativeBadgeText: {
     fontSize: 11,
     fontWeight: "600",
-    color: "#00E676",
+    color: "#C0C0C0",
   },
   errorBanner: {
     flexDirection: "row",
@@ -470,7 +470,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 13,
     lineHeight: 18,
-    color: "#FF6B6B",
+    color: "#FF4444",
   },
   tiersContainer: {
     gap: 16,
@@ -480,14 +480,14 @@ const styles = StyleSheet.create({
     padding: 20,
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: "#1A2533",
-    backgroundColor: "#111820",
+    borderColor: "#222222",
+    backgroundColor: "#111111",
   },
   tierCardHighlighted: {
     borderWidth: 2,
-    borderColor: ELECTRIC_BLUE,
+    borderColor: "#FFFFFF",
     padding: 24,
-    shadowColor: ELECTRIC_BLUE,
+    shadowColor: "#FFFFFF",
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.25,
     shadowRadius: 20,
@@ -514,7 +514,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "900",
     letterSpacing: 2.5,
-    color: "#ECEDEE",
+    color: "#F0F0F0",
   },
   priceRow: {
     flexDirection: "row",
@@ -524,18 +524,18 @@ const styles = StyleSheet.create({
   tierPrice: {
     fontSize: 36,
     fontWeight: "900",
-    color: "#ECEDEE",
+    color: "#F0F0F0",
   },
   tierPeriod: {
     fontSize: 16,
     marginLeft: 4,
-    color: "#5A6A7A",
+    color: "#666666",
   },
   savings: {
     fontSize: 13,
     fontWeight: "700",
     marginTop: 4,
-    color: "#00E676",
+    color: "#C0C0C0",
   },
   featuresContainer: {
     gap: 10,
@@ -549,7 +549,7 @@ const styles = StyleSheet.create({
   featureText: {
     fontSize: 14,
     lineHeight: 20,
-    color: "#ECEDEE",
+    color: "#F0F0F0",
   },
   subscribeButton: {
     borderRadius: 26,
@@ -558,7 +558,7 @@ const styles = StyleSheet.create({
   subscribeButtonOutline: {
     height: 50,
     borderWidth: 1,
-    borderColor: ELECTRIC_BLUE,
+    borderColor: "#FFFFFF",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -577,7 +577,7 @@ const styles = StyleSheet.create({
     letterSpacing: 3,
   },
   subscribeTextBlue: {
-    color: ELECTRIC_BLUE,
+    color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "800",
     letterSpacing: 1,
@@ -590,7 +590,7 @@ const styles = StyleSheet.create({
   skipText: {
     fontSize: 15,
     fontWeight: "500",
-    color: "#5A6A7A",
+    color: "#666666",
   },
   restoreButton: {
     alignItems: "center",
@@ -600,7 +600,7 @@ const styles = StyleSheet.create({
   restoreText: {
     fontSize: 13,
     textDecorationLine: "underline",
-    color: "#5A6A7A",
+    color: "#666666",
   },
   legalText: {
     fontSize: 10,
@@ -608,6 +608,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 16,
     paddingHorizontal: 20,
-    color: "#3A4A5A",
+    color: "#444444",
   },
 });

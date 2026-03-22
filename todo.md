@@ -152,3 +152,9 @@
 - [x] Update eas.json submit config with correct bundle ID
 - [x] Clean up stale native folders (ios/, android/) — none present
 - [x] Remove build blockers (fixed stale scheme reference in oauth.ts, cleaned .expo/web cache)
+
+## Logo & Color Scheme Update
+- [x] Set uploaded geometric arm logo as app icon (icon.png, splash-icon.png, favicon.png, android-icon-foreground.png)
+- [x] Update theme.config.js to monochrome black/white/silver palette matching logo
+- [x] Update all hardcoded colors across 14 screen files to monochrome palette
+- [x] Update app.config.ts logoUrl and splash background colors to pure black

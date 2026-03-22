@@ -17,8 +17,8 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useApp } from "@/lib/app-context";
 import * as Haptics from "expo-haptics";
 
-const ELECTRIC_BLUE = "#007AFF";
-const CYAN_GLOW = "#00D4FF";
+const PRIMARY_WHITE = "#FFFFFF";
+const SILVER = "#C0C0C0";
 const CHART_WIDTH = 320;
 const CHART_HEIGHT = 180;
 const CHART_PADDING = 40;
@@ -83,7 +83,7 @@ export default function TrackScreen() {
             activeOpacity={0.8}
           >
             <LinearGradient
-              colors={[ELECTRIC_BLUE, CYAN_GLOW]}
+              colors={["#FFFFFF", "#C0C0C0"]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={styles.logButtonGradient}
@@ -108,7 +108,7 @@ export default function TrackScreen() {
             <Text
               style={[
                 styles.weightDiff,
-                { color: latestWeight > profile.targetWeight ? "#FFB300" : "#00E676" },
+                { color: latestWeight > profile.targetWeight ? "#B0B0B0" : "#C0C0C0" },
               ]}
             >
               {latestWeight > profile.targetWeight ? "+" : ""}
@@ -147,8 +147,8 @@ export default function TrackScreen() {
             <Svg width={CHART_WIDTH} height={CHART_HEIGHT}>
               <Defs>
                 <SvgGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
-                  <Stop offset="0" stopColor={ELECTRIC_BLUE} />
-                  <Stop offset="1" stopColor={CYAN_GLOW} />
+                  <Stop offset="0" stopColor={"#FFFFFF"} />
+                  <Stop offset="1" stopColor={"#C0C0C0"} />
                 </SvgGradient>
               </Defs>
               {[0.25, 0.5, 0.75].map((ratio) => (
@@ -158,7 +158,7 @@ export default function TrackScreen() {
                   y1={CHART_PADDING + ratio * (CHART_HEIGHT - CHART_PADDING * 2)}
                   x2={CHART_WIDTH - CHART_PADDING}
                   y2={CHART_PADDING + ratio * (CHART_HEIGHT - CHART_PADDING * 2)}
-                  stroke="#1A2533"
+                  stroke="#222222"
                   strokeWidth={1}
                   strokeDasharray="4,4"
                 />
@@ -174,7 +174,7 @@ export default function TrackScreen() {
             </Svg>
           ) : (
             <View style={styles.chartEmpty}>
-              <IconSymbol name="chart.bar.fill" size={40} color="#5A6A7A" />
+              <IconSymbol name="chart.bar.fill" size={40} color="#666666" />
               <Text style={styles.chartEmptyText}>
                 Log at least 2 weights to see your chart
               </Text>
@@ -213,7 +213,7 @@ export default function TrackScreen() {
           onPress={() => (router as any).push("/gains-card")}
           activeOpacity={0.7}
         >
-          <IconSymbol name="square.and.arrow.up" size={20} color={ELECTRIC_BLUE} />
+          <IconSymbol name="square.and.arrow.up" size={20} color={"#FFFFFF"} />
           <Text style={styles.shareButtonText}>Share Progress</Text>
         </TouchableOpacity>
       </ScrollView>
@@ -227,7 +227,7 @@ export default function TrackScreen() {
               <TextInput
                 style={styles.modalInputText}
                 placeholder={`Weight (${profile.unit})`}
-                placeholderTextColor="#5A6A7A"
+                placeholderTextColor="#666666"
                 value={newWeight}
                 onChangeText={setNewWeight}
                 keyboardType="decimal-pad"
@@ -267,7 +267,7 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     paddingBottom: 16,
   },
-  headerTitle: { fontSize: 26, fontWeight: "900", color: "#ECEDEE" },
+  headerTitle: { fontSize: 26, fontWeight: "900", color: "#F0F0F0" },
   logButton: { borderRadius: 20, overflow: "hidden" },
   logButtonGradient: {
     flexDirection: "row",
@@ -282,21 +282,21 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     padding: 20,
     borderWidth: 1,
-    borderColor: "#1A2533",
-    backgroundColor: "#111820",
+    borderColor: "#222222",
+    backgroundColor: "#111111",
     alignItems: "center",
     marginBottom: 16,
   },
-  weightValue: { fontSize: 48, fontWeight: "900", color: "#ECEDEE" },
-  weightUnit: { fontSize: 20, fontWeight: "500", color: "#5A6A7A" },
-  weightLabel: { fontSize: 13, fontWeight: "600", color: "#5A6A7A", marginTop: 4 },
+  weightValue: { fontSize: 48, fontWeight: "900", color: "#F0F0F0" },
+  weightUnit: { fontSize: 20, fontWeight: "500", color: "#666666" },
+  weightLabel: { fontSize: 13, fontWeight: "600", color: "#666666", marginTop: 4 },
   weightTargetRow: {
     flexDirection: "row",
     gap: 12,
     marginTop: 8,
     alignItems: "center",
   },
-  weightTarget: { fontSize: 14, fontWeight: "600", color: ELECTRIC_BLUE },
+  weightTarget: { fontSize: 14, fontWeight: "600", color: "#FFFFFF" },
   weightDiff: { fontSize: 14, fontWeight: "700" },
   timeRangeRow: { flexDirection: "row", gap: 8, marginBottom: 16 },
   timeRangeButton: {
@@ -304,37 +304,37 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: "#1A2533",
+    borderColor: "#222222",
     alignItems: "center",
   },
   timeRangeActive: {
     backgroundColor: "rgba(0,122,255,0.12)",
-    borderColor: ELECTRIC_BLUE,
+    borderColor: "#FFFFFF",
   },
-  timeRangeText: { fontSize: 13, fontWeight: "700", color: "#5A6A7A" },
-  timeRangeTextActive: { color: ELECTRIC_BLUE },
+  timeRangeText: { fontSize: 13, fontWeight: "700", color: "#666666" },
+  timeRangeTextActive: { color: "#FFFFFF" },
   chartCard: {
     borderRadius: 18,
     padding: 16,
     borderWidth: 1,
-    borderColor: "#1A2533",
-    backgroundColor: "#111820",
+    borderColor: "#222222",
+    backgroundColor: "#111111",
     alignItems: "center",
     marginBottom: 24,
   },
   chartEmpty: { alignItems: "center", paddingVertical: 30, gap: 10 },
-  chartEmptyText: { fontSize: 14, color: "#5A6A7A", textAlign: "center" },
-  sectionTitle: { fontSize: 18, fontWeight: "800", color: "#ECEDEE", marginBottom: 12 },
+  chartEmptyText: { fontSize: 14, color: "#666666", textAlign: "center" },
+  sectionTitle: { fontSize: 18, fontWeight: "800", color: "#F0F0F0", marginBottom: 12 },
   entryRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#1A2533",
+    borderBottomColor: "#222222",
   },
-  entryDate: { fontSize: 15, color: "#7A8A99" },
-  entryWeight: { fontSize: 15, fontWeight: "700", color: "#ECEDEE" },
-  emptyText: { fontSize: 14, color: "#5A6A7A", textAlign: "center", paddingVertical: 20 },
+  entryDate: { fontSize: 15, color: "#888888" },
+  entryWeight: { fontSize: 15, fontWeight: "700", color: "#F0F0F0" },
+  emptyText: { fontSize: 14, color: "#666666", textAlign: "center", paddingVertical: 20 },
   shareButton: {
     flexDirection: "row",
     alignItems: "center",
@@ -344,9 +344,9 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: ELECTRIC_BLUE,
+    borderColor: "#FFFFFF",
   },
-  shareButtonText: { fontSize: 15, fontWeight: "700", color: ELECTRIC_BLUE },
+  shareButtonText: { fontSize: 15, fontWeight: "700", color: "#FFFFFF" },
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.75)",
@@ -360,15 +360,15 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 24,
     gap: 16,
-    backgroundColor: "#111820",
+    backgroundColor: "#111111",
     borderWidth: 1,
-    borderColor: "#1A2533",
+    borderColor: "#222222",
   },
-  modalTitle: { fontSize: 20, fontWeight: "800", textAlign: "center", color: "#ECEDEE" },
+  modalTitle: { fontSize: 20, fontWeight: "800", textAlign: "center", color: "#F0F0F0" },
   modalInputContainer: {
     borderWidth: 1,
-    borderColor: "#1A2533",
-    backgroundColor: "#0A0E14",
+    borderColor: "#222222",
+    backgroundColor: "#000000",
     borderRadius: 12,
     overflow: "hidden",
   },
@@ -377,7 +377,7 @@ const styles = StyleSheet.create({
     height: 52,
     fontSize: 20,
     fontWeight: "700",
-    color: "#ECEDEE",
+    color: "#F0F0F0",
     textAlign: "center",
   },
   modalButtons: { flexDirection: "row", gap: 12 },
@@ -386,16 +386,16 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#1A2533",
+    borderColor: "#222222",
     justifyContent: "center",
     alignItems: "center",
   },
-  modalCancelText: { fontSize: 16, fontWeight: "700", color: "#7A8A99" },
+  modalCancelText: { fontSize: 16, fontWeight: "700", color: "#888888" },
   modalSaveButton: {
     flex: 1,
     height: 48,
     borderRadius: 14,
-    backgroundColor: ELECTRIC_BLUE,
+    backgroundColor: "#FFFFFF",
     justifyContent: "center",
     alignItems: "center",
   },

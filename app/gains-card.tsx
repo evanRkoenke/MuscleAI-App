@@ -15,9 +15,9 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useApp } from "@/lib/app-context";
 import * as Haptics from "expo-haptics";
 
-const ELECTRIC_BLUE = "#007AFF";
-const CYAN_GLOW = "#00D4FF";
-const PROTEIN_CYAN = "#00E5FF";
+const PRIMARY_WHITE = "#FFFFFF";
+const SILVER = "#C0C0C0";
+const PROTEIN_LIGHT = "#E0E0E0";
 
 export default function GainsCardScreen() {
   const router = useRouter();
@@ -73,7 +73,7 @@ export default function GainsCardScreen() {
           style={styles.backButton}
           activeOpacity={0.7}
         >
-          <IconSymbol name="xmark" size={24} color="#ECEDEE" />
+          <IconSymbol name="xmark" size={24} color="#F0F0F0" />
         </TouchableOpacity>
         <Text style={styles.topBarTitle}>Gains Card</Text>
         <View style={styles.backButton} />
@@ -109,7 +109,7 @@ export default function GainsCardScreen() {
               <Text
                 style={[
                   styles.cardWeightChange,
-                  { color: stats.change > 0 ? "#00E676" : "#FF3D3D" },
+                  { color: stats.change > 0 ? "#C0C0C0" : "#FF3D3D" },
                 ]}
               >
                 {stats.change > 0 ? "+" : ""}
@@ -121,7 +121,7 @@ export default function GainsCardScreen() {
           {/* Stats Grid */}
           <View style={styles.cardStatsGrid}>
             <View style={styles.cardStatItem}>
-              <Text style={[styles.cardStatValue, { color: PROTEIN_CYAN }]}>{todayMacros.protein}g</Text>
+              <Text style={[styles.cardStatValue, { color: "#E0E0E0" }]}>{todayMacros.protein}g</Text>
               <Text style={styles.cardStatLabel}>PROTEIN</Text>
             </View>
             <View style={styles.cardStatItem}>
@@ -136,9 +136,9 @@ export default function GainsCardScreen() {
 
           {/* Macro Bars */}
           <View style={styles.cardMacroBars}>
-            <MacroBar label="Protein" value={todayMacros.protein} goal={profile.proteinGoal} color={PROTEIN_CYAN} />
-            <MacroBar label="Carbs" value={todayMacros.carbs} goal={profile.carbsGoal} color="#FFB300" />
-            <MacroBar label="Fat" value={todayMacros.fat} goal={profile.fatGoal} color="#FF6B6B" />
+            <MacroBar label="Protein" value={todayMacros.protein} goal={profile.proteinGoal} color={"#E0E0E0"} />
+            <MacroBar label="Carbs" value={todayMacros.carbs} goal={profile.carbsGoal} color="#B0B0B0" />
+            <MacroBar label="Fat" value={todayMacros.fat} goal={profile.fatGoal} color="#FF4444" />
           </View>
 
           {/* Card Footer */}
@@ -163,7 +163,7 @@ export default function GainsCardScreen() {
           activeOpacity={0.8}
         >
           <LinearGradient
-            colors={[ELECTRIC_BLUE, CYAN_GLOW]}
+            colors={["#FFFFFF", "#C0C0C0"]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={styles.shareGradient}
@@ -223,7 +223,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   backButton: { width: 40, height: 40, justifyContent: "center", alignItems: "center" },
-  topBarTitle: { fontSize: 18, fontWeight: "800", color: "#ECEDEE" },
+  topBarTitle: { fontSize: 18, fontWeight: "800", color: "#F0F0F0" },
   cardContainer: { flex: 1, justifyContent: "center", alignItems: "center", paddingHorizontal: 24 },
   gainsCard: {
     width: "100%",
@@ -232,38 +232,38 @@ const styles = StyleSheet.create({
     padding: 24,
     borderWidth: 2,
     borderColor: "rgba(0,122,255,0.25)",
-    backgroundColor: "#0A0E14",
+    backgroundColor: "#000000",
     gap: 20,
     overflow: "hidden",
   },
   cardHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  cardLogo: { fontSize: 20, fontWeight: "900", letterSpacing: 3, color: ELECTRIC_BLUE },
+  cardLogo: { fontSize: 20, fontWeight: "900", letterSpacing: 3, color: "#FFFFFF" },
   cardBadgeContainer: {
     backgroundColor: "rgba(0,229,255,0.1)",
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 8,
   },
-  cardBadge: { fontSize: 11, fontWeight: "900", color: PROTEIN_CYAN, letterSpacing: 1 },
+  cardBadge: { fontSize: 11, fontWeight: "900", color: "#E0E0E0", letterSpacing: 1 },
   cardWeightSection: { alignItems: "center", gap: 4 },
-  cardWeightLabel: { fontSize: 11, fontWeight: "800", color: "#5A6A7A", letterSpacing: 2 },
-  cardWeightValue: { fontSize: 48, fontWeight: "900", color: "#ECEDEE" },
-  cardWeightUnit: { fontSize: 20, fontWeight: "500", color: "#5A6A7A" },
+  cardWeightLabel: { fontSize: 11, fontWeight: "800", color: "#666666", letterSpacing: 2 },
+  cardWeightValue: { fontSize: 48, fontWeight: "900", color: "#F0F0F0" },
+  cardWeightUnit: { fontSize: 20, fontWeight: "500", color: "#666666" },
   cardWeightChange: { fontSize: 14, fontWeight: "600" },
   cardStatsGrid: { flexDirection: "row", justifyContent: "space-around" },
   cardStatItem: { alignItems: "center", gap: 4 },
-  cardStatValue: { fontSize: 22, fontWeight: "900", color: "#ECEDEE" },
-  cardStatLabel: { fontSize: 9, fontWeight: "800", color: "#5A6A7A", letterSpacing: 1.5 },
+  cardStatValue: { fontSize: 22, fontWeight: "900", color: "#F0F0F0" },
+  cardStatLabel: { fontSize: 9, fontWeight: "800", color: "#666666", letterSpacing: 1.5 },
   cardMacroBars: { gap: 10 },
   macroBarContainer: { gap: 4 },
   macroBarHeader: { flexDirection: "row", justifyContent: "space-between" },
-  macroBarLabel: { fontSize: 12, fontWeight: "600", color: "#5A6A7A" },
-  macroBarValue: { fontSize: 12, fontWeight: "700", color: "#ECEDEE" },
+  macroBarLabel: { fontSize: 12, fontWeight: "600", color: "#666666" },
+  macroBarValue: { fontSize: 12, fontWeight: "700", color: "#F0F0F0" },
   macroBarTrack: { height: 6, borderRadius: 3, overflow: "hidden" },
   macroBarFill: { height: "100%", borderRadius: 3 },
   cardFooter: { flexDirection: "row", justifyContent: "space-between" },
-  cardFooterText: { fontSize: 12, fontWeight: "700", color: ELECTRIC_BLUE },
-  cardFooterDate: { fontSize: 12, color: "#5A6A7A" },
+  cardFooterText: { fontSize: 12, fontWeight: "700", color: "#FFFFFF" },
+  cardFooterDate: { fontSize: 12, color: "#666666" },
   shareSection: { paddingHorizontal: 24, paddingBottom: 24, gap: 12 },
   shareButton: { borderRadius: 27, overflow: "hidden" },
   shareGradient: {
@@ -281,10 +281,10 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#1A2533",
-    backgroundColor: "#111820",
+    borderColor: "#222222",
+    backgroundColor: "#111111",
     justifyContent: "center",
     alignItems: "center",
   },
-  shareSmallText: { fontSize: 14, fontWeight: "600", color: "#ECEDEE" },
+  shareSmallText: { fontSize: 14, fontWeight: "600", color: "#F0F0F0" },
 });

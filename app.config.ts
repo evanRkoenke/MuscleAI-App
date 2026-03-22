@@ -8,7 +8,7 @@ const env = {
   appSlug: "muscle-ai",
   // S3 URL of the app logo - set this to the URL returned by generate_image when creating custom logo
   // Leave empty to use the default icon from assets/images/icon.png
-  logoUrl: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663415661115/RkdcfIKRdFkHHdqq.png",
+  logoUrl: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663415661115/nvGTGPLDGVYblmTC.png",
   // Deep link scheme for OAuth callbacks and universal links
   scheme: "muscleai",
   // Bundle identifiers — must match your Apple Developer and Google Play accounts
@@ -24,12 +24,12 @@ const config: ExpoConfig = {
   icon: "./assets/images/icon.png",
   scheme: env.scheme,
   userInterfaceStyle: "dark",
-  backgroundColor: "#0A0E14",
+  backgroundColor: "#000000",
   newArchEnabled: true,
   ios: {
     supportsTablet: true,
     bundleIdentifier: env.iosBundleId,
-    backgroundColor: "#0A0E14",
+    backgroundColor: "#000000",
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
       UIUserInterfaceStyle: "Dark",
@@ -39,7 +39,7 @@ const config: ExpoConfig = {
   },
   android: {
     adaptiveIcon: {
-      backgroundColor: "#0A0E14",
+      backgroundColor: "#000000",
       foregroundImage: "./assets/images/android-icon-foreground.png",
       backgroundImage: "./assets/images/android-icon-background.png",
       monochromeImage: "./assets/images/android-icon-monochrome.png",
@@ -89,9 +89,9 @@ const config: ExpoConfig = {
         image: "./assets/images/splash-icon.png",
         imageWidth: 200,
         resizeMode: "contain",
-        backgroundColor: "#0A0E14",
+        backgroundColor: "#000000",
         dark: {
-          backgroundColor: "#0A0E14",
+          backgroundColor: "#000000",
         },
       },
     ],

@@ -20,7 +20,7 @@ import { useColors } from "@/hooks/use-colors";
 import { useApp } from "@/lib/app-context";
 import * as Haptics from "expo-haptics";
 
-const ELECTRIC_BLUE = "#007AFF";
+const PRIMARY_WHITE = "#FFFFFF";
 
 type AuthMode = "login" | "signup" | "forgot";
 
@@ -189,11 +189,11 @@ export default function AuthScreen() {
             {/* Name field (signup only) */}
             {mode === "signup" && (
               <View style={styles.inputContainer}>
-                <IconSymbol name="person.fill" size={20} color="#5A6A7A" />
+                <IconSymbol name="person.fill" size={20} color="#666666" />
                 <TextInput
                   style={styles.input}
                   placeholder="Full Name"
-                  placeholderTextColor="#5A6A7A"
+                  placeholderTextColor="#666666"
                   value={name}
                   onChangeText={setName}
                   autoCapitalize="words"
@@ -203,11 +203,11 @@ export default function AuthScreen() {
 
             {/* Email */}
             <View style={styles.inputContainer}>
-              <IconSymbol name="paperplane.fill" size={20} color="#5A6A7A" />
+              <IconSymbol name="paperplane.fill" size={20} color="#666666" />
               <TextInput
                 style={styles.input}
                 placeholder="Email"
-                placeholderTextColor="#5A6A7A"
+                placeholderTextColor="#666666"
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
@@ -219,11 +219,11 @@ export default function AuthScreen() {
             {/* Password (not in forgot mode) */}
             {!isForgot && (
               <View style={styles.inputContainer}>
-                <IconSymbol name="lock.fill" size={20} color="#5A6A7A" />
+                <IconSymbol name="lock.fill" size={20} color="#666666" />
                 <TextInput
                   style={styles.input}
                   placeholder="Password"
-                  placeholderTextColor="#5A6A7A"
+                  placeholderTextColor="#666666"
                   value={password}
                   onChangeText={setPassword}
                   secureTextEntry
@@ -243,7 +243,7 @@ export default function AuthScreen() {
             {/* Success message */}
             {successMessage ? (
               <View style={styles.successBox}>
-                <IconSymbol name="checkmark.circle.fill" size={18} color="#00E676" />
+                <IconSymbol name="checkmark.circle.fill" size={18} color="#C0C0C0" />
                 <Text style={styles.successText}>{successMessage}</Text>
               </View>
             ) : null}
@@ -267,7 +267,7 @@ export default function AuthScreen() {
               disabled={loading}
             >
               <LinearGradient
-                colors={[ELECTRIC_BLUE, "#0055CC"]}
+                colors={["#FFFFFF", "#666666"]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.authButtonGradient}
@@ -289,7 +289,7 @@ export default function AuthScreen() {
                 onPress={() => switchMode("login")}
                 activeOpacity={0.7}
               >
-                <IconSymbol name="chevron.left.forwardslash.chevron.right" size={16} color={ELECTRIC_BLUE} />
+                <IconSymbol name="chevron.left.forwardslash.chevron.right" size={16} color={"#FFFFFF"} />
                 <Text style={styles.backText}>Back to Sign In</Text>
               </TouchableOpacity>
             )}
@@ -359,14 +359,14 @@ const styles = StyleSheet.create({
     fontSize: 36,
     fontWeight: "900",
     letterSpacing: 4,
-    color: ELECTRIC_BLUE,
+    color: "#FFFFFF",
     fontStyle: "italic",
   },
   tagline: {
     fontSize: 14,
     marginTop: 8,
     letterSpacing: 1,
-    color: "#7A8A99",
+    color: "#888888",
   },
   form: {
     gap: 14,
@@ -376,21 +376,21 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     textAlign: "center",
     marginBottom: 4,
-    color: "#ECEDEE",
+    color: "#F0F0F0",
   },
   forgotDesc: {
     fontSize: 14,
     textAlign: "center",
     lineHeight: 20,
-    color: "#7A8A99",
+    color: "#888888",
     marginBottom: 4,
   },
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "#1A2533",
-    backgroundColor: "#111820",
+    borderColor: "#222222",
+    backgroundColor: "#111111",
     borderRadius: 14,
     paddingHorizontal: 16,
     height: 54,
@@ -400,7 +400,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     height: "100%",
-    color: "#ECEDEE",
+    color: "#F0F0F0",
   },
   errorBox: {
     flexDirection: "row",
@@ -431,7 +431,7 @@ const styles = StyleSheet.create({
   successText: {
     flex: 1,
     fontSize: 14,
-    color: "#00E676",
+    color: "#C0C0C0",
     lineHeight: 20,
   },
   forgotButton: {
@@ -440,7 +440,7 @@ const styles = StyleSheet.create({
   forgotLinkText: {
     fontSize: 14,
     fontWeight: "600",
-    color: ELECTRIC_BLUE,
+    color: "#FFFFFF",
   },
   authButton: {
     marginTop: 4,
@@ -469,7 +469,7 @@ const styles = StyleSheet.create({
   backText: {
     fontSize: 15,
     fontWeight: "600",
-    color: ELECTRIC_BLUE,
+    color: "#FFFFFF",
   },
   divider: {
     flexDirection: "row",
@@ -480,12 +480,12 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: "#1A2533",
+    backgroundColor: "#222222",
   },
   dividerText: {
     fontSize: 13,
     fontWeight: "600",
-    color: "#5A6A7A",
+    color: "#666666",
   },
   socialButton: {
     flexDirection: "row",
@@ -494,19 +494,19 @@ const styles = StyleSheet.create({
     height: 54,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#1A2533",
-    backgroundColor: "#111820",
+    borderColor: "#222222",
+    backgroundColor: "#111111",
     gap: 10,
   },
   socialIcon: {
     fontSize: 20,
     fontWeight: "700",
-    color: "#ECEDEE",
+    color: "#F0F0F0",
   },
   socialButtonText: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#ECEDEE",
+    color: "#F0F0F0",
   },
   toggleButton: {
     alignItems: "center",
@@ -514,10 +514,10 @@ const styles = StyleSheet.create({
   },
   toggleText: {
     fontSize: 15,
-    color: "#7A8A99",
+    color: "#888888",
   },
   toggleHighlight: {
-    color: ELECTRIC_BLUE,
+    color: "#FFFFFF",
     fontWeight: "700",
   },
 });

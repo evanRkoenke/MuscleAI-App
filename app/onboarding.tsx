@@ -16,8 +16,8 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import * as Haptics from "expo-haptics";
 
 const { width } = Dimensions.get("window");
-const ELECTRIC_BLUE = "#007AFF";
-const CYAN_GLOW = "#00D4FF";
+const PRIMARY_WHITE = "#FFFFFF";
+const SILVER = "#C0C0C0";
 
 interface SlideData {
   id: string;
@@ -90,7 +90,7 @@ export default function OnboardingScreen() {
       <View style={styles.slideContent}>
         <View style={styles.iconContainer}>
           <View style={styles.iconGlow}>
-            <IconSymbol name={item.icon} size={item.iconSize} color={ELECTRIC_BLUE} />
+            <IconSymbol name={item.icon} size={item.iconSize} color={"#FFFFFF"} />
           </View>
         </View>
         <Text style={styles.title}>{item.title}</Text>
@@ -131,7 +131,7 @@ export default function OnboardingScreen() {
                 style={[
                   styles.dot,
                   {
-                    backgroundColor: index === currentIndex ? ELECTRIC_BLUE : "#1A2533",
+                    backgroundColor: index === currentIndex ? "#FFFFFF" : "#222222",
                     width: index === currentIndex ? 24 : 8,
                   },
                 ]}
@@ -145,7 +145,7 @@ export default function OnboardingScreen() {
             activeOpacity={0.8}
           >
             <LinearGradient
-              colors={[ELECTRIC_BLUE, CYAN_GLOW]}
+              colors={["#FFFFFF", "#C0C0C0"]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={styles.nextGradient}
@@ -170,7 +170,7 @@ const styles = StyleSheet.create({
     zIndex: 10,
     padding: 8,
   },
-  skipText: { fontSize: 16, fontWeight: "500", color: "#5A6A7A" },
+  skipText: { fontSize: 16, fontWeight: "500", color: "#666666" },
   slide: { flex: 1, justifyContent: "center", alignItems: "center", paddingHorizontal: 40 },
   slideContent: { alignItems: "center", gap: 16 },
   iconContainer: { marginBottom: 24 },
@@ -187,7 +187,7 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     textAlign: "center",
     letterSpacing: 2,
-    color: "#ECEDEE",
+    color: "#F0F0F0",
   },
   highlight: {
     fontSize: 34,
@@ -195,7 +195,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     letterSpacing: 1,
     marginTop: -8,
-    color: ELECTRIC_BLUE,
+    color: "#FFFFFF",
   },
   subtitle: {
     fontSize: 16,
@@ -203,7 +203,7 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     marginTop: 8,
     paddingHorizontal: 20,
-    color: "#7A8A99",
+    color: "#888888",
   },
   bottomSection: { paddingHorizontal: 24, paddingBottom: 24, gap: 24 },
   pagination: { flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 8 },

@@ -31,22 +31,22 @@ const RING_R = (RING_SIZE - RING_STROKE) / 2;
 const RING_C = 2 * Math.PI * RING_R;
 
 // ─── Brand palette ───
-const BLUE = "#007AFF";
-const DEEP = "#0033AA";
-const CYAN = "#00D4FF";
-const PROT = "#00E5FF";
-const CARB = "#FFB300";
+const ACCENT = "#FFFFFF";
+const ACCENT_DIM = "#777777";
+const SILVER = "#C0C0C0";
+const PROT = "#E0E0E0";
+const CARB = "#B0B0B0";
 const FATR = "#FF3D3D";
-const BG = "#060A10";
-const SURF = "#0D1219";
-const SURF2 = "#111820";
-const BDR = "#1A2533";
-const T1 = "#ECEDEE";
-const T2 = "#7A8A99";
-const T3 = "#3A4A5C";
+const BG = "#000000";
+const SURF = "#0A0A0A";
+const SURF2 = "#111111";
+const BDR = "#222222";
+const T1 = "#F0F0F0";
+const T2 = "#888888";
+const T3 = "#444444";
 
 function scoreColor(s: number) {
-  return s >= 80 ? "#00E676" : s >= 60 ? "#FFB300" : "#FF3D3D";
+  return s >= 80 ? "#C0C0C0" : s >= 60 ? "#B0B0B0" : "#FF3D3D";
 }
 
 export default function HomeScreen() {
@@ -72,7 +72,7 @@ export default function HomeScreen() {
       {/* Full-screen dark background */}
       <View style={StyleSheet.absoluteFill}>
         <LinearGradient
-          colors={[BG, "#080D14", BG]}
+          colors={[BG, "#000000", BG]}
           style={StyleSheet.absoluteFill}
         />
       </View>
@@ -92,7 +92,7 @@ export default function HomeScreen() {
               <Image source={{ uri: profile.profilePhotoUri }} style={s.hdrAvatarImg} />
             ) : (
               <LinearGradient
-                colors={[BLUE, CYAN]}
+                colors={[ACCENT, SILVER]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={s.hdrAvatarFallback}
@@ -123,9 +123,9 @@ export default function HomeScreen() {
           <Svg width={RING_SIZE} height={RING_SIZE}>
             <Defs>
               <SvgGradient id="rg" x1="0" y1="0" x2="1" y2="1">
-                <Stop offset="0" stopColor={DEEP} />
-                <Stop offset="0.4" stopColor={BLUE} />
-                <Stop offset="1" stopColor={CYAN} />
+                <Stop offset="0" stopColor={"#777777"} />
+                <Stop offset="0.4" stopColor={ACCENT} />
+                <Stop offset="1" stopColor={SILVER} />
               </SvgGradient>
             </Defs>
             {/* Track */}
@@ -133,7 +133,7 @@ export default function HomeScreen() {
               cx={RING_SIZE / 2}
               cy={RING_SIZE / 2}
               r={RING_R}
-              stroke="#141E2C"
+              stroke="#1A1A1A"
               strokeWidth={RING_STROKE}
               fill="transparent"
             />
@@ -166,7 +166,7 @@ export default function HomeScreen() {
             { val: mac.protein, unit: "g", label: "PROTEIN", color: PROT },
             { val: mac.carbs, unit: "g", label: "CARBS", color: CARB },
             { val: mac.fat, unit: "g", label: "FAT", color: FATR },
-            { val: mac.sugar, unit: "g", label: "SUGAR", color: "#C084FC" },
+            { val: mac.sugar, unit: "g", label: "SUGAR", color: "#A0A0A0" },
           ].map((m) => (
             <View key={m.label} style={s.macCard}>
               <Text style={s.macVal}>
@@ -181,7 +181,7 @@ export default function HomeScreen() {
         {/* ═══ QUICK ACTIONS ═══ */}
         <View style={s.qRow}>
           <TouchableOpacity style={s.qBtn} onPress={doScan} activeOpacity={0.7}>
-            <IconSymbol name="camera.fill" size={15} color={BLUE} />
+            <IconSymbol name="camera.fill" size={15} color={ACCENT} />
             <Text style={s.qTxt}>Scan</Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -189,7 +189,7 @@ export default function HomeScreen() {
             onPress={() => router.push("/(tabs)/meals")}
             activeOpacity={0.7}
           >
-            <IconSymbol name="fork.knife" size={15} color={BLUE} />
+            <IconSymbol name="fork.knife" size={15} color={ACCENT} />
             <Text style={s.qTxt}>Meals</Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -197,7 +197,7 @@ export default function HomeScreen() {
             onPress={() => router.push("/(tabs)/forecast")}
             activeOpacity={0.7}
           >
-            <IconSymbol name="chart.line.uptrend.xyaxis" size={15} color={BLUE} />
+            <IconSymbol name="chart.line.uptrend.xyaxis" size={15} color={ACCENT} />
             <Text style={s.qTxt}>Forecast</Text>
           </TouchableOpacity>
         </View>
@@ -236,7 +236,7 @@ export default function HomeScreen() {
             end={{ x: 1, y: 1 }}
             style={StyleSheet.absoluteFill}
           />
-          <IconSymbol name="bubble.left.fill" size={22} color={BLUE} />
+          <IconSymbol name="bubble.left.fill" size={22} color={ACCENT} />
           <View style={s.supInfo}>
             <Text style={s.supTitle}>Muscle Support</Text>
             <Text style={s.supSub}>AI-powered help, 24/7</Text>
@@ -251,7 +251,7 @@ export default function HomeScreen() {
       <TouchableOpacity style={s.fab} onPress={doScan} activeOpacity={0.8}>
         <View style={s.fabGlow} />
         <LinearGradient
-          colors={[BLUE, CYAN]}
+          colors={[ACCENT, SILVER]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={s.fabInner}
@@ -286,7 +286,7 @@ const s = StyleSheet.create({
     height: 34,
     borderRadius: 17,
     borderWidth: 1.5,
-    borderColor: BLUE,
+    borderColor: ACCENT,
   },
   hdrAvatarFallback: {
     width: 34,
@@ -324,7 +324,7 @@ const s = StyleSheet.create({
     height: RING_SIZE + 30,
     borderRadius: (RING_SIZE + 30) / 2,
     backgroundColor: "transparent",
-    shadowColor: BLUE,
+    shadowColor: ACCENT,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.55,
     shadowRadius: 40,
@@ -336,7 +336,7 @@ const s = StyleSheet.create({
     height: RING_SIZE + 10,
     borderRadius: (RING_SIZE + 10) / 2,
     backgroundColor: "transparent",
-    shadowColor: CYAN,
+    shadowColor: SILVER,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.25,
     shadowRadius: 25,
@@ -502,7 +502,7 @@ const s = StyleSheet.create({
     width: 88,
     height: 88,
     borderRadius: 44,
-    backgroundColor: BLUE,
+    backgroundColor: ACCENT,
     opacity: 0.25,
   },
   fabInner: {
@@ -511,7 +511,7 @@ const s = StyleSheet.create({
     borderRadius: 32,
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: BLUE,
+    shadowColor: ACCENT,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.6,
     shadowRadius: 20,

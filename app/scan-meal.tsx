@@ -21,12 +21,12 @@ import { useApp } from "@/lib/app-context";
 import { trpc } from "@/lib/trpc";
 import * as Haptics from "expo-haptics";
 
-const ELECTRIC_BLUE = "#007AFF";
-const CYAN_GLOW = "#00D4FF";
-const PROTEIN_CYAN = "#00E5FF";
-const CARBS_AMBER = "#FFB300";
-const FAT_RED = "#FF6B6B";
-const SUGAR_PURPLE = "#C084FC";
+const PRIMARY_WHITE = "#FFFFFF";
+const SILVER = "#C0C0C0";
+const PROTEIN_LIGHT = "#E0E0E0";
+const CARBS_SILVER = "#B0B0B0";
+const FAT_RED = "#FF4444";
+const SUGAR_GRAY = "#A0A0A0";
 
 interface FoodItem {
   name: string;
@@ -321,7 +321,7 @@ export default function ScanMealScreen() {
           style={styles.backButton}
           activeOpacity={0.7}
         >
-          <IconSymbol name="arrow.left" size={24} color="#ECEDEE" />
+          <IconSymbol name="arrow.left" size={24} color="#F0F0F0" />
         </TouchableOpacity>
         <Text style={styles.topBarTitle}>Scan Meal</Text>
         <View style={styles.backButton} />
@@ -343,7 +343,7 @@ export default function ScanMealScreen() {
               <Text style={styles.errorMessage}>{error}</Text>
             </View>
             <TouchableOpacity onPress={clearError} activeOpacity={0.7}>
-              <IconSymbol name="xmark.circle.fill" size={18} color="#5A6A7A" />
+              <IconSymbol name="xmark.circle.fill" size={18} color="#666666" />
             </TouchableOpacity>
           </View>
         ) : null}
@@ -353,7 +353,7 @@ export default function ScanMealScreen() {
           <View style={styles.cameraSection}>
             <View style={styles.cameraPlaceholder}>
               <View style={styles.cameraIconGlow}>
-                <IconSymbol name="camera.fill" size={48} color={ELECTRIC_BLUE} />
+                <IconSymbol name="camera.fill" size={48} color={"#FFFFFF"} />
               </View>
               <Text style={styles.cameraText}>Scan Your Meal</Text>
               <Text style={styles.cameraSubtext}>
@@ -368,7 +368,7 @@ export default function ScanMealScreen() {
                 activeOpacity={0.8}
               >
                 <LinearGradient
-                  colors={[ELECTRIC_BLUE, CYAN_GLOW]}
+                  colors={["#FFFFFF", "#C0C0C0"]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={styles.cameraButtonGradient}
@@ -382,7 +382,7 @@ export default function ScanMealScreen() {
                 onPress={() => pickImage(false)}
                 activeOpacity={0.7}
               >
-                <IconSymbol name="magnifyingglass" size={22} color={ELECTRIC_BLUE} />
+                <IconSymbol name="magnifyingglass" size={22} color={"#FFFFFF"} />
                 <Text style={styles.galleryButtonText}>Gallery</Text>
               </TouchableOpacity>
             </View>
@@ -400,7 +400,7 @@ export default function ScanMealScreen() {
         {scanning && (
           <View style={styles.scanningContainer}>
             <View style={styles.scannerPulse}>
-              <ActivityIndicator size="large" color={ELECTRIC_BLUE} />
+              <ActivityIndicator size="large" color={"#FFFFFF"} />
             </View>
             <Text style={styles.scanningText}>Analyzing with AI...</Text>
             <Text style={styles.scanningSubtext}>
@@ -436,11 +436,11 @@ export default function ScanMealScreen() {
                 <Text style={styles.totalLabel}>Calories</Text>
               </View>
               <View style={styles.totalCard}>
-                <Text style={[styles.totalValue, { color: PROTEIN_CYAN }]}>{result.totalProtein}g</Text>
+                <Text style={[styles.totalValue, { color: "#E0E0E0" }]}>{result.totalProtein}g</Text>
                 <Text style={styles.totalLabel}>Protein</Text>
               </View>
               <View style={styles.totalCard}>
-                <Text style={[styles.totalValue, { color: CARBS_AMBER }]}>{result.totalCarbs}g</Text>
+                <Text style={[styles.totalValue, { color: "#B0B0B0" }]}>{result.totalCarbs}g</Text>
                 <Text style={styles.totalLabel}>Carbs</Text>
               </View>
               <View style={styles.totalCard}>
@@ -459,7 +459,7 @@ export default function ScanMealScreen() {
             {/* Confidence Alerts */}
             {pendingConfirmations.size > 0 && (
               <View style={styles.confidenceBanner}>
-                <IconSymbol name="questionmark.circle" size={18} color="#FFB300" />
+                <IconSymbol name="questionmark.circle" size={18} color="#B0B0B0" />
                 <Text style={styles.confidenceText}>
                   {pendingConfirmations.size} item{pendingConfirmations.size > 1 ? "s need" : " needs"} confirmation
                 </Text>
@@ -475,7 +475,7 @@ export default function ScanMealScreen() {
                   onPress={() => setShowAddModal(true)}
                   activeOpacity={0.7}
                 >
-                  <IconSymbol name="plus" size={16} color={ELECTRIC_BLUE} />
+                  <IconSymbol name="plus" size={16} color={"#FFFFFF"} />
                   <Text style={styles.addItemText}>Add Item</Text>
                 </TouchableOpacity>
               </View>
@@ -531,14 +531,14 @@ export default function ScanMealScreen() {
                             onChangeText={setEditGrams}
                             keyboardType="numeric"
                             placeholder={String(food.grams)}
-                            placeholderTextColor="#5A6A7A"
+                            placeholderTextColor="#666666"
                             returnKeyType="done"
                             onSubmitEditing={() => handleUpdateGrams(i)}
                             autoFocus
                           />
                           <Text style={styles.gramsUnit}>g</Text>
                           <TouchableOpacity onPress={() => handleUpdateGrams(i)} activeOpacity={0.7}>
-                            <IconSymbol name="checkmark" size={16} color="#00E676" />
+                            <IconSymbol name="checkmark" size={16} color="#C0C0C0" />
                           </TouchableOpacity>
                           <TouchableOpacity onPress={() => { setEditingIndex(null); setEditGrams(""); }} activeOpacity={0.7}>
                             <IconSymbol name="xmark" size={16} color="#FF3D3D" />
@@ -551,7 +551,7 @@ export default function ScanMealScreen() {
                           activeOpacity={0.7}
                         >
                           <Text style={styles.gramsText}>{food.grams}g</Text>
-                          <IconSymbol name="pencil" size={12} color="#5A6A7A" />
+                          <IconSymbol name="pencil" size={12} color="#666666" />
                         </TouchableOpacity>
                       )}
                       {/* Remove button */}
@@ -575,7 +575,7 @@ export default function ScanMealScreen() {
               activeOpacity={0.8}
             >
               <LinearGradient
-                colors={[ELECTRIC_BLUE, "#0055CC"]}
+                colors={["#FFFFFF", "#666666"]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.confirmGradient}
@@ -609,7 +609,7 @@ export default function ScanMealScreen() {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Add Food Item</Text>
               <TouchableOpacity onPress={() => { setShowAddModal(false); resetAddForm(); }} activeOpacity={0.7}>
-                <IconSymbol name="xmark" size={22} color="#ECEDEE" />
+                <IconSymbol name="xmark" size={22} color="#F0F0F0" />
               </TouchableOpacity>
             </View>
 
@@ -621,7 +621,7 @@ export default function ScanMealScreen() {
                   value={addName}
                   onChangeText={setAddName}
                   placeholder="e.g., Grilled Salmon"
-                  placeholderTextColor="#5A6A7A"
+                  placeholderTextColor="#666666"
                   returnKeyType="next"
                 />
               </View>
@@ -634,7 +634,7 @@ export default function ScanMealScreen() {
                     value={addGrams}
                     onChangeText={setAddGrams}
                     placeholder="100"
-                    placeholderTextColor="#5A6A7A"
+                    placeholderTextColor="#666666"
                     keyboardType="numeric"
                   />
                 </View>
@@ -645,7 +645,7 @@ export default function ScanMealScreen() {
                     value={addCalories}
                     onChangeText={setAddCalories}
                     placeholder="0"
-                    placeholderTextColor="#5A6A7A"
+                    placeholderTextColor="#666666"
                     keyboardType="numeric"
                   />
                 </View>
@@ -659,7 +659,7 @@ export default function ScanMealScreen() {
                     value={addProtein}
                     onChangeText={setAddProtein}
                     placeholder="0"
-                    placeholderTextColor="#5A6A7A"
+                    placeholderTextColor="#666666"
                     keyboardType="numeric"
                   />
                 </View>
@@ -670,7 +670,7 @@ export default function ScanMealScreen() {
                     value={addCarbs}
                     onChangeText={setAddCarbs}
                     placeholder="0"
-                    placeholderTextColor="#5A6A7A"
+                    placeholderTextColor="#666666"
                     keyboardType="numeric"
                   />
                 </View>
@@ -684,18 +684,18 @@ export default function ScanMealScreen() {
                     value={addFat}
                     onChangeText={setAddFat}
                     placeholder="0"
-                    placeholderTextColor="#5A6A7A"
+                    placeholderTextColor="#666666"
                     keyboardType="numeric"
                   />
                 </View>
                 <View style={[styles.inputGroup, { flex: 1 }]}>
-                  <Text style={[styles.inputLabel, { color: SUGAR_PURPLE }]}>Sugar (g)</Text>
+                  <Text style={[styles.inputLabel, { color: "#A0A0A0" }]}>Sugar (g)</Text>
                   <TextInput
                     style={[styles.modalInput, { borderColor: "rgba(192,132,252,0.3)" }]}
                     value={addSugar}
                     onChangeText={setAddSugar}
                     placeholder="0"
-                    placeholderTextColor="#5A6A7A"
+                    placeholderTextColor="#666666"
                     keyboardType="numeric"
                   />
                 </View>
@@ -709,7 +709,7 @@ export default function ScanMealScreen() {
               activeOpacity={0.8}
             >
               <LinearGradient
-                colors={[ELECTRIC_BLUE, "#0055CC"]}
+                colors={["#FFFFFF", "#666666"]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.modalAddGradient}
@@ -726,8 +726,8 @@ export default function ScanMealScreen() {
 }
 
 function getScoreColor(score: number): string {
-  if (score >= 80) return "#00E676";
-  if (score >= 60) return "#FFB300";
+  if (score >= 80) return "#C0C0C0";
+  if (score >= 60) return "#B0B0B0";
   return "#FF3D3D";
 }
 
@@ -740,7 +740,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   backButton: { width: 40, height: 40, justifyContent: "center", alignItems: "center" },
-  topBarTitle: { fontSize: 18, fontWeight: "800", color: "#ECEDEE" },
+  topBarTitle: { fontSize: 18, fontWeight: "800", color: "#F0F0F0" },
   scrollContent: { paddingHorizontal: 20, paddingBottom: 40 },
 
   // Error banner
@@ -758,7 +758,7 @@ const styles = StyleSheet.create({
   errorIconBg: { marginTop: 2 },
   errorContent: { flex: 1, gap: 2 },
   errorTitle: { fontSize: 15, fontWeight: "700", color: "#FF3D3D" },
-  errorMessage: { fontSize: 13, lineHeight: 18, color: "#FF8A8A" },
+  errorMessage: { fontSize: 13, lineHeight: 18, color: "#FF6666" },
 
   // Camera section
   cameraSection: { gap: 20, paddingTop: 20 },
@@ -766,8 +766,8 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 2,
     borderStyle: "dashed",
-    borderColor: "#1A2533",
-    backgroundColor: "#111820",
+    borderColor: "#222222",
+    backgroundColor: "#111111",
     padding: 40,
     alignItems: "center",
     gap: 12,
@@ -781,8 +781,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 4,
   },
-  cameraText: { fontSize: 22, fontWeight: "800", color: "#ECEDEE" },
-  cameraSubtext: { fontSize: 14, textAlign: "center", lineHeight: 20, color: "#7A8A99" },
+  cameraText: { fontSize: 22, fontWeight: "800", color: "#F0F0F0" },
+  cameraSubtext: { fontSize: 14, textAlign: "center", lineHeight: 20, color: "#888888" },
   buttonRow: { flexDirection: "row", gap: 12 },
   cameraButton: { flex: 1, borderRadius: 14, overflow: "hidden" },
   cameraButtonGradient: {
@@ -802,10 +802,10 @@ const styles = StyleSheet.create({
     height: 54,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#1A2533",
-    backgroundColor: "#111820",
+    borderColor: "#222222",
+    backgroundColor: "#111111",
   },
-  galleryButtonText: { color: ELECTRIC_BLUE, fontSize: 16, fontWeight: "700" },
+  galleryButtonText: { color: "#FFFFFF", fontSize: 16, fontWeight: "700" },
 
   // Image preview
   imagePreview: { borderRadius: 16, overflow: "hidden", marginBottom: 16 },
@@ -822,8 +822,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 4,
   },
-  scanningText: { fontSize: 18, fontWeight: "700", color: ELECTRIC_BLUE },
-  scanningSubtext: { fontSize: 14, color: "#7A8A99" },
+  scanningText: { fontSize: 18, fontWeight: "700", color: "#FFFFFF" },
+  scanningSubtext: { fontSize: 14, color: "#888888" },
 
   // Results
   resultContainer: { gap: 16 },
@@ -832,24 +832,24 @@ const styles = StyleSheet.create({
     padding: 22,
     borderRadius: 20,
     borderWidth: 2,
-    backgroundColor: "#111820",
+    backgroundColor: "#111111",
     overflow: "hidden",
   },
   scoreValue: { fontSize: 56, fontWeight: "900" },
   scoreLabel: { fontSize: 11, fontWeight: "900", letterSpacing: 2.5, marginTop: 4 },
-  mealName: { fontSize: 22, fontWeight: "800", textAlign: "center", color: "#ECEDEE" },
+  mealName: { fontSize: 22, fontWeight: "800", textAlign: "center", color: "#F0F0F0" },
   totalsRow: { flexDirection: "row", gap: 8 },
   totalCard: {
     flex: 1,
     borderRadius: 12,
     padding: 12,
     alignItems: "center",
-    backgroundColor: "#111820",
+    backgroundColor: "#111111",
     borderWidth: 1,
-    borderColor: "#1A2533",
+    borderColor: "#222222",
   },
-  totalValue: { fontSize: 18, fontWeight: "900", color: "#ECEDEE" },
-  totalLabel: { fontSize: 10, fontWeight: "600", marginTop: 4, color: "#5A6A7A" },
+  totalValue: { fontSize: 18, fontWeight: "900", color: "#F0F0F0" },
+  totalLabel: { fontSize: 10, fontWeight: "600", marginTop: 4, color: "#666666" },
 
   // Sugar row
   sugarRow: {
@@ -864,8 +864,8 @@ const styles = StyleSheet.create({
     borderColor: "rgba(192,132,252,0.2)",
   },
   sugarIcon: { fontSize: 16 },
-  sugarLabel: { fontSize: 14, fontWeight: "700", flex: 1, color: SUGAR_PURPLE },
-  sugarValue: { fontSize: 18, fontWeight: "900", color: SUGAR_PURPLE },
+  sugarLabel: { fontSize: 14, fontWeight: "700", flex: 1, color: "#A0A0A0" },
+  sugarValue: { fontSize: 18, fontWeight: "900", color: "#A0A0A0" },
 
   // Confidence banner
   confidenceBanner: {
@@ -879,14 +879,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(255,179,0,0.2)",
   },
-  confidenceText: { fontSize: 13, fontWeight: "600", color: "#FFB300" },
+  confidenceText: { fontSize: 13, fontWeight: "600", color: "#B0B0B0" },
 
   // Food list
   foodList: {
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#1A2533",
-    backgroundColor: "#111820",
+    borderColor: "#222222",
+    backgroundColor: "#111111",
     overflow: "hidden",
   },
   foodListHeader: {
@@ -895,7 +895,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     padding: 14,
   },
-  foodListTitle: { fontSize: 15, fontWeight: "700", color: "#ECEDEE" },
+  foodListTitle: { fontSize: 15, fontWeight: "700", color: "#F0F0F0" },
   addItemButton: {
     flexDirection: "row",
     alignItems: "center",
@@ -905,12 +905,12 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: "rgba(0,122,255,0.1)",
   },
-  addItemText: { fontSize: 13, fontWeight: "700", color: ELECTRIC_BLUE },
+  addItemText: { fontSize: 13, fontWeight: "700", color: "#FFFFFF" },
 
   // Food item
   foodItem: {
     borderTopWidth: 1,
-    borderTopColor: "#1A2533",
+    borderTopColor: "#222222",
   },
   foodItemRow: {
     flexDirection: "row",
@@ -921,15 +921,15 @@ const styles = StyleSheet.create({
   },
   foodInfo: { flex: 1, gap: 2, marginRight: 8 },
   foodNameRow: { flexDirection: "row", alignItems: "center", gap: 6 },
-  foodName: { fontSize: 15, fontWeight: "600", color: "#ECEDEE", flexShrink: 1 },
+  foodName: { fontSize: 15, fontWeight: "600", color: "#F0F0F0", flexShrink: 1 },
   lowConfBadge: {
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 6,
     backgroundColor: "rgba(255,179,0,0.15)",
   },
-  lowConfText: { fontSize: 10, fontWeight: "700", color: "#FFB300" },
-  foodMacros: { fontSize: 12, marginTop: 4, color: "#7A8A99" },
+  lowConfText: { fontSize: 10, fontWeight: "700", color: "#B0B0B0" },
+  foodMacros: { fontSize: 12, marginTop: 4, color: "#888888" },
   foodActions: { flexDirection: "row", alignItems: "center", gap: 8 },
 
   // Grams editing
@@ -942,7 +942,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: "rgba(255,255,255,0.05)",
   },
-  gramsText: { fontSize: 13, fontWeight: "600", color: "#ECEDEE" },
+  gramsText: { fontSize: 13, fontWeight: "600", color: "#F0F0F0" },
   gramsEditRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -953,15 +953,15 @@ const styles = StyleSheet.create({
     height: 28,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: "#1A2533",
-    backgroundColor: "#0A0F14",
-    color: "#ECEDEE",
+    borderColor: "#222222",
+    backgroundColor: "#000000",
+    color: "#F0F0F0",
     fontSize: 13,
     fontWeight: "600",
     textAlign: "center",
     paddingHorizontal: 4,
   },
-  gramsUnit: { fontSize: 12, color: "#5A6A7A" },
+  gramsUnit: { fontSize: 12, color: "#666666" },
   removeFoodButton: {
     width: 28,
     height: 28,
@@ -978,7 +978,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     backgroundColor: "rgba(255,179,0,0.06)",
   },
-  confirmPromptText: { fontSize: 13, color: "#FFB300", flex: 1 },
+  confirmPromptText: { fontSize: 13, color: "#B0B0B0", flex: 1 },
   confirmFoodName: { fontWeight: "800" },
   confirmActions: { flexDirection: "row", gap: 8 },
   confirmYes: {
@@ -987,7 +987,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     backgroundColor: "rgba(0,230,118,0.15)",
   },
-  confirmYesText: { fontSize: 12, fontWeight: "700", color: "#00E676" },
+  confirmYesText: { fontSize: 12, fontWeight: "700", color: "#C0C0C0" },
   confirmNo: {
     paddingHorizontal: 12,
     paddingVertical: 4,
@@ -1008,7 +1008,7 @@ const styles = StyleSheet.create({
   },
   confirmButtonText: { color: "#FFFFFF", fontSize: 17, fontWeight: "800" },
   rescanButton: { alignItems: "center", padding: 12 },
-  rescanText: { fontSize: 15, fontWeight: "600", color: ELECTRIC_BLUE },
+  rescanText: { fontSize: 15, fontWeight: "600", color: "#FFFFFF" },
 
   // Modal
   modalOverlay: {
@@ -1017,7 +1017,7 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   modalContent: {
-    backgroundColor: "#111820",
+    backgroundColor: "#111111",
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     padding: 20,
@@ -1029,18 +1029,18 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 16,
   },
-  modalTitle: { fontSize: 20, fontWeight: "800", color: "#ECEDEE" },
+  modalTitle: { fontSize: 20, fontWeight: "800", color: "#F0F0F0" },
   modalScroll: { marginBottom: 16 },
   inputGroup: { marginBottom: 12 },
-  inputLabel: { fontSize: 12, fontWeight: "700", color: "#7A8A99", marginBottom: 6 },
+  inputLabel: { fontSize: 12, fontWeight: "700", color: "#888888", marginBottom: 6 },
   inputRow: { flexDirection: "row", gap: 12 },
   modalInput: {
     height: 44,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: "#1A2533",
-    backgroundColor: "#0A0F14",
-    color: "#ECEDEE",
+    borderColor: "#222222",
+    backgroundColor: "#000000",
+    color: "#F0F0F0",
     fontSize: 15,
     fontWeight: "600",
     paddingHorizontal: 14,

@@ -16,7 +16,7 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { trpc } from "@/lib/trpc";
 import * as Haptics from "expo-haptics";
 
-const ELECTRIC_BLUE = "#007AFF";
+const PRIMARY_WHITE = "#FFFFFF";
 
 interface ChatMessage {
   id: string;
@@ -157,14 +157,14 @@ export default function SupportScreen() {
     >
       {item.isEscalation && (
         <View style={styles.escalationBadge}>
-          <IconSymbol name="bolt.fill" size={12} color="#FFB300" />
+          <IconSymbol name="bolt.fill" size={12} color="#B0B0B0" />
           <Text style={styles.escalationBadgeText}>ESCALATED</Text>
         </View>
       )}
       <Text
         style={[
           styles.messageText,
-          { color: item.role === "user" ? "#FFFFFF" : "#ECEDEE" },
+          { color: item.role === "user" ? "#FFFFFF" : "#F0F0F0" },
         ]}
       >
         {item.content}
@@ -185,7 +185,7 @@ export default function SupportScreen() {
             style={styles.backButton}
             activeOpacity={0.7}
           >
-            <IconSymbol name="arrow.left" size={24} color="#ECEDEE" />
+            <IconSymbol name="arrow.left" size={24} color="#F0F0F0" />
           </TouchableOpacity>
           <View style={styles.headerCenter}>
             <Text style={styles.headerTitle}>Muscle Support</Text>
@@ -227,7 +227,7 @@ export default function SupportScreen() {
         {/* Loading indicator */}
         {loading && (
           <View style={styles.loadingRow}>
-            <ActivityIndicator size="small" color={ELECTRIC_BLUE} />
+            <ActivityIndicator size="small" color={"#FFFFFF"} />
             <Text style={styles.loadingText}>Thinking...</Text>
           </View>
         )}
@@ -237,7 +237,7 @@ export default function SupportScreen() {
           <TextInput
             style={styles.input}
             placeholder="Type a message..."
-            placeholderTextColor="#5A6A7A"
+            placeholderTextColor="#666666"
             value={input}
             onChangeText={setInput}
             returnKeyType="send"
@@ -248,7 +248,7 @@ export default function SupportScreen() {
           <TouchableOpacity
             style={[
               styles.sendButton,
-              { backgroundColor: input.trim() ? ELECTRIC_BLUE : "#1A2533" },
+              { backgroundColor: input.trim() ? "#FFFFFF" : "#222222" },
             ]}
             onPress={() => sendMessage(input)}
             disabled={!input.trim() || loading}
@@ -270,30 +270,30 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#1A2533",
+    borderBottomColor: "#222222",
   },
   backButton: { width: 40, height: 40, justifyContent: "center", alignItems: "center" },
   headerCenter: { flex: 1, alignItems: "center" },
-  headerTitle: { fontSize: 17, fontWeight: "800", color: "#ECEDEE" },
+  headerTitle: { fontSize: 17, fontWeight: "800", color: "#F0F0F0" },
   onlineRow: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 2 },
-  onlineDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: "#00E676" },
-  headerSubtitle: { fontSize: 12, fontWeight: "500", color: "#00E676" },
+  onlineDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: "#C0C0C0" },
+  headerSubtitle: { fontSize: 12, fontWeight: "500", color: "#C0C0C0" },
   messageList: { paddingHorizontal: 16, paddingVertical: 12, gap: 8 },
   messageBubble: { maxWidth: "80%", borderRadius: 18, paddingHorizontal: 16, paddingVertical: 10 },
   userBubble: {
     alignSelf: "flex-end",
     borderBottomRightRadius: 4,
-    backgroundColor: ELECTRIC_BLUE,
+    backgroundColor: "#FFFFFF",
   },
   assistantBubble: {
     alignSelf: "flex-start",
     borderBottomLeftRadius: 4,
-    backgroundColor: "#111820",
+    backgroundColor: "#111111",
     borderWidth: 1,
-    borderColor: "#1A2533",
+    borderColor: "#222222",
   },
   escalationBubble: {
-    borderColor: "#FFB300",
+    borderColor: "#B0B0B0",
     backgroundColor: "rgba(255,179,0,0.06)",
   },
   escalationBadge: {
@@ -306,7 +306,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: "900",
     letterSpacing: 1.5,
-    color: "#FFB300",
+    color: "#B0B0B0",
   },
   messageText: { fontSize: 15, lineHeight: 22 },
   quickActions: {
@@ -321,10 +321,10 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: ELECTRIC_BLUE,
+    borderColor: "#FFFFFF",
     backgroundColor: "rgba(0,122,255,0.08)",
   },
-  quickActionText: { fontSize: 13, fontWeight: "600", color: ELECTRIC_BLUE },
+  quickActionText: { fontSize: 13, fontWeight: "600", color: "#FFFFFF" },
   loadingRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -332,15 +332,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 8,
   },
-  loadingText: { fontSize: 13, color: "#5A6A7A" },
+  loadingText: { fontSize: 13, color: "#666666" },
   inputContainer: {
     flexDirection: "row",
     alignItems: "flex-end",
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderTopWidth: 1,
-    borderTopColor: "#1A2533",
-    backgroundColor: "#0A0E14",
+    borderTopColor: "#222222",
+    backgroundColor: "#000000",
     gap: 8,
   },
   input: {
@@ -350,10 +350,10 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     fontSize: 15,
     maxHeight: 100,
-    color: "#ECEDEE",
-    backgroundColor: "#111820",
+    color: "#F0F0F0",
+    backgroundColor: "#111111",
     borderWidth: 1,
-    borderColor: "#1A2533",
+    borderColor: "#222222",
   },
   sendButton: {
     width: 40,

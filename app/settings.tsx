@@ -20,7 +20,7 @@ import { useColors } from "@/hooks/use-colors";
 import { useApp } from "@/lib/app-context";
 import * as Haptics from "expo-haptics";
 
-const ELECTRIC_BLUE = "#007AFF";
+const PRIMARY_WHITE = "#FFFFFF";
 
 const TIER_LABELS: Record<string, string> = {
   free: "Free",
@@ -30,10 +30,10 @@ const TIER_LABELS: Record<string, string> = {
 };
 
 const TIER_COLORS: Record<string, string> = {
-  free: "#7A8A99",
-  essential: "#00E676",
-  pro: "#FFB300",
-  elite: ELECTRIC_BLUE,
+  free: "#888888",
+  essential: "#C0C0C0",
+  pro: "#B0B0B0",
+  elite: "#FFFFFF",
 };
 
 // Stripe Customer Portal — In production, the server creates a Billing Portal
@@ -181,7 +181,7 @@ export default function SettingsScreen() {
           style={styles.backButton}
           activeOpacity={0.7}
         >
-          <IconSymbol name="arrow.left" size={24} color="#ECEDEE" />
+          <IconSymbol name="arrow.left" size={24} color="#F0F0F0" />
         </TouchableOpacity>
         <Text style={styles.topBarTitle}>Settings</Text>
         <View style={styles.backButton} />
@@ -225,9 +225,9 @@ export default function SettingsScreen() {
               {subscription === "free" ? "Subscribe" : "Manage Subscription"}
             </Text>
             {managingSubscription ? (
-              <ActivityIndicator size="small" color={ELECTRIC_BLUE} />
+              <ActivityIndicator size="small" color={"#FFFFFF"} />
             ) : (
-              <IconSymbol name="chevron.right" size={18} color="#5A6A7A" />
+              <IconSymbol name="chevron.right" size={18} color="#666666" />
             )}
           </TouchableOpacity>
           {subscription !== "free" && (
@@ -251,8 +251,8 @@ export default function SettingsScreen() {
                 onPress={() => router.push("/paywall")}
                 activeOpacity={0.7}
               >
-                <Text style={[styles.rowLabel, { color: ELECTRIC_BLUE }]}>Upgrade Plan</Text>
-                <IconSymbol name="chevron.right" size={18} color={ELECTRIC_BLUE} />
+                <Text style={[styles.rowLabel, { color: "#FFFFFF" }]}>Upgrade Plan</Text>
+                <IconSymbol name="chevron.right" size={18} color={"#FFFFFF"} />
               </TouchableOpacity>
             </>
           )}
@@ -281,8 +281,8 @@ export default function SettingsScreen() {
             onPress={() => setShowGoalModal(true)}
             activeOpacity={0.7}
           >
-            <Text style={[styles.rowLabel, { color: ELECTRIC_BLUE }]}>Edit Goals</Text>
-            <IconSymbol name="chevron.right" size={18} color={ELECTRIC_BLUE} />
+            <Text style={[styles.rowLabel, { color: "#FFFFFF" }]}>Edit Goals</Text>
+            <IconSymbol name="chevron.right" size={18} color={"#FFFFFF"} />
           </TouchableOpacity>
         </View>
 
@@ -315,7 +315,7 @@ export default function SettingsScreen() {
             activeOpacity={0.7}
           >
             <Text style={styles.rowLabel}>AI Support Chat</Text>
-            <IconSymbol name="chevron.right" size={18} color="#5A6A7A" />
+            <IconSymbol name="chevron.right" size={18} color="#666666" />
           </TouchableOpacity>
           <View style={styles.divider} />
           <TouchableOpacity
@@ -324,7 +324,7 @@ export default function SettingsScreen() {
             activeOpacity={0.7}
           >
             <Text style={styles.rowLabel}>Privacy Policy</Text>
-            <IconSymbol name="chevron.right" size={18} color="#5A6A7A" />
+            <IconSymbol name="chevron.right" size={18} color="#666666" />
           </TouchableOpacity>
           <View style={styles.divider} />
           <TouchableOpacity
@@ -333,7 +333,7 @@ export default function SettingsScreen() {
             activeOpacity={0.7}
           >
             <Text style={styles.rowLabel}>Terms of Service</Text>
-            <IconSymbol name="chevron.right" size={18} color="#5A6A7A" />
+            <IconSymbol name="chevron.right" size={18} color="#666666" />
           </TouchableOpacity>
         </View>
 
@@ -414,7 +414,7 @@ const styles = StyleSheet.create({
   topBarTitle: {
     fontSize: 18,
     fontWeight: "800",
-    color: "#ECEDEE",
+    color: "#F0F0F0",
   },
   scrollContent: {
     paddingHorizontal: 20,
@@ -427,13 +427,13 @@ const styles = StyleSheet.create({
     marginTop: 24,
     marginBottom: 8,
     marginLeft: 4,
-    color: "#5A6A7A",
+    color: "#666666",
   },
   card: {
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#1A2533",
-    backgroundColor: "#111820",
+    borderColor: "#222222",
+    backgroundColor: "#111111",
     overflow: "hidden",
   },
   row: {
@@ -446,11 +446,11 @@ const styles = StyleSheet.create({
   rowLabel: {
     fontSize: 15,
     fontWeight: "500",
-    color: "#ECEDEE",
+    color: "#F0F0F0",
   },
   rowValue: {
     fontSize: 15,
-    color: "#7A8A99",
+    color: "#888888",
   },
   planBadge: {
     flexDirection: "row",
@@ -469,7 +469,7 @@ const styles = StyleSheet.create({
   divider: {
     height: 1,
     marginLeft: 16,
-    backgroundColor: "#1A2533",
+    backgroundColor: "#222222",
   },
   logoutButton: {
     marginTop: 32,
@@ -489,7 +489,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 16,
     marginBottom: 20,
-    color: "#5A6A7A",
+    color: "#666666",
   },
   modalOverlay: {
     flex: 1,
@@ -504,15 +504,15 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 24,
     gap: 14,
-    backgroundColor: "#111820",
+    backgroundColor: "#111111",
     borderWidth: 1,
-    borderColor: "#1A2533",
+    borderColor: "#222222",
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: "800",
     textAlign: "center",
-    color: "#ECEDEE",
+    color: "#F0F0F0",
   },
   modalField: {
     gap: 6,
@@ -520,18 +520,18 @@ const styles = StyleSheet.create({
   modalFieldLabel: {
     fontSize: 13,
     fontWeight: "600",
-    color: "#7A8A99",
+    color: "#888888",
   },
   modalInput: {
     borderWidth: 1,
-    borderColor: "#1A2533",
-    backgroundColor: "#0A0E14",
+    borderColor: "#222222",
+    backgroundColor: "#000000",
     borderRadius: 10,
     paddingHorizontal: 14,
     height: 44,
     fontSize: 16,
     fontWeight: "600",
-    color: "#ECEDEE",
+    color: "#F0F0F0",
   },
   modalButtons: {
     flexDirection: "row",
@@ -543,20 +543,20 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#1A2533",
+    borderColor: "#222222",
     justifyContent: "center",
     alignItems: "center",
   },
   modalCancelText: {
     fontSize: 16,
     fontWeight: "700",
-    color: "#7A8A99",
+    color: "#888888",
   },
   modalSaveButton: {
     flex: 1,
     height: 48,
     borderRadius: 14,
-    backgroundColor: ELECTRIC_BLUE,
+    backgroundColor: "#FFFFFF",
     justifyContent: "center",
     alignItems: "center",
   },

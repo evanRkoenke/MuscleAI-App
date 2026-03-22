@@ -25,24 +25,24 @@ import type { GainsCardEntry, PersonalRecord } from "@/lib/app-context";
 import * as ImagePicker from "expo-image-picker";
 import * as Haptics from "expo-haptics";
 
-const ELECTRIC_BLUE = "#007AFF";
-const CYAN_GLOW = "#00D4FF";
-const PROTEIN_CYAN = "#00E5FF";
-const SURFACE = "#111820";
-const BORDER = "#1A2533";
-const TEXT_PRIMARY = "#ECEDEE";
-const TEXT_SECONDARY = "#7A8A99";
-const TEXT_TERTIARY = "#5A6A7A";
+const PRIMARY_WHITE = "#FFFFFF";
+const SILVER = "#C0C0C0";
+const PROTEIN_LIGHT = "#E0E0E0";
+const SURFACE = "#111111";
+const BORDER = "#222222";
+const TEXT_PRIMARY = "#F0F0F0";
+const TEXT_SECONDARY = "#888888";
+const TEXT_TERTIARY = "#666666";
 const SCREEN_W = Dimensions.get("window").width;
 const CARD_W = (SCREEN_W - 60) / 2;
 
 const PR_ICONS: Record<string, { icon: "flame.fill" | "bolt.fill" | "star.fill" | "heart.fill" | "chart.line.uptrend.xyaxis" | "scalemass.fill"; color: string }> = {
-  protein: { icon: "bolt.fill", color: PROTEIN_CYAN },
-  calories: { icon: "flame.fill", color: "#FFB300" },
-  anabolic: { icon: "star.fill", color: ELECTRIC_BLUE },
-  streak: { icon: "heart.fill", color: "#FF6B6B" },
-  weight_gain: { icon: "chart.line.uptrend.xyaxis", color: "#00E676" },
-  weight_loss: { icon: "scalemass.fill", color: "#FF9800" },
+  protein: { icon: "bolt.fill", color: "#E0E0E0" },
+  calories: { icon: "flame.fill", color: "#B0B0B0" },
+  anabolic: { icon: "star.fill", color: "#FFFFFF" },
+  streak: { icon: "heart.fill", color: "#FF4444" },
+  weight_gain: { icon: "chart.line.uptrend.xyaxis", color: "#C0C0C0" },
+  weight_loss: { icon: "scalemass.fill", color: "#D0D0D0" },
 };
 
 const TIER_LABELS: Record<string, string> = {
@@ -54,9 +54,9 @@ const TIER_LABELS: Record<string, string> = {
 
 const TIER_COLORS: Record<string, string> = {
   free: TEXT_TERTIARY,
-  essential: "#00E676",
-  pro: "#FFB300",
-  elite: ELECTRIC_BLUE,
+  essential: "#C0C0C0",
+  pro: "#B0B0B0",
+  elite: "#FFFFFF",
 };
 
 export default function ProfileScreen() {
@@ -318,7 +318,7 @@ export default function ProfileScreen() {
         </Text>
         <View style={styles.galleryCardStats}>
           <View style={styles.galleryCardStat}>
-            <Text style={[styles.galleryCardStatValue, { color: PROTEIN_CYAN }]}>{item.protein}g</Text>
+            <Text style={[styles.galleryCardStatValue, { color: "#E0E0E0" }]}>{item.protein}g</Text>
             <Text style={styles.galleryCardStatLabel}>PROTEIN</Text>
           </View>
           <View style={styles.galleryCardStat}>
@@ -336,7 +336,7 @@ export default function ProfileScreen() {
             onPress={() => handleShareCard(item)}
             activeOpacity={0.7}
           >
-            <IconSymbol name="square.and.arrow.up" size={14} color={ELECTRIC_BLUE} />
+            <IconSymbol name="square.and.arrow.up" size={14} color={"#FFFFFF"} />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.galleryCardActionBtn}
@@ -351,7 +351,7 @@ export default function ProfileScreen() {
   }, [profile.unit, handleShareCard, handleDeleteCard]);
 
   const renderPR = useCallback(({ item }: { item: PersonalRecord }) => {
-    const prConfig = PR_ICONS[item.category] || { icon: "star.fill" as const, color: ELECTRIC_BLUE };
+    const prConfig = PR_ICONS[item.category] || { icon: "star.fill" as const, color: "#FFFFFF" };
     const date = new Date(item.date).toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
@@ -382,7 +382,7 @@ export default function ProfileScreen() {
           <Image source={{ uri: profile.profilePhotoUri }} style={styles.avatarImage} />
         ) : (
           <LinearGradient
-            colors={[ELECTRIC_BLUE, CYAN_GLOW]}
+            colors={["#FFFFFF", "#C0C0C0"]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.avatarGradient}
@@ -420,7 +420,7 @@ export default function ProfileScreen() {
             onPress={() => setEditModalVisible(true)}
             activeOpacity={0.8}
           >
-            <IconSymbol name="pencil" size={14} color={ELECTRIC_BLUE} />
+            <IconSymbol name="pencil" size={14} color={"#FFFFFF"} />
             <Text style={styles.editProfileBtnText}>Edit Profile</Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -458,18 +458,18 @@ export default function ProfileScreen() {
           <Text style={styles.statBoxLabel}>Active Days</Text>
         </View>
         <View style={styles.statBox}>
-          <Text style={[styles.statBoxValue, { color: PROTEIN_CYAN }]}>{stats.totalProtein}g</Text>
+          <Text style={[styles.statBoxValue, { color: "#E0E0E0" }]}>{stats.totalProtein}g</Text>
           <Text style={styles.statBoxLabel}>Total Protein</Text>
         </View>
         <View style={styles.statBox}>
-          <Text style={[styles.statBoxValue, { color: ELECTRIC_BLUE }]}>{stats.avgAnabolic}</Text>
+          <Text style={[styles.statBoxValue, { color: "#FFFFFF" }]}>{stats.avgAnabolic}</Text>
           <Text style={styles.statBoxLabel}>Avg Anabolic</Text>
         </View>
       </View>
 
       {/* ─── PERSONAL RECORDS ─── */}
       <View style={styles.sectionHeader}>
-        <IconSymbol name="star.fill" size={18} color="#FFB300" />
+        <IconSymbol name="star.fill" size={18} color="#B0B0B0" />
         <Text style={styles.sectionTitle}>PERSONAL RECORDS</Text>
       </View>
       {personalRecords.length === 0 ? (
@@ -489,14 +489,14 @@ export default function ProfileScreen() {
 
       {/* ─── GAINS CARDS GALLERY ─── */}
       <View style={styles.sectionHeader}>
-        <IconSymbol name="bolt.fill" size={18} color={ELECTRIC_BLUE} />
+        <IconSymbol name="bolt.fill" size={18} color={"#FFFFFF"} />
         <Text style={styles.sectionTitle}>GAINS CARDS</Text>
         <TouchableOpacity
           style={styles.createCardBtn}
           onPress={handleCreateCard}
           activeOpacity={0.7}
         >
-          <IconSymbol name="plus" size={16} color={ELECTRIC_BLUE} />
+          <IconSymbol name="plus" size={16} color={"#FFFFFF"} />
           <Text style={styles.createCardText}>Create</Text>
         </TouchableOpacity>
       </View>
@@ -510,7 +510,7 @@ export default function ProfileScreen() {
             activeOpacity={0.8}
           >
             <LinearGradient
-              colors={[ELECTRIC_BLUE, CYAN_GLOW]}
+              colors={["#FFFFFF", "#C0C0C0"]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={styles.emptyCreateGrad}
@@ -654,7 +654,7 @@ export default function ProfileScreen() {
               disabled={saving}
             >
               <LinearGradient
-                colors={[ELECTRIC_BLUE, CYAN_GLOW]}
+                colors={["#FFFFFF", "#C0C0C0"]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.saveGrad}
@@ -699,7 +699,7 @@ export default function ProfileScreen() {
                 activeOpacity={0.7}
               >
                 <View style={styles.paymentRowLeft}>
-                  <IconSymbol name="creditcard.fill" size={20} color={ELECTRIC_BLUE} />
+                  <IconSymbol name="creditcard.fill" size={20} color={"#FFFFFF"} />
                   <View>
                     <Text style={styles.paymentRowLabel}>Payment Method</Text>
                     <Text style={styles.paymentRowSub}>
@@ -767,7 +767,7 @@ const styles = StyleSheet.create({
     height: 88,
     borderRadius: 44,
     borderWidth: 3,
-    borderColor: ELECTRIC_BLUE,
+    borderColor: "#FFFFFF",
   },
   avatarInitial: {
     fontSize: 36,
@@ -781,11 +781,11 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: ELECTRIC_BLUE,
+    backgroundColor: "#FFFFFF",
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 2,
-    borderColor: "#0A0E14",
+    borderColor: "#000000",
   },
   tierBadge: {
     marginTop: -12,
@@ -793,7 +793,7 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     borderRadius: 10,
     borderWidth: 1.5,
-    backgroundColor: "#0A0E14",
+    backgroundColor: "#000000",
   },
   tierBadgeText: {
     fontSize: 10,
@@ -822,12 +822,12 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: ELECTRIC_BLUE,
+    borderColor: "#FFFFFF",
   },
   editProfileBtnText: {
     fontSize: 14,
     fontWeight: "700",
-    color: ELECTRIC_BLUE,
+    color: "#FFFFFF",
   },
   paymentBtn: {
     flexDirection: "row",
@@ -898,12 +898,12 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: ELECTRIC_BLUE,
+    borderColor: "#FFFFFF",
   },
   createCardText: {
     fontSize: 13,
     fontWeight: "700",
-    color: ELECTRIC_BLUE,
+    color: "#FFFFFF",
   },
 
   /* Personal Records */
@@ -1066,13 +1066,13 @@ const styles = StyleSheet.create({
   galleryCardAnabolicLabel: {
     fontSize: 9,
     fontWeight: "800",
-    color: ELECTRIC_BLUE,
+    color: "#FFFFFF",
     letterSpacing: 1,
   },
   galleryCardAnabolicValue: {
     fontSize: 18,
     fontWeight: "900",
-    color: ELECTRIC_BLUE,
+    color: "#FFFFFF",
   },
   galleryCardActions: {
     flexDirection: "row",
@@ -1095,7 +1095,7 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   modalContent: {
-    backgroundColor: "#0D1117",
+    backgroundColor: "#000000",
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingHorizontal: 24,
