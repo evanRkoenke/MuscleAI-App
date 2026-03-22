@@ -8,7 +8,7 @@ const env = {
   appSlug: "muscle-ai",
   // S3 URL of the app logo - set this to the URL returned by generate_image when creating custom logo
   // Leave empty to use the default icon from assets/images/icon.png
-  logoUrl: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663415661115/nvGTGPLDGVYblmTC.png",
+  logoUrl: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663415661115/jEYsPpDSGDCRyFOc.png",
   // Deep link scheme for OAuth callbacks and universal links
   scheme: "muscleai",
   // Bundle identifiers — must match your Apple Developer and Google Play accounts
