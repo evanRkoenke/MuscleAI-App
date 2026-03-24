@@ -192,3 +192,7 @@
 - [x] Set Bold weight for all headings and subheadings
 - [x] Set Regular weight for body text
 - [x] Apply consistent typography hierarchy across all screens
+
+## Header Text Style
+- [x] Remove italic from MUSCLE AI header text
+- [x] Set to SF Pro Display Bold with tighter letter spacing (-2%)

@@ -301,10 +301,9 @@ const s = StyleSheet.create({
   },
   hdrTitle: {
     fontSize: 24,
-    fontWeight: "900",
-    letterSpacing: 5,
+    fontWeight: "700",
+    letterSpacing: -0.5,
     color: T1,
-    fontStyle: "italic",
   },
   hdrAvatar: { padding: 2 },
   hdrAvatarImg: {
