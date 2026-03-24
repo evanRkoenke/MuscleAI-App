@@ -20,6 +20,8 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
 import { useApp } from "@/lib/app-context";
 import * as Haptics from "expo-haptics";
+import { Typography } from "@/constants/typography";
+
 
 const PRIMARY_WHITE = "#FFFFFF";
 
@@ -384,7 +386,7 @@ const styles = StyleSheet.create({
   },
   formTitle: {
     fontSize: 26,
-    fontWeight: "800",
+    fontWeight: "700",
     textAlign: "center",
     marginBottom: 4,
     color: "#F0F0F0",
@@ -450,7 +452,7 @@ const styles = StyleSheet.create({
   },
   forgotLinkText: {
     fontSize: 14,
-    fontWeight: "600",
+    fontWeight: "400",
     color: "#FFFFFF",
   },
   authButton: {
@@ -467,7 +469,7 @@ const styles = StyleSheet.create({
   authButtonText: {
     color: "#FFFFFF",
     fontSize: 17,
-    fontWeight: "800",
+    fontWeight: "600",
     letterSpacing: 0.5,
   },
   backButton: {
@@ -479,7 +481,7 @@ const styles = StyleSheet.create({
   },
   backText: {
     fontSize: 15,
-    fontWeight: "600",
+    fontWeight: "400",
     color: "#FFFFFF",
   },
   divider: {
@@ -495,7 +497,7 @@ const styles = StyleSheet.create({
   },
   dividerText: {
     fontSize: 13,
-    fontWeight: "600",
+    fontWeight: "400",
     color: "#666666",
   },
   socialButton: {
@@ -511,7 +513,7 @@ const styles = StyleSheet.create({
   },
   socialIcon: {
     fontSize: 20,
-    fontWeight: "700",
+    fontWeight: "600",
     color: "#F0F0F0",
   },
   socialButtonText: {
@@ -529,6 +531,6 @@ const styles = StyleSheet.create({
   },
   toggleHighlight: {
     color: "#FFFFFF",
-    fontWeight: "700",
+    fontWeight: "400",
   },
 });

@@ -14,6 +14,8 @@ import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useApp } from "@/lib/app-context";
 import * as Haptics from "expo-haptics";
+import { Typography } from "@/constants/typography";
+
 
 const PRIMARY_WHITE = "#FFFFFF";
 const SILVER = "#C0C0C0";
@@ -223,7 +225,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   backButton: { width: 40, height: 40, justifyContent: "center", alignItems: "center" },
-  topBarTitle: { fontSize: 18, fontWeight: "800", color: "#F0F0F0" },
+  topBarTitle: { fontSize: 18, fontWeight: "600", color: "#F0F0F0" },
   cardContainer: { flex: 1, justifyContent: "center", alignItems: "center", paddingHorizontal: 24 },
   gainsCard: {
     width: "100%",
@@ -244,25 +246,25 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 8,
   },
-  cardBadge: { fontSize: 11, fontWeight: "900", color: "#E0E0E0", letterSpacing: 1 },
+  cardBadge: { fontSize: 11, fontWeight: "400", color: "#E0E0E0", letterSpacing: 1 },
   cardWeightSection: { alignItems: "center", gap: 4 },
-  cardWeightLabel: { fontSize: 11, fontWeight: "800", color: "#666666", letterSpacing: 2 },
-  cardWeightValue: { fontSize: 48, fontWeight: "900", color: "#F0F0F0" },
-  cardWeightUnit: { fontSize: 20, fontWeight: "500", color: "#666666" },
-  cardWeightChange: { fontSize: 14, fontWeight: "600" },
+  cardWeightLabel: { fontSize: 11, fontWeight: "400", color: "#666666", letterSpacing: 2 },
+  cardWeightValue: { fontSize: 48, fontWeight: "700", color: "#F0F0F0" },
+  cardWeightUnit: { fontSize: 20, fontWeight: "600", color: "#666666" },
+  cardWeightChange: { fontSize: 14, fontWeight: "400" },
   cardStatsGrid: { flexDirection: "row", justifyContent: "space-around" },
   cardStatItem: { alignItems: "center", gap: 4 },
-  cardStatValue: { fontSize: 22, fontWeight: "900", color: "#F0F0F0" },
-  cardStatLabel: { fontSize: 9, fontWeight: "800", color: "#666666", letterSpacing: 1.5 },
+  cardStatValue: { fontSize: 22, fontWeight: "700", color: "#F0F0F0" },
+  cardStatLabel: { fontSize: 9, fontWeight: "400", color: "#666666", letterSpacing: 1.5 },
   cardMacroBars: { gap: 10 },
   macroBarContainer: { gap: 4 },
   macroBarHeader: { flexDirection: "row", justifyContent: "space-between" },
-  macroBarLabel: { fontSize: 12, fontWeight: "600", color: "#666666" },
-  macroBarValue: { fontSize: 12, fontWeight: "700", color: "#F0F0F0" },
+  macroBarLabel: { fontSize: 12, fontWeight: "400", color: "#666666" },
+  macroBarValue: { fontSize: 12, fontWeight: "400", color: "#F0F0F0" },
   macroBarTrack: { height: 6, borderRadius: 3, overflow: "hidden" },
   macroBarFill: { height: "100%", borderRadius: 3 },
   cardFooter: { flexDirection: "row", justifyContent: "space-between" },
-  cardFooterText: { fontSize: 12, fontWeight: "700", color: "#FFFFFF" },
+  cardFooterText: { fontSize: 12, fontWeight: "400", color: "#FFFFFF" },
   cardFooterDate: { fontSize: 12, color: "#666666" },
   shareSection: { paddingHorizontal: 24, paddingBottom: 24, gap: 12 },
   shareButton: { borderRadius: 27, overflow: "hidden" },
@@ -274,7 +276,7 @@ const styles = StyleSheet.create({
     height: 54,
     borderRadius: 27,
   },
-  shareButtonText: { color: "#FFFFFF", fontSize: 17, fontWeight: "800" },
+  shareButtonText: { color: "#FFFFFF", fontSize: 17, fontWeight: "600" },
   shareRow: { flexDirection: "row", gap: 10 },
   shareSmallButton: {
     flex: 1,

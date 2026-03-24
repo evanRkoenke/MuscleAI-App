@@ -20,6 +20,8 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useApp } from "@/lib/app-context";
 import { trpc } from "@/lib/trpc";
 import * as Haptics from "expo-haptics";
+import { Typography } from "@/constants/typography";
+
 
 const PRIMARY_WHITE = "#FFFFFF";
 const SILVER = "#C0C0C0";
@@ -739,7 +741,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   backButton: { width: 40, height: 40, justifyContent: "center", alignItems: "center" },
-  topBarTitle: { fontSize: 18, fontWeight: "800", color: "#F0F0F0" },
+  topBarTitle: { fontSize: 18, fontWeight: "600", color: "#F0F0F0" },
   scrollContent: { paddingHorizontal: 20, paddingBottom: 40 },
 
   // Error banner
@@ -756,7 +758,7 @@ const styles = StyleSheet.create({
   },
   errorIconBg: { marginTop: 2 },
   errorContent: { flex: 1, gap: 2 },
-  errorTitle: { fontSize: 15, fontWeight: "700", color: "#FF3D3D" },
+  errorTitle: { fontSize: 15, fontWeight: "400", color: "#FF3D3D" },
   errorMessage: { fontSize: 13, lineHeight: 18, color: "#FF6666" },
 
   // Camera section
@@ -780,7 +782,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 4,
   },
-  cameraText: { fontSize: 22, fontWeight: "800", color: "#F0F0F0" },
+  cameraText: { fontSize: 22, fontWeight: "700", color: "#F0F0F0" },
   cameraSubtext: { fontSize: 14, textAlign: "center", lineHeight: 20, color: "#888888" },
   buttonRow: { flexDirection: "row", gap: 12 },
   cameraButton: { flex: 1, borderRadius: 14, overflow: "hidden" },
@@ -791,7 +793,7 @@ const styles = StyleSheet.create({
     gap: 8,
     height: 54,
   },
-  cameraButtonText: { color: "#FFFFFF", fontSize: 16, fontWeight: "700" },
+  cameraButtonText: { color: "#FFFFFF", fontSize: 16, fontWeight: "600" },
   galleryButton: {
     flex: 1,
     flexDirection: "row",
@@ -804,7 +806,7 @@ const styles = StyleSheet.create({
     borderColor: "#222222",
     backgroundColor: "#111111",
   },
-  galleryButtonText: { color: "#FFFFFF", fontSize: 16, fontWeight: "700" },
+  galleryButtonText: { color: "#FFFFFF", fontSize: 16, fontWeight: "600" },
 
   // Image preview
   imagePreview: { borderRadius: 16, overflow: "hidden", marginBottom: 16 },
@@ -821,7 +823,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 4,
   },
-  scanningText: { fontSize: 18, fontWeight: "700", color: "#FFFFFF" },
+  scanningText: { fontSize: 18, fontWeight: "600", color: "#FFFFFF" },
   scanningSubtext: { fontSize: 14, color: "#888888" },
 
   // Results
@@ -834,9 +836,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#111111",
     overflow: "hidden",
   },
-  scoreValue: { fontSize: 56, fontWeight: "900" },
-  scoreLabel: { fontSize: 11, fontWeight: "900", letterSpacing: 2.5, marginTop: 4 },
-  mealName: { fontSize: 22, fontWeight: "800", textAlign: "center", color: "#F0F0F0" },
+  scoreValue: { fontSize: 56, fontWeight: "700" },
+  scoreLabel: { fontSize: 11, fontWeight: "400", letterSpacing: 2.5, marginTop: 4 },
+  mealName: { fontSize: 22, fontWeight: "700", textAlign: "center", color: "#F0F0F0" },
   totalsRow: { flexDirection: "row", gap: 8 },
   totalCard: {
     flex: 1,
@@ -847,8 +849,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#222222",
   },
-  totalValue: { fontSize: 18, fontWeight: "900", color: "#F0F0F0" },
-  totalLabel: { fontSize: 10, fontWeight: "600", marginTop: 4, color: "#666666" },
+  totalValue: { fontSize: 18, fontWeight: "600", color: "#F0F0F0" },
+  totalLabel: { fontSize: 10, fontWeight: "400", marginTop: 4, color: "#666666" },
 
   // Sugar row
   sugarRow: {
@@ -863,8 +865,8 @@ const styles = StyleSheet.create({
     borderColor: "rgba(192,132,252,0.2)",
   },
   sugarIcon: { fontSize: 16 },
-  sugarLabel: { fontSize: 14, fontWeight: "700", flex: 1, color: "#A0A0A0" },
-  sugarValue: { fontSize: 18, fontWeight: "900", color: "#A0A0A0" },
+  sugarLabel: { fontSize: 14, fontWeight: "400", flex: 1, color: "#A0A0A0" },
+  sugarValue: { fontSize: 18, fontWeight: "600", color: "#A0A0A0" },
 
   // Confidence banner
   confidenceBanner: {
@@ -878,7 +880,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(255,179,0,0.2)",
   },
-  confidenceText: { fontSize: 13, fontWeight: "600", color: "#B0B0B0" },
+  confidenceText: { fontSize: 13, fontWeight: "400", color: "#B0B0B0" },
 
   // Food list
   foodList: {
@@ -894,7 +896,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     padding: 14,
   },
-  foodListTitle: { fontSize: 15, fontWeight: "700", color: "#F0F0F0" },
+  foodListTitle: { fontSize: 15, fontWeight: "400", color: "#F0F0F0" },
   addItemButton: {
     flexDirection: "row",
     alignItems: "center",
@@ -904,7 +906,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: "rgba(0,122,255,0.1)",
   },
-  addItemText: { fontSize: 13, fontWeight: "700", color: "#FFFFFF" },
+  addItemText: { fontSize: 13, fontWeight: "600", color: "#FFFFFF" },
 
   // Food item
   foodItem: {
@@ -920,14 +922,14 @@ const styles = StyleSheet.create({
   },
   foodInfo: { flex: 1, gap: 2, marginRight: 8 },
   foodNameRow: { flexDirection: "row", alignItems: "center", gap: 6 },
-  foodName: { fontSize: 15, fontWeight: "600", color: "#F0F0F0", flexShrink: 1 },
+  foodName: { fontSize: 15, fontWeight: "400", color: "#F0F0F0", flexShrink: 1 },
   lowConfBadge: {
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 6,
     backgroundColor: "rgba(255,179,0,0.15)",
   },
-  lowConfText: { fontSize: 10, fontWeight: "700", color: "#B0B0B0" },
+  lowConfText: { fontSize: 10, fontWeight: "400", color: "#B0B0B0" },
   foodMacros: { fontSize: 12, marginTop: 4, color: "#888888" },
   foodActions: { flexDirection: "row", alignItems: "center", gap: 8 },
 
@@ -941,7 +943,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: "rgba(255,255,255,0.05)",
   },
-  gramsText: { fontSize: 13, fontWeight: "600", color: "#F0F0F0" },
+  gramsText: { fontSize: 13, fontWeight: "400", color: "#F0F0F0" },
   gramsEditRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -956,7 +958,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#000000",
     color: "#F0F0F0",
     fontSize: 13,
-    fontWeight: "600",
+    fontWeight: "400",
     textAlign: "center",
     paddingHorizontal: 4,
   },
@@ -978,7 +980,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,179,0,0.06)",
   },
   confirmPromptText: { fontSize: 13, color: "#B0B0B0", flex: 1 },
-  confirmFoodName: { fontWeight: "800" },
+  confirmFoodName: { fontWeight: "600" },
   confirmActions: { flexDirection: "row", gap: 8 },
   confirmYes: {
     paddingHorizontal: 12,
@@ -986,14 +988,14 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     backgroundColor: "rgba(0,230,118,0.15)",
   },
-  confirmYesText: { fontSize: 12, fontWeight: "700", color: "#C0C0C0" },
+  confirmYesText: { fontSize: 12, fontWeight: "600", color: "#C0C0C0" },
   confirmNo: {
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 6,
     backgroundColor: "rgba(255,61,61,0.15)",
   },
-  confirmNoText: { fontSize: 12, fontWeight: "700", color: "#FF3D3D" },
+  confirmNoText: { fontSize: 12, fontWeight: "600", color: "#FF3D3D" },
 
   // Confirm button
   confirmButton: { borderRadius: 27, overflow: "hidden" },
@@ -1005,7 +1007,7 @@ const styles = StyleSheet.create({
     height: 54,
     borderRadius: 27,
   },
-  confirmButtonText: { color: "#FFFFFF", fontSize: 17, fontWeight: "800" },
+  confirmButtonText: { color: "#FFFFFF", fontSize: 17, fontWeight: "600" },
   rescanButton: { alignItems: "center", padding: 12 },
   rescanText: { fontSize: 15, fontWeight: "600", color: "#FFFFFF" },
 
@@ -1028,10 +1030,10 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 16,
   },
-  modalTitle: { fontSize: 20, fontWeight: "800", color: "#F0F0F0" },
+  modalTitle: { fontSize: 20, fontWeight: "600", color: "#F0F0F0" },
   modalScroll: { marginBottom: 16 },
   inputGroup: { marginBottom: 12 },
-  inputLabel: { fontSize: 12, fontWeight: "700", color: "#888888", marginBottom: 6 },
+  inputLabel: { fontSize: 12, fontWeight: "400", color: "#888888", marginBottom: 6 },
   inputRow: { flexDirection: "row", gap: 12 },
   modalInput: {
     height: 44,
@@ -1053,5 +1055,5 @@ const styles = StyleSheet.create({
     height: 50,
     borderRadius: 14,
   },
-  modalAddText: { color: "#FFFFFF", fontSize: 16, fontWeight: "700" },
+  modalAddText: { color: "#FFFFFF", fontSize: 16, fontWeight: "600" },
 });

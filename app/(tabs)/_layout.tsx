@@ -3,6 +3,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { HapticTab } from "@/components/haptic-tab";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Platform } from "react-native";
+import { Typography } from "@/constants/typography";
+
 
 ;
 const TAB_BAR_BG = "#000000";
@@ -31,7 +33,7 @@ export default function TabLayout() {
         },
         tabBarLabelStyle: {
           fontSize: 10,
-          fontWeight: "700",
+          fontWeight: "400",
           letterSpacing: 1,
           textTransform: "uppercase",
         },

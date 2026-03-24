@@ -186,3 +186,9 @@
 - [x] Add geometric arm logo next to MUSCLE AI title in dashboard header
 - [x] Crop black background from logo to make it transparent (only muscle arm visible)
 - [x] Make the header logo bigger
+
+## Global Typography Update
+- [x] Configure SF Pro Display / system San Francisco as the default font family
+- [x] Set Bold weight for all headings and subheadings
+- [x] Set Regular weight for body text
+- [x] Apply consistent typography hierarchy across all screens

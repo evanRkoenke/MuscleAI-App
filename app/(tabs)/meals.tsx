@@ -14,6 +14,8 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { WeekStrip } from "@/components/week-strip";
 import { useApp } from "@/lib/app-context";
 import * as Haptics from "expo-haptics";
+import { Typography } from "@/constants/typography";
+
 
 const MEAL_TYPES = ["breakfast", "lunch", "dinner", "snack"] as const;
 const MEAL_LABELS: Record<string, string> = {
@@ -278,7 +280,7 @@ export default function MealsScreen() {
 
 const styles = StyleSheet.create({
   header: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 8 },
-  headerTitle: { fontSize: 26, fontWeight: "900", color: "#F0F0F0" },
+  headerTitle: { fontSize: 26, fontWeight: "700", color: "#F0F0F0" },
   headerDate: { fontSize: 14, marginTop: 4, color: "#666666" },
 
   weekStripWrap: { paddingHorizontal: 20, marginBottom: 4 },
@@ -304,7 +306,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   tabActive: { backgroundColor: "rgba(0,122,255,0.12)" },
-  tabText: { fontSize: 14, fontWeight: "700", color: "#666666" },
+  tabText: { fontSize: 14, fontWeight: "400", color: "#666666" },
   tabTextActive: { color: "#FFFFFF" },
 
   // Summary
@@ -319,8 +321,8 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   summaryItem: { flex: 1, alignItems: "center" },
-  summaryValue: { fontSize: 22, fontWeight: "900", color: "#F0F0F0" },
-  summaryLabel: { fontSize: 12, marginTop: 4, fontWeight: "600", color: "#666666" },
+  summaryValue: { fontSize: 22, fontWeight: "700", color: "#F0F0F0" },
+  summaryLabel: { fontSize: 12, marginTop: 4, fontWeight: "400", color: "#666666" },
   summaryDivider: { width: 1, height: "100%", backgroundColor: "#222222" },
 
   // Sugar banner
@@ -337,8 +339,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(192,132,252,0.2)",
   },
-  sugarLabel: { fontSize: 13, fontWeight: "700", color: "#A0A0A0" },
-  sugarValue: { fontSize: 16, fontWeight: "900", color: "#A0A0A0" },
+  sugarLabel: { fontSize: 13, fontWeight: "400", color: "#A0A0A0" },
+  sugarValue: { fontSize: 16, fontWeight: "600", color: "#A0A0A0" },
 
   // List
   listContent: { paddingHorizontal: 20, paddingBottom: 100, gap: 12 },
@@ -351,8 +353,8 @@ const styles = StyleSheet.create({
   },
   sectionHeader: { flexDirection: "row", alignItems: "center", padding: 14, gap: 8 },
   sectionIcon: { fontSize: 18 },
-  sectionTitle: { fontSize: 16, fontWeight: "700", flex: 1, color: "#F0F0F0" },
-  sectionCalories: { fontSize: 14, fontWeight: "600", color: "#666666" },
+  sectionTitle: { fontSize: 16, fontWeight: "600", flex: 1, color: "#F0F0F0" },
+  sectionCalories: { fontSize: 14, fontWeight: "400", color: "#666666" },
 
   // Meal item
   mealItem: {
@@ -366,7 +368,7 @@ const styles = StyleSheet.create({
   },
   mealInfo: { flex: 1, gap: 2, marginRight: 8 },
   mealNameRow: { flexDirection: "row", alignItems: "center", gap: 6 },
-  mealName: { fontSize: 15, fontWeight: "600", color: "#F0F0F0", flexShrink: 1 },
+  mealName: { fontSize: 15, fontWeight: "400", color: "#F0F0F0", flexShrink: 1 },
   mealMacros: { fontSize: 12, color: "#888888" },
   mealActions: { flexDirection: "row", alignItems: "center", gap: 4 },
   actionButton: {
@@ -377,7 +379,7 @@ const styles = StyleSheet.create({
     borderRadius: 18,
   },
   mealCalContainer: { alignItems: "flex-end", marginLeft: 4 },
-  mealCalories: { fontSize: 18, fontWeight: "800", color: "#F0F0F0" },
+  mealCalories: { fontSize: 18, fontWeight: "600", color: "#F0F0F0" },
   mealCalLabel: { fontSize: 11, color: "#666666" },
 
   // Add meal
@@ -398,6 +400,6 @@ const styles = StyleSheet.create({
     paddingVertical: 60,
     gap: 12,
   },
-  emptyTitle: { fontSize: 18, fontWeight: "800", color: "#F0F0F0" },
+  emptyTitle: { fontSize: 18, fontWeight: "600", color: "#F0F0F0" },
   emptySubtext: { fontSize: 14, color: "#666666", textAlign: "center", maxWidth: 260 },
 });

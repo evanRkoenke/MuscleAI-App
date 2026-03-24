@@ -15,6 +15,8 @@ import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { trpc } from "@/lib/trpc";
 import * as Haptics from "expo-haptics";
+import { Typography } from "@/constants/typography";
+
 
 const PRIMARY_WHITE = "#FFFFFF";
 
@@ -274,10 +276,10 @@ const styles = StyleSheet.create({
   },
   backButton: { width: 40, height: 40, justifyContent: "center", alignItems: "center" },
   headerCenter: { flex: 1, alignItems: "center" },
-  headerTitle: { fontSize: 17, fontWeight: "800", color: "#F0F0F0" },
+  headerTitle: { fontSize: 17, fontWeight: "600", color: "#F0F0F0" },
   onlineRow: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 2 },
   onlineDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: "#C0C0C0" },
-  headerSubtitle: { fontSize: 12, fontWeight: "500", color: "#C0C0C0" },
+  headerSubtitle: { fontSize: 12, fontWeight: "400", color: "#C0C0C0" },
   messageList: { paddingHorizontal: 16, paddingVertical: 12, gap: 8 },
   messageBubble: { maxWidth: "80%", borderRadius: 18, paddingHorizontal: 16, paddingVertical: 10 },
   userBubble: {
@@ -304,7 +306,7 @@ const styles = StyleSheet.create({
   },
   escalationBadgeText: {
     fontSize: 10,
-    fontWeight: "900",
+    fontWeight: "400",
     letterSpacing: 1.5,
     color: "#B0B0B0",
   },

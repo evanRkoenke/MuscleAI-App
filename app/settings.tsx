@@ -19,6 +19,8 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
 import { useApp } from "@/lib/app-context";
 import * as Haptics from "expo-haptics";
+import { Typography } from "@/constants/typography";
+
 
 const PRIMARY_WHITE = "#FFFFFF";
 
@@ -413,7 +415,7 @@ const styles = StyleSheet.create({
   },
   topBarTitle: {
     fontSize: 18,
-    fontWeight: "800",
+    fontWeight: "600",
     color: "#F0F0F0",
   },
   scrollContent: {
@@ -422,7 +424,7 @@ const styles = StyleSheet.create({
   },
   sectionLabel: {
     fontSize: 11,
-    fontWeight: "800",
+    fontWeight: "400",
     letterSpacing: 2,
     marginTop: 24,
     marginBottom: 8,
@@ -445,7 +447,7 @@ const styles = StyleSheet.create({
   },
   rowLabel: {
     fontSize: 15,
-    fontWeight: "500",
+    fontWeight: "400",
     color: "#F0F0F0",
   },
   rowValue: {
@@ -464,7 +466,7 @@ const styles = StyleSheet.create({
   },
   planText: {
     fontSize: 14,
-    fontWeight: "700",
+    fontWeight: "400",
   },
   divider: {
     height: 1,
@@ -481,7 +483,7 @@ const styles = StyleSheet.create({
   },
   logoutText: {
     fontSize: 16,
-    fontWeight: "600",
+    fontWeight: "900",
     color: "#FF3D3D",
   },
   version: {
@@ -510,7 +512,7 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 20,
-    fontWeight: "800",
+    fontWeight: "600",
     textAlign: "center",
     color: "#F0F0F0",
   },
@@ -549,7 +551,7 @@ const styles = StyleSheet.create({
   },
   modalCancelText: {
     fontSize: 16,
-    fontWeight: "700",
+    fontWeight: "600",
     color: "#888888",
   },
   modalSaveButton: {
@@ -562,7 +564,7 @@ const styles = StyleSheet.create({
   },
   modalSaveText: {
     fontSize: 16,
-    fontWeight: "700",
+    fontWeight: "600",
     color: "#FFFFFF",
   },
 });

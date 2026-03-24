@@ -24,6 +24,8 @@ import { useApp } from "@/lib/app-context";
 import type { GainsCardEntry, PersonalRecord } from "@/lib/app-context";
 import * as ImagePicker from "expo-image-picker";
 import * as Haptics from "expo-haptics";
+import { Typography } from "@/constants/typography";
+
 
 const PRIMARY_WHITE = "#FFFFFF";
 const SILVER = "#C0C0C0";
@@ -734,7 +736,7 @@ const styles = StyleSheet.create({
   },
   topBarTitle: {
     fontSize: 18,
-    fontWeight: "800",
+    fontWeight: "600",
     color: TEXT_PRIMARY,
   },
   scrollContent: {
@@ -771,7 +773,7 @@ const styles = StyleSheet.create({
   },
   avatarInitial: {
     fontSize: 36,
-    fontWeight: "900",
+    fontWeight: "700",
     color: "#FFFFFF",
   },
   cameraBadge: {
@@ -797,12 +799,12 @@ const styles = StyleSheet.create({
   },
   tierBadgeText: {
     fontSize: 10,
-    fontWeight: "900",
+    fontWeight: "400",
     letterSpacing: 1.5,
   },
   profileName: {
     fontSize: 22,
-    fontWeight: "800",
+    fontWeight: "700",
     color: TEXT_PRIMARY,
   },
   profileEmail: {
@@ -826,7 +828,7 @@ const styles = StyleSheet.create({
   },
   editProfileBtnText: {
     fontSize: 14,
-    fontWeight: "700",
+    fontWeight: "600",
     color: "#FFFFFF",
   },
   paymentBtn: {
@@ -842,7 +844,7 @@ const styles = StyleSheet.create({
   },
   paymentBtnText: {
     fontSize: 14,
-    fontWeight: "700",
+    fontWeight: "600",
     color: TEXT_PRIMARY,
   },
 
@@ -866,12 +868,12 @@ const styles = StyleSheet.create({
   },
   statBoxValue: {
     fontSize: 22,
-    fontWeight: "900",
+    fontWeight: "700",
     color: TEXT_PRIMARY,
   },
   statBoxLabel: {
     fontSize: 11,
-    fontWeight: "600",
+    fontWeight: "400",
     color: TEXT_SECONDARY,
   },
 
@@ -886,7 +888,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     flex: 1,
     fontSize: 14,
-    fontWeight: "900",
+    fontWeight: "400",
     letterSpacing: 2,
     color: TEXT_PRIMARY,
   },
@@ -902,7 +904,7 @@ const styles = StyleSheet.create({
   },
   createCardText: {
     fontSize: 13,
-    fontWeight: "700",
+    fontWeight: "400",
     color: "#FFFFFF",
   },
 
@@ -937,7 +939,7 @@ const styles = StyleSheet.create({
   },
   prLabel: {
     fontSize: 14,
-    fontWeight: "600",
+    fontWeight: "400",
     color: TEXT_PRIMARY,
   },
   prDate: {
@@ -949,12 +951,12 @@ const styles = StyleSheet.create({
   },
   prValue: {
     fontSize: 20,
-    fontWeight: "900",
+    fontWeight: "600",
     color: TEXT_PRIMARY,
   },
   prUnit: {
     fontSize: 11,
-    fontWeight: "600",
+    fontWeight: "400",
     color: TEXT_SECONDARY,
   },
 
@@ -987,7 +989,7 @@ const styles = StyleSheet.create({
   },
   emptyCreateText: {
     fontSize: 14,
-    fontWeight: "800",
+    fontWeight: "400",
     color: "#FFFFFF",
   },
 
@@ -1013,7 +1015,7 @@ const styles = StyleSheet.create({
   },
   galleryCardDate: {
     fontSize: 12,
-    fontWeight: "600",
+    fontWeight: "400",
     color: TEXT_SECONDARY,
   },
   galleryCardBadge: {
@@ -1023,17 +1025,17 @@ const styles = StyleSheet.create({
   },
   galleryCardBadgeText: {
     fontSize: 9,
-    fontWeight: "900",
+    fontWeight: "400",
     letterSpacing: 1,
   },
   galleryCardWeight: {
     fontSize: 26,
-    fontWeight: "900",
+    fontWeight: "700",
     color: TEXT_PRIMARY,
   },
   galleryCardUnit: {
     fontSize: 14,
-    fontWeight: "500",
+    fontWeight: "400",
     color: TEXT_SECONDARY,
   },
   galleryCardStats: {
@@ -1045,12 +1047,12 @@ const styles = StyleSheet.create({
   },
   galleryCardStatValue: {
     fontSize: 14,
-    fontWeight: "800",
+    fontWeight: "400",
     color: TEXT_PRIMARY,
   },
   galleryCardStatLabel: {
     fontSize: 8,
-    fontWeight: "700",
+    fontWeight: "400",
     color: TEXT_TERTIARY,
     letterSpacing: 1,
   },
@@ -1065,13 +1067,13 @@ const styles = StyleSheet.create({
   },
   galleryCardAnabolicLabel: {
     fontSize: 9,
-    fontWeight: "800",
+    fontWeight: "400",
     color: "#FFFFFF",
     letterSpacing: 1,
   },
   galleryCardAnabolicValue: {
     fontSize: 18,
-    fontWeight: "900",
+    fontWeight: "600",
     color: "#FFFFFF",
   },
   galleryCardActions: {
@@ -1112,7 +1114,7 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 20,
-    fontWeight: "800",
+    fontWeight: "600",
     color: TEXT_PRIMARY,
   },
   modalCloseBtn: {
@@ -1132,7 +1134,7 @@ const styles = StyleSheet.create({
   },
   fieldLabel: {
     fontSize: 11,
-    fontWeight: "800",
+    fontWeight: "400",
     letterSpacing: 1.5,
     color: TEXT_SECONDARY,
     marginBottom: 6,
@@ -1177,7 +1179,7 @@ const styles = StyleSheet.create({
   },
   saveBtnText: {
     fontSize: 16,
-    fontWeight: "800",
+    fontWeight: "600",
     color: "#FFFFFF",
     letterSpacing: 1,
   },
@@ -1199,7 +1201,7 @@ const styles = StyleSheet.create({
   },
   paymentRowLabel: {
     fontSize: 15,
-    fontWeight: "700",
+    fontWeight: "400",
     color: TEXT_PRIMARY,
   },
   paymentRowSub: {

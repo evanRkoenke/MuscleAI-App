@@ -25,6 +25,8 @@ import {
   type PlanInfo,
 } from "@/lib/iap-service";
 import * as Haptics from "expo-haptics";
+import { Typography } from "@/constants/typography";
+
 
 const PRIMARY_WHITE = "#FFFFFF";
 const SILVER = "#C0C0C0";
@@ -422,12 +424,12 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    fontWeight: "800",
+    fontWeight: "700",
     color: "#F0F0F0",
   },
   titleHighlight: {
     fontSize: 32,
-    fontWeight: "900",
+    fontWeight: "700",
     letterSpacing: 1,
     color: "#FFFFFF",
   },
@@ -452,7 +454,7 @@ const styles = StyleSheet.create({
   },
   nativeBadgeText: {
     fontSize: 11,
-    fontWeight: "600",
+    fontWeight: "400",
     color: "#C0C0C0",
   },
   errorBanner: {
@@ -504,7 +506,7 @@ const styles = StyleSheet.create({
   badgeText: {
     color: "#FFFFFF",
     fontSize: 10,
-    fontWeight: "900",
+    fontWeight: "400",
     letterSpacing: 1.5,
   },
   tierHeader: {
@@ -512,7 +514,7 @@ const styles = StyleSheet.create({
   },
   tierName: {
     fontSize: 14,
-    fontWeight: "900",
+    fontWeight: "400",
     letterSpacing: 2.5,
     color: "#F0F0F0",
   },
@@ -523,7 +525,7 @@ const styles = StyleSheet.create({
   },
   tierPrice: {
     fontSize: 36,
-    fontWeight: "900",
+    fontWeight: "700",
     color: "#F0F0F0",
   },
   tierPeriod: {
@@ -533,7 +535,7 @@ const styles = StyleSheet.create({
   },
   savings: {
     fontSize: 13,
-    fontWeight: "700",
+    fontWeight: "400",
     marginTop: 4,
     color: "#C0C0C0",
   },
@@ -573,13 +575,13 @@ const styles = StyleSheet.create({
   subscribeTextWhite: {
     color: "#FFFFFF",
     fontSize: 18,
-    fontWeight: "900",
+    fontWeight: "600",
     letterSpacing: 3,
   },
   subscribeTextBlue: {
     color: "#FFFFFF",
     fontSize: 16,
-    fontWeight: "800",
+    fontWeight: "600",
     letterSpacing: 1,
   },
   skipButton: {
@@ -589,7 +591,7 @@ const styles = StyleSheet.create({
   },
   skipText: {
     fontSize: 15,
-    fontWeight: "500",
+    fontWeight: "400",
     color: "#666666",
   },
   restoreButton: {

@@ -14,6 +14,8 @@ import { LinearGradient } from "expo-linear-gradient";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import * as Haptics from "expo-haptics";
+import { Typography } from "@/constants/typography";
+
 
 const { width } = Dimensions.get("window");
 const PRIMARY_WHITE = "#FFFFFF";
@@ -170,7 +172,7 @@ const styles = StyleSheet.create({
     zIndex: 10,
     padding: 8,
   },
-  skipText: { fontSize: 16, fontWeight: "500", color: "#666666" },
+  skipText: { fontSize: 16, fontWeight: "600", color: "#666666" },
   slide: { flex: 1, justifyContent: "center", alignItems: "center", paddingHorizontal: 40 },
   slideContent: { alignItems: "center", gap: 16 },
   iconContainer: { marginBottom: 24 },
@@ -184,14 +186,14 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 32,
-    fontWeight: "800",
+    fontWeight: "700",
     textAlign: "center",
     letterSpacing: 2,
     color: "#F0F0F0",
   },
   highlight: {
     fontSize: 34,
-    fontWeight: "900",
+    fontWeight: "700",
     textAlign: "center",
     letterSpacing: 1,
     marginTop: -8,
@@ -218,7 +220,7 @@ const styles = StyleSheet.create({
   nextButtonText: {
     color: "#FFFFFF",
     fontSize: 18,
-    fontWeight: "800",
+    fontWeight: "600",
     letterSpacing: 0.5,
   },
 });

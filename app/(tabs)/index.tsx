@@ -22,6 +22,8 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { WeekStrip } from "@/components/week-strip";
 import { useApp } from "@/lib/app-context";
 import * as Haptics from "expo-haptics";
+import { Typography } from "@/constants/typography";
+
 
 const { width: SW } = Dimensions.get("window");
 
@@ -321,7 +323,7 @@ const s = StyleSheet.create({
   },
   hdrAvatarText: {
     fontSize: 15,
-    fontWeight: "800" as const,
+    fontWeight: "400" as const,
     color: "#FFFFFF",
   },
   hdrGear: { padding: 8 },
@@ -372,13 +374,13 @@ const s = StyleSheet.create({
   },
   ringNum: {
     fontSize: 50,
-    fontWeight: "900",
+    fontWeight: "700",
     color: T1,
     letterSpacing: -2,
   },
   ringLabel: {
     fontSize: 13,
-    fontWeight: "600",
+    fontWeight: "400",
     color: T2,
     marginTop: 2,
   },
@@ -402,17 +404,17 @@ const s = StyleSheet.create({
   },
   macVal: {
     fontSize: 28,
-    fontWeight: "900",
+    fontWeight: "700",
     color: T1,
   },
   macUnit: {
     fontSize: 14,
-    fontWeight: "500",
+    fontWeight: "400",
     color: T2,
   },
   macLbl: {
     fontSize: 10,
-    fontWeight: "900",
+    fontWeight: "400",
     letterSpacing: 1.5,
   },
 
@@ -436,7 +438,7 @@ const s = StyleSheet.create({
   },
   qTxt: {
     fontSize: 14,
-    fontWeight: "700",
+    fontWeight: "400",
     color: T1,
   },
 
@@ -451,7 +453,7 @@ const s = StyleSheet.create({
   },
   ppHdr: {
     fontSize: 13,
-    fontWeight: "900",
+    fontWeight: "400",
     letterSpacing: 2.5,
     color: T1,
     marginBottom: 14,
@@ -462,7 +464,7 @@ const s = StyleSheet.create({
     alignItems: "center",
   },
   ppLeft: { flex: 1, gap: 4 },
-  ppName: { fontSize: 17, fontWeight: "700", color: T1 },
+  ppName: { fontSize: 17, fontWeight: "600", color: T1 },
   ppDetail: { fontSize: 14, color: T2 },
   ppBadge: {
     width: 76,
@@ -472,10 +474,10 @@ const s = StyleSheet.create({
     justifyContent: "center",
     borderWidth: 1,
   },
-  ppScore: { fontSize: 30, fontWeight: "900" },
+  ppScore: { fontSize: 30, fontWeight: "700" },
   ppScoreLbl: {
     fontSize: 7,
-    fontWeight: "800",
+    fontWeight: "400",
     letterSpacing: 0.5,
     textAlign: "center",
     lineHeight: 9,
@@ -507,7 +509,7 @@ const s = StyleSheet.create({
     overflow: "hidden",
   },
   supInfo: { flex: 1 },
-  supTitle: { fontSize: 16, fontWeight: "700", color: T1 },
+  supTitle: { fontSize: 16, fontWeight: "600", color: T1 },
   supSub: { fontSize: 13, marginTop: 2, color: T2 },
 
   /* FAB */

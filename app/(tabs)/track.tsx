@@ -16,6 +16,8 @@ import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useApp } from "@/lib/app-context";
 import * as Haptics from "expo-haptics";
+import { Typography } from "@/constants/typography";
+
 
 const PRIMARY_WHITE = "#FFFFFF";
 const SILVER = "#C0C0C0";
@@ -267,7 +269,7 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     paddingBottom: 16,
   },
-  headerTitle: { fontSize: 26, fontWeight: "900", color: "#F0F0F0" },
+  headerTitle: { fontSize: 26, fontWeight: "700", color: "#F0F0F0" },
   logButton: { borderRadius: 20, overflow: "hidden" },
   logButtonGradient: {
     flexDirection: "row",
@@ -277,7 +279,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 20,
   },
-  logButtonText: { color: "#FFFFFF", fontSize: 14, fontWeight: "700" },
+  logButtonText: { color: "#FFFFFF", fontSize: 14, fontWeight: "600" },
   weightCard: {
     borderRadius: 18,
     padding: 20,
@@ -287,17 +289,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 16,
   },
-  weightValue: { fontSize: 48, fontWeight: "900", color: "#F0F0F0" },
-  weightUnit: { fontSize: 20, fontWeight: "500", color: "#666666" },
-  weightLabel: { fontSize: 13, fontWeight: "600", color: "#666666", marginTop: 4 },
+  weightValue: { fontSize: 48, fontWeight: "700", color: "#F0F0F0" },
+  weightUnit: { fontSize: 20, fontWeight: "600", color: "#666666" },
+  weightLabel: { fontSize: 13, fontWeight: "400", color: "#666666", marginTop: 4 },
   weightTargetRow: {
     flexDirection: "row",
     gap: 12,
     marginTop: 8,
     alignItems: "center",
   },
-  weightTarget: { fontSize: 14, fontWeight: "600", color: "#FFFFFF" },
-  weightDiff: { fontSize: 14, fontWeight: "700" },
+  weightTarget: { fontSize: 14, fontWeight: "400", color: "#FFFFFF" },
+  weightDiff: { fontSize: 14, fontWeight: "400" },
   timeRangeRow: { flexDirection: "row", gap: 8, marginBottom: 16 },
   timeRangeButton: {
     flex: 1,
@@ -311,7 +313,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,122,255,0.12)",
     borderColor: "#FFFFFF",
   },
-  timeRangeText: { fontSize: 13, fontWeight: "700", color: "#666666" },
+  timeRangeText: { fontSize: 13, fontWeight: "400", color: "#666666" },
   timeRangeTextActive: { color: "#FFFFFF" },
   chartCard: {
     borderRadius: 18,
@@ -324,7 +326,7 @@ const styles = StyleSheet.create({
   },
   chartEmpty: { alignItems: "center", paddingVertical: 30, gap: 10 },
   chartEmptyText: { fontSize: 14, color: "#666666", textAlign: "center" },
-  sectionTitle: { fontSize: 18, fontWeight: "800", color: "#F0F0F0", marginBottom: 12 },
+  sectionTitle: { fontSize: 18, fontWeight: "600", color: "#F0F0F0", marginBottom: 12 },
   entryRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -333,7 +335,7 @@ const styles = StyleSheet.create({
     borderBottomColor: "#222222",
   },
   entryDate: { fontSize: 15, color: "#888888" },
-  entryWeight: { fontSize: 15, fontWeight: "700", color: "#F0F0F0" },
+  entryWeight: { fontSize: 15, fontWeight: "400", color: "#F0F0F0" },
   emptyText: { fontSize: 14, color: "#666666", textAlign: "center", paddingVertical: 20 },
   shareButton: {
     flexDirection: "row",
@@ -346,7 +348,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#FFFFFF",
   },
-  shareButtonText: { fontSize: 15, fontWeight: "700", color: "#FFFFFF" },
+  shareButtonText: { fontSize: 15, fontWeight: "600", color: "#FFFFFF" },
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.75)",
@@ -364,7 +366,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#222222",
   },
-  modalTitle: { fontSize: 20, fontWeight: "800", textAlign: "center", color: "#F0F0F0" },
+  modalTitle: { fontSize: 20, fontWeight: "600", textAlign: "center", color: "#F0F0F0" },
   modalInputContainer: {
     borderWidth: 1,
     borderColor: "#222222",
@@ -376,7 +378,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     height: 52,
     fontSize: 20,
-    fontWeight: "700",
+    fontWeight: "600",
     color: "#F0F0F0",
     textAlign: "center",
   },
@@ -390,7 +392,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  modalCancelText: { fontSize: 16, fontWeight: "700", color: "#888888" },
+  modalCancelText: { fontSize: 16, fontWeight: "600", color: "#888888" },
   modalSaveButton: {
     flex: 1,
     height: 48,
@@ -399,5 +401,5 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  modalSaveText: { fontSize: 16, fontWeight: "700", color: "#FFFFFF" },
+  modalSaveText: { fontSize: 16, fontWeight: "600", color: "#FFFFFF" },
 });

@@ -24,6 +24,8 @@ import { LinearGradient } from "expo-linear-gradient";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useApp } from "@/lib/app-context";
+import { Typography } from "@/constants/typography";
+
 
 const SW = Dimensions.get("window").width;
 const CHART_W = SW - 56;
@@ -350,9 +352,9 @@ const st = StyleSheet.create({
     alignItems: "baseline",
     marginBottom: 10,
   },
-  wVal: { fontSize: 38, fontWeight: "900", color: T1 },
+  wVal: { fontSize: 38, fontWeight: "700", color: T1 },
   wUnit: { fontSize: 18, fontWeight: "600", color: T2 },
-  wDate: { fontSize: 14, fontWeight: "600", color: T2 },
+  wDate: { fontSize: 14, fontWeight: "400", color: T2 },
 
   /* Chart */
   chartCard: {
@@ -380,7 +382,7 @@ const st = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  lockLbl: { fontSize: 16, fontWeight: "700", color: T1 },
+  lockLbl: { fontSize: 16, fontWeight: "600", color: T1 },
 
   /* Priority Sync */
   syncCard: {
@@ -401,7 +403,7 @@ const st = StyleSheet.create({
     alignItems: "center",
   },
   syncInfo: { flex: 1, gap: 2 },
-  syncTitle: { fontSize: 16, fontWeight: "700", color: T1 },
+  syncTitle: { fontSize: 16, fontWeight: "600", color: T1 },
   syncSub: { fontSize: 13, color: T2 },
 
   /* Upsell */
@@ -418,13 +420,13 @@ const st = StyleSheet.create({
   },
   upsellBadge: {
     fontSize: 12,
-    fontWeight: "900",
+    fontWeight: "400",
     letterSpacing: 2.5,
     color: T1,
   },
   upsellDesc: {
     fontSize: 15,
-    fontWeight: "500",
+    fontWeight: "400",
     textAlign: "center",
     lineHeight: 22,
     color: T2,
@@ -432,11 +434,11 @@ const st = StyleSheet.create({
   priceBlock: { alignItems: "center", gap: 4, marginTop: 4 },
   priceMain: {
     fontSize: 22,
-    fontWeight: "900",
+    fontWeight: "700",
     letterSpacing: 1,
     color: T1,
   },
-  priceSave: { fontSize: 13, fontWeight: "700", color: "#C0C0C0" },
+  priceSave: { fontSize: 13, fontWeight: "600", color: "#C0C0C0" },
   unlockBtn: {
     width: "100%",
     marginTop: 6,
@@ -466,13 +468,13 @@ const st = StyleSheet.create({
   unlockTxt: {
     color: "#FFFFFF",
     fontSize: 18,
-    fontWeight: "900",
+    fontWeight: "600",
     letterSpacing: 4,
   },
 
   /* Milestones */
   milestones: { marginTop: 4 },
-  msTitle: { fontSize: 18, fontWeight: "700", color: T1, marginBottom: 16 },
+  msTitle: { fontSize: 18, fontWeight: "600", color: T1, marginBottom: 16 },
   msRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -488,7 +490,7 @@ const st = StyleSheet.create({
     backgroundColor: ACCENT,
   },
   msInfo: { flex: 1 },
-  msMonth: { fontSize: 14, fontWeight: "700", color: ACCENT },
+  msMonth: { fontSize: 14, fontWeight: "400", color: ACCENT },
   msLabel: { fontSize: 13, marginTop: 2, color: T2 },
-  msWeight: { fontSize: 16, fontWeight: "700", color: T1 },
+  msWeight: { fontSize: 16, fontWeight: "600", color: T1 },
 });
