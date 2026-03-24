@@ -7,8 +7,8 @@ import {
   StyleSheet,
   Dimensions,
   Platform,
-  Image,
 } from "react-native";
+import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import Svg, {
   Circle,
@@ -115,7 +115,7 @@ export default function HomeScreen() {
             <Image
               source={require("@/assets/images/logo-cropped.png")}
               style={s.hdrLogo}
-              resizeMode="contain"
+              contentFit="contain"
             />
           </View>
           <TouchableOpacity

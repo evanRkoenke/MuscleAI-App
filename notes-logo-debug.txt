@@ -1,0 +1,12 @@
+Logo debug findings:
+- logo-cropped.png exists at 606x408, RGBA, transparent background
+- The logo content is WHITE/light gray on transparent background
+- On the dark app background, the white logo should be visible
+- The Image component is from react-native (not expo-image)
+- React Native's Image from react-native can sometimes have issues with transparent PNGs on native
+- The logo shows fine on web preview but not on Expo Go
+
+Possible fixes:
+1. Switch from react-native Image to expo-image's Image component which handles transparency better
+2. The issue might be that react-native Image needs explicit width/height and the transparent areas confuse native rendering
+3. Try using expo-image instead of react-native Image for better native compatibility

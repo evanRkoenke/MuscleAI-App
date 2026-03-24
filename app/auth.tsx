@@ -11,8 +11,8 @@ import {
   ActivityIndicator,
   Alert,
   Modal,
-  Image,
 } from "react-native";
+import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { ScreenContainer } from "@/components/screen-container";
@@ -177,7 +177,7 @@ export default function AuthScreen() {
             <Image
               source={require("../assets/images/logo-cropped.png")}
               style={styles.logoImage}
-              resizeMode="contain"
+              contentFit="contain"
             />
             <Text style={styles.logo}>MUSCLE AI</Text>
             <Text style={styles.tagline}>Hypertrophy-Optimized Nutrition</Text>

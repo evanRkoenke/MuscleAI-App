@@ -202,3 +202,6 @@
 - [x] Add cropped muscle logo above MUSCLE AI text on auth screen
 - [x] Remove italic tilt from MUSCLE AI text on auth screen
 - [x] Change MUSCLE AI font to SF Pro Display Bold on auth screen
+
+## Bug: Logo not showing on Expo Go
+- [x] Fix cropped muscle logo not rendering on Expo Go (switched from react-native Image to expo-image)
