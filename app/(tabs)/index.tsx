@@ -92,7 +92,7 @@ export default function HomeScreen() {
               <Image source={{ uri: profile.profilePhotoUri }} style={s.hdrAvatarImg} />
             ) : (
               <LinearGradient
-                colors={[ACCENT, SILVER]}
+                colors={["#444444", "#333333"]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={s.hdrAvatarFallback}
@@ -251,7 +251,7 @@ export default function HomeScreen() {
       <TouchableOpacity style={s.fab} onPress={doScan} activeOpacity={0.8}>
         <View style={s.fabGlow} />
         <LinearGradient
-          colors={[ACCENT, SILVER]}
+          colors={["#444444", "#333333"]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={s.fabInner}
@@ -502,8 +502,8 @@ const s = StyleSheet.create({
     width: 88,
     height: 88,
     borderRadius: 44,
-    backgroundColor: ACCENT,
-    opacity: 0.25,
+    backgroundColor: "#444444",
+    opacity: 0.35,
   },
   fabInner: {
     width: 64,
@@ -511,7 +511,7 @@ const s = StyleSheet.create({
     borderRadius: 32,
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: ACCENT,
+    shadowColor: "#444444",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.6,
     shadowRadius: 20,

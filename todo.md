@@ -164,3 +164,7 @@
 
 ## Button Color Adjustment
 - [x] Darken white/light buttons across the app while keeping button text white
+
+## Dashboard Icon Color Adjustment
+- [x] Darken circular camera FAB button to #444444 charcoal
+- [x] Darken profile icon to #444444 charcoal
