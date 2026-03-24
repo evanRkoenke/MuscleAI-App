@@ -111,7 +111,7 @@ export default function HomeScreen() {
           <View style={s.hdrTitleRow}>
             <Text style={s.hdrTitle}>MUSCLE AI</Text>
             <Image
-              source={require("@/assets/images/icon.png")}
+              source={require("@/assets/images/logo-cropped.png")}
               style={s.hdrLogo}
               resizeMode="contain"
             />
@@ -294,8 +294,8 @@ const s = StyleSheet.create({
     gap: 6,
   },
   hdrLogo: {
-    width: 28,
-    height: 28,
+    width: 40,
+    height: 27,
   },
   hdrTitle: {
     fontSize: 24,

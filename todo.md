@@ -184,3 +184,5 @@
 
 ## Header Logo
 - [x] Add geometric arm logo next to MUSCLE AI title in dashboard header
+- [x] Crop black background from logo to make it transparent (only muscle arm visible)
+- [x] Make the header logo bigger
