@@ -12,7 +12,7 @@ import {
   Modal,
   Alert,
 } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { ScreenContainer } from "@/components/screen-container";
@@ -52,14 +52,38 @@ interface ScanResult {
   mealName: string;
 }
 
+type MealCategory = "breakfast" | "lunch" | "dinner" | "snack";
+
+const CATEGORY_OPTIONS: { key: MealCategory; label: string; icon: string }[] = [
+  { key: "breakfast", label: "Breakfast", icon: "☀️" },
+  { key: "lunch", label: "Lunch", icon: "🌤️" },
+  { key: "dinner", label: "Dinner", icon: "🌙" },
+  { key: "snack", label: "Snacks", icon: "⚡" },
+];
+
+function getDefaultCategory(): MealCategory {
+  const hour = new Date().getHours();
+  if (hour < 10) return "breakfast";
+  if (hour < 14) return "lunch";
+  if (hour < 20) return "dinner";
+  return "snack";
+}
+
 export default function ScanMealScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ category?: string }>();
   const { addMeal, selectedDate } = useApp();
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [scanning, setScanning] = useState(false);
   const [result, setResult] = useState<ScanResult | null>(null);
   const [error, setError] = useState("");
-  const [errorType, setErrorType] = useState<"camera" | "scan" | "network" | "">("");
+  const [errorType, setErrorType] = useState<"camera" | "scan" | "network" | "">("")
+
+  // Meal category: from route param, or default based on time of day
+  const initialCategory = (params.category && ["breakfast", "lunch", "dinner", "snack"].includes(params.category))
+    ? params.category as MealCategory
+    : getDefaultCategory();
+  const [selectedCategory, setSelectedCategory] = useState<MealCategory>(initialCategory);;
 
   // Edit/Add state
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
@@ -283,16 +307,11 @@ export default function ScanMealScreen() {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
-    const hour = new Date().getHours();
-    let mealType: "breakfast" | "lunch" | "dinner" | "snack" = "snack";
-    if (hour < 10) mealType = "breakfast";
-    else if (hour < 14) mealType = "lunch";
-    else if (hour < 20) mealType = "dinner";
 
     await addMeal({
       id: Date.now().toString(),
       date: selectedDate,
-      mealType,
+      mealType: selectedCategory,
       name: result.mealName,
       calories: result.totalCalories,
       protein: result.totalProtein,
@@ -303,7 +322,7 @@ export default function ScanMealScreen() {
       imageUri: imageUri || undefined,
     });
     router.back();
-  }, [result, imageUri, addMeal, selectedDate, router]);
+  }, [result, imageUri, addMeal, selectedDate, selectedCategory, router]);
 
   const handleReset = () => {
     setImageUri(null);
@@ -567,6 +586,39 @@ export default function ScanMealScreen() {
                   </View>
                 </View>
               ))}
+            </View>
+
+            {/* Meal Category Picker */}
+            <View style={styles.categorySection}>
+              <Text style={styles.categorySectionTitle}>Log to</Text>
+              <View style={styles.categoryRow}>
+                {CATEGORY_OPTIONS.map((opt) => (
+                  <TouchableOpacity
+                    key={opt.key}
+                    style={[
+                      styles.categoryChip,
+                      selectedCategory === opt.key && styles.categoryChipActive,
+                    ]}
+                    onPress={() => {
+                      setSelectedCategory(opt.key);
+                      if (Platform.OS !== "web") {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      }
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.categoryIcon}>{opt.icon}</Text>
+                    <Text
+                      style={[
+                        styles.categoryLabel,
+                        selectedCategory === opt.key && styles.categoryLabelActive,
+                      ]}
+                    >
+                      {opt.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
             </View>
 
             {/* Confirm Button */}
@@ -1056,4 +1108,45 @@ const styles = StyleSheet.create({
     borderRadius: 14,
   },
   modalAddText: { color: "#FFFFFF", fontSize: 16, fontWeight: "600" },
+
+  // Category picker
+  categorySection: { marginBottom: 16 },
+  categorySectionTitle: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#888888",
+    letterSpacing: 1,
+    textTransform: "uppercase" as const,
+    marginBottom: 10,
+  },
+  categoryRow: {
+    flexDirection: "row" as const,
+    gap: 8,
+  },
+  categoryChip: {
+    flex: 1,
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    justifyContent: "center" as const,
+    gap: 4,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#222222",
+    backgroundColor: "#111111",
+  },
+  categoryChipActive: {
+    borderColor: "#555555",
+    backgroundColor: "#222222",
+  },
+  categoryIcon: { fontSize: 14 },
+  categoryLabel: {
+    fontSize: 12,
+    fontWeight: "500" as const,
+    color: "#666666",
+  },
+  categoryLabelActive: {
+    color: "#FFFFFF",
+    fontWeight: "600" as const,
+  },
 });

@@ -155,7 +155,7 @@ export default function MealsScreen() {
       ) : (
         <TouchableOpacity
           style={styles.addMealButton}
-          onPress={() => (router as any).push("/scan-meal")}
+          onPress={() => (router as any).push({ pathname: "/scan-meal", params: { category: item.type } })}
           activeOpacity={0.7}
         >
           <IconSymbol name="plus" size={18} color={"#FFFFFF"} />

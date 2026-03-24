@@ -208,3 +208,8 @@
 
 ## Macro Card Font Sizing
 - [x] Make macro numbers dynamically shrink when values are large to prevent text wrapping
+
+## Meal Category Bug Fix
+- [x] Fix meals going to wrong category (all going to dinner instead of selected category)
+- [x] Pass correct category from meals tab "Add Breakfast/Lunch/Dinner/Snacks" buttons to scan-meal
+- [x] Add meal category picker on scan screen so user can choose category before logging
