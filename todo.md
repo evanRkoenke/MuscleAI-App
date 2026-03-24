@@ -168,3 +168,4 @@
 ## Dashboard Icon Color Adjustment
 - [x] Darken circular camera FAB button to #444444 charcoal
 - [x] Darken profile icon to #444444 charcoal
+- [x] Lighten camera FAB and profile icon slightly from #444444 to #555555
