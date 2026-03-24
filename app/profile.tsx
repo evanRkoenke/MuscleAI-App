@@ -382,7 +382,7 @@ export default function ProfileScreen() {
           <Image source={{ uri: profile.profilePhotoUri }} style={styles.avatarImage} />
         ) : (
           <LinearGradient
-            colors={["#FFFFFF", "#C0C0C0"]}
+            colors={["#444444", "#333333"]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.avatarGradient}
@@ -510,7 +510,7 @@ export default function ProfileScreen() {
             activeOpacity={0.8}
           >
             <LinearGradient
-              colors={["#FFFFFF", "#C0C0C0"]}
+              colors={["#444444", "#333333"]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={styles.emptyCreateGrad}
@@ -654,7 +654,7 @@ export default function ProfileScreen() {
               disabled={saving}
             >
               <LinearGradient
-                colors={["#FFFFFF", "#C0C0C0"]}
+                colors={["#444444", "#333333"]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.saveGrad}
@@ -781,7 +781,7 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#444444",
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 2,

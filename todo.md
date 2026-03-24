@@ -161,3 +161,6 @@
 
 ## Auth Screen Logo
 - [x] Add geometric arm logo prominently on auth/login screen above MUSCLE AI title
+
+## Button Color Adjustment
+- [x] Darken white/light buttons across the app while keeping button text white

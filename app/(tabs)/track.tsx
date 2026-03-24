@@ -83,7 +83,7 @@ export default function TrackScreen() {
             activeOpacity={0.8}
           >
             <LinearGradient
-              colors={["#FFFFFF", "#C0C0C0"]}
+              colors={["#444444", "#333333"]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={styles.logButtonGradient}
@@ -395,7 +395,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 48,
     borderRadius: 14,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#444444",
     justifyContent: "center",
     alignItems: "center",
   },

@@ -273,7 +273,7 @@ export default function AuthScreen() {
               disabled={loading}
             >
               <LinearGradient
-                colors={["#FFFFFF", "#666666"]}
+                colors={["#444444", "#2A2A2A"]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.authButtonGradient}

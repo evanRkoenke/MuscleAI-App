@@ -1,0 +1,22 @@
+All LinearGradient button colors to darken:
+
+1. auth.tsx - Sign In button: DONE - changed ["#FFFFFF", "#666666"] to ["#444444", "#2A2A2A"]
+
+2. onboarding.tsx - Next/Get Started button: ["#FFFFFF", "#C0C0C0"] → ["#444444", "#333333"]
+
+3. paywall.tsx - Plan highlight badge: ["#FFFFFF", "#C0C0C0"] → ["#444444", "#333333"]
+   paywall.tsx - Subscribe button: ["#FFFFFF", "#FF3B30"] → ["#444444", "#2A2A2A"] (remove red)
+
+4. scan-meal.tsx - "Log This Meal" button: ["#FFFFFF", "#C0C0C0"] → ["#444444", "#333333"]
+   scan-meal.tsx - "Scan Meal" button: ["#FFFFFF", "#666666"] → ["#444444", "#2A2A2A"]
+   scan-meal.tsx - Another button: ["#FFFFFF", "#666666"] → ["#444444", "#2A2A2A"]
+
+5. gains-card.tsx - Share button: ["#FFFFFF", "#C0C0C0"] → ["#444444", "#333333"]
+
+6. profile.tsx - 3 buttons: ["#FFFFFF", "#C0C0C0"] → ["#444444", "#333333"]
+
+7. track.tsx - Log Weight button: ["#FFFFFF", "#C0C0C0"] → ["#444444", "#333333"]
+
+8. support.tsx - Send button: backgroundColor "#FFFFFF" → "#444444"
+
+All text should remain #FFFFFF (white).

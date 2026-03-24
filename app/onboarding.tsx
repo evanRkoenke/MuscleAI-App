@@ -145,7 +145,7 @@ export default function OnboardingScreen() {
             activeOpacity={0.8}
           >
             <LinearGradient
-              colors={["#FFFFFF", "#C0C0C0"]}
+              colors={["#444444", "#333333"]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={styles.nextGradient}

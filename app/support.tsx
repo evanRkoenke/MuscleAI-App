@@ -248,7 +248,7 @@ export default function SupportScreen() {
           <TouchableOpacity
             style={[
               styles.sendButton,
-              { backgroundColor: input.trim() ? "#FFFFFF" : "#222222" },
+              { backgroundColor: input.trim() ? "#444444" : "#222222" },
             ]}
             onPress={() => sendMessage(input)}
             disabled={!input.trim() || loading}
@@ -283,7 +283,7 @@ const styles = StyleSheet.create({
   userBubble: {
     alignSelf: "flex-end",
     borderBottomRightRadius: 4,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#444444",
   },
   assistantBubble: {
     alignSelf: "flex-start",

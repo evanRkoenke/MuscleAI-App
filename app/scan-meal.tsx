@@ -368,7 +368,7 @@ export default function ScanMealScreen() {
                 activeOpacity={0.8}
               >
                 <LinearGradient
-                  colors={["#FFFFFF", "#C0C0C0"]}
+                  colors={["#444444", "#333333"]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={styles.cameraButtonGradient}
@@ -575,7 +575,7 @@ export default function ScanMealScreen() {
               activeOpacity={0.8}
             >
               <LinearGradient
-                colors={["#FFFFFF", "#666666"]}
+                colors={["#444444", "#2A2A2A"]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.confirmGradient}
@@ -709,7 +709,7 @@ export default function ScanMealScreen() {
               activeOpacity={0.8}
             >
               <LinearGradient
-                colors={["#FFFFFF", "#666666"]}
+                colors={["#444444", "#2A2A2A"]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.modalAddGradient}
