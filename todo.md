@@ -169,3 +169,9 @@
 - [x] Darken circular camera FAB button to #444444 charcoal
 - [x] Darken profile icon to #444444 charcoal
 - [x] Lighten camera FAB and profile icon slightly from #444444 to #555555
+
+## Weekly Calendar Strip
+- [x] Add horizontal scrollable weekly calendar strip to dashboard
+- [x] Support day selection that updates calories/macros display
+- [x] Style with minimalist black-and-white theme matching Muscle AI branding
+- [x] Subtle highlight for currently selected date

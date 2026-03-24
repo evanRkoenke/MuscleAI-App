@@ -1,0 +1,9 @@
+Weekly calendar strip screenshot findings:
+- Shows Mon 23 through Sun 29 (current week)
+- Tuesday 24 (today) is highlighted with white background, black text
+- Small dot under today's date
+- "March 2026" month label above the strip
+- All days visible, scrollable horizontally
+- Minimalist black-and-white styling matches the app theme
+- No TypeScript errors, no build errors
+- Calendar integrates cleanly between header and calorie ring

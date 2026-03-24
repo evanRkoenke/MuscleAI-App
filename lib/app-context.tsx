@@ -83,6 +83,9 @@ interface AppContextType extends AppState {
   getTodayMeals: () => MealEntry[];
   getTodayCalories: () => number;
   getTodayMacros: () => { protein: number; carbs: number; fat: number; sugar: number };
+  getMealsByDate: (date: string) => MealEntry[];
+  getCaloriesByDate: (date: string) => number;
+  getMacrosByDate: (date: string) => { protein: number; carbs: number; fat: number; sugar: number };
   getFavoriteMeals: () => MealEntry[];
   loading: boolean;
 }
@@ -327,6 +330,24 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     };
   }, [getTodayMeals]);
 
+  const getMealsByDate = useCallback((date: string) => {
+    return state.meals.filter((m) => m.date === date);
+  }, [state.meals]);
+
+  const getCaloriesByDate = useCallback((date: string) => {
+    return getMealsByDate(date).reduce((sum, m) => sum + m.calories, 0);
+  }, [getMealsByDate]);
+
+  const getMacrosByDate = useCallback((date: string) => {
+    const dateMeals = getMealsByDate(date);
+    return {
+      protein: dateMeals.reduce((sum, m) => sum + m.protein, 0),
+      carbs: dateMeals.reduce((sum, m) => sum + m.carbs, 0),
+      fat: dateMeals.reduce((sum, m) => sum + m.fat, 0),
+      sugar: dateMeals.reduce((sum, m) => sum + (m.sugar ?? 0), 0),
+    };
+  }, [getMealsByDate]);
+
   const getFavoriteMeals = useCallback(() => {
     return state.meals.filter((m) => m.isFavorite);
   }, [state.meals]);
@@ -349,6 +370,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         getTodayMeals,
         getTodayCalories,
         getTodayMacros,
+        getMealsByDate,
+        getCaloriesByDate,
+        getMacrosByDate,
         getFavoriteMeals,
         loading,
       }}

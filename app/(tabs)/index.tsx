@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -19,6 +19,7 @@ import Svg, {
 import { LinearGradient } from "expo-linear-gradient";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { WeekStrip } from "@/components/week-strip";
 import { useApp } from "@/lib/app-context";
 import * as Haptics from "expo-haptics";
 
@@ -49,17 +50,23 @@ function scoreColor(s: number) {
   return s >= 80 ? "#C0C0C0" : s >= 60 ? "#B0B0B0" : "#FF3D3D";
 }
 
+function todayStr() {
+  return new Date().toISOString().split("T")[0];
+}
+
 export default function HomeScreen() {
   const router = useRouter();
-  const { profile, getTodayCalories, getTodayMacros, getTodayMeals } = useApp();
+  const { profile, getCaloriesByDate, getMacrosByDate, getMealsByDate } = useApp();
 
-  const cal = getTodayCalories();
-  const mac = getTodayMacros();
+  const [selectedDate, setSelectedDate] = useState(todayStr);
+
+  const cal = useMemo(() => getCaloriesByDate(selectedDate), [getCaloriesByDate, selectedDate]);
+  const mac = useMemo(() => getMacrosByDate(selectedDate), [getMacrosByDate, selectedDate]);
   const rem = Math.max(0, profile.calorieGoal - cal);
   const prog = Math.min(1, cal / profile.calorieGoal);
   const dashOff = RING_C * (1 - prog * 0.75); // max 270° sweep
 
-  const meals = getTodayMeals();
+  const meals = useMemo(() => getMealsByDate(selectedDate), [getMealsByDate, selectedDate]);
   const last = meals.length > 0 ? meals[meals.length - 1] : null;
 
   const doScan = useCallback(() => {
@@ -112,6 +119,9 @@ export default function HomeScreen() {
             <IconSymbol name="gearshape.fill" size={20} color={T3} />
           </TouchableOpacity>
         </View>
+
+        {/* ═══ WEEKLY CALENDAR STRIP ═══ */}
+        <WeekStrip selectedDate={selectedDate} onSelectDate={setSelectedDate} />
 
         {/* ═══ CALORIE RING ═══ */}
         <View style={s.ringWrap}>
