@@ -196,3 +196,9 @@
 ## Header Text Style
 - [x] Remove italic from MUSCLE AI header text
 - [x] Set to SF Pro Display Bold with tighter letter spacing (-2%)
+- [x] Ensure logo sits correctly next to upright MUSCLE AI header text
+
+## Auth Screen Branding Update
+- [x] Add cropped muscle logo above MUSCLE AI text on auth screen
+- [x] Remove italic tilt from MUSCLE AI text on auth screen
+- [x] Change MUSCLE AI font to SF Pro Display Bold on auth screen

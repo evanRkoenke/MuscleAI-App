@@ -175,7 +175,7 @@ export default function AuthScreen() {
           {/* Brand Header */}
           <View style={styles.header}>
             <Image
-              source={require("../assets/images/icon.png")}
+              source={require("../assets/images/logo-cropped.png")}
               style={styles.logoImage}
               resizeMode="contain"
             />
@@ -364,16 +364,15 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   logoImage: {
-    width: 120,
-    height: 120,
+    width: 100,
+    height: 68,
     marginBottom: 16,
   },
   logo: {
     fontSize: 36,
-    fontWeight: "900",
-    letterSpacing: 4,
+    fontWeight: "700",
+    letterSpacing: -0.7,
     color: "#FFFFFF",
-    fontStyle: "italic",
   },
   tagline: {
     fontSize: 14,

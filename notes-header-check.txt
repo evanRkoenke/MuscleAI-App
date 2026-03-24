@@ -1,0 +1,5 @@
+Screenshot shows: "MUSCLE AI" text is upright (no italic), Bold weight, with the geometric arm logo to the right.
+The logo appears at the correct position - right next to the text with a small gap.
+The logo and text are vertically centered and aligned with the profile avatar on the left and settings gear on the right.
+Everything looks correct and consistent. The layout is: [Avatar] [MUSCLE AI logo] [Settings gear]
+The logo is the cropped transparent version showing just the muscle arm.
