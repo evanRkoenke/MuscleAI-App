@@ -181,3 +181,6 @@
 - [x] Update meals tab to show meals for the selected date (not just today)
 - [x] Allow adding/editing meals for any selected date
 - [x] Update scan-meal to log meals to the selected date
+
+## Header Logo
+- [x] Add geometric arm logo next to MUSCLE AI title in dashboard header

@@ -1,0 +1,6 @@
+Header logo placement findings:
+- Logo appears at 28x28 next to MUSCLE AI text
+- It's visible but quite small - the geometric arm icon is recognizable
+- Sits nicely inline with the title text
+- No TypeScript errors
+- The logo and text are centered together in the header row between avatar and gear icon

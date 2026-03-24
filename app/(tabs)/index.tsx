@@ -108,7 +108,14 @@ export default function HomeScreen() {
               </LinearGradient>
             )}
           </TouchableOpacity>
-          <Text style={s.hdrTitle}>MUSCLE AI</Text>
+          <View style={s.hdrTitleRow}>
+            <Text style={s.hdrTitle}>MUSCLE AI</Text>
+            <Image
+              source={require("@/assets/images/icon.png")}
+              style={s.hdrLogo}
+              resizeMode="contain"
+            />
+          </View>
           <TouchableOpacity
             onPress={() => (router as any).push("/settings")}
             style={s.hdrGear}
@@ -280,6 +287,15 @@ const s = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingVertical: 12,
+  },
+  hdrTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  hdrLogo: {
+    width: 28,
+    height: 28,
   },
   hdrTitle: {
     fontSize: 24,
