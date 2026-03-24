@@ -11,11 +11,9 @@ import {
 import { useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { WeekStrip } from "@/components/week-strip";
 import { useApp } from "@/lib/app-context";
 import * as Haptics from "expo-haptics";
-
-const PRIMARY_WHITE = "#FFFFFF";
-const SUGAR_GRAY = "#A0A0A0";
 
 const MEAL_TYPES = ["breakfast", "lunch", "dinner", "snack"] as const;
 const MEAL_LABELS: Record<string, string> = {
@@ -31,26 +29,44 @@ const MEAL_ICONS: Record<string, string> = {
   snack: "⚡",
 };
 
-type TabMode = "today" | "favorites";
+type TabMode = "meals" | "favorites";
 
 export default function MealsScreen() {
   const router = useRouter();
-  const { getTodayMeals, getTodayCalories, getTodayMacros, removeMeal, toggleFavoriteMeal, getFavoriteMeals, profile } = useApp();
-  const [activeTab, setActiveTab] = useState<TabMode>("today");
+  const {
+    getMealsByDate,
+    getCaloriesByDate,
+    getMacrosByDate,
+    removeMeal,
+    toggleFavoriteMeal,
+    getFavoriteMeals,
+    profile,
+    selectedDate,
+    setSelectedDate,
+  } = useApp();
+  const [activeTab, setActiveTab] = useState<TabMode>("meals");
 
-  const todayMeals = getTodayMeals();
-  const todayCalories = getTodayCalories();
-  const todayMacros = getTodayMacros();
+  const dateMeals = useMemo(() => getMealsByDate(selectedDate), [getMealsByDate, selectedDate]);
+  const dateCalories = useMemo(() => getCaloriesByDate(selectedDate), [getCaloriesByDate, selectedDate]);
+  const dateMacros = useMemo(() => getMacrosByDate(selectedDate), [getMacrosByDate, selectedDate]);
   const favoriteMeals = getFavoriteMeals();
+
+  const isToday = selectedDate === new Date().toISOString().split("T")[0];
+
+  const dateLabel = useMemo(() => {
+    const d = new Date(selectedDate + "T12:00:00");
+    if (isToday) return "Today";
+    return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+  }, [selectedDate, isToday]);
 
   const mealSections = useMemo(() => {
     return MEAL_TYPES.map((type) => ({
       type,
       label: MEAL_LABELS[type],
       icon: MEAL_ICONS[type],
-      meals: todayMeals.filter((m) => m.mealType === type),
+      meals: dateMeals.filter((m) => m.mealType === type),
     }));
-  }, [todayMeals]);
+  }, [dateMeals]);
 
   const handleDeleteMeal = useCallback(
     (id: string, name: string) => {
@@ -157,11 +173,11 @@ export default function MealsScreen() {
     <ScreenContainer>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>
-          {activeTab === "today" ? "Today's Meals" : "Favorite Meals"}
+          {activeTab === "meals" ? `${dateLabel}'s Meals` : "Favorite Meals"}
         </Text>
         <Text style={styles.headerDate}>
-          {activeTab === "today"
-            ? new Date().toLocaleDateString("en-US", {
+          {activeTab === "meals"
+            ? new Date(selectedDate + "T12:00:00").toLocaleDateString("en-US", {
                 weekday: "long",
                 month: "short",
                 day: "numeric",
@@ -170,15 +186,22 @@ export default function MealsScreen() {
         </Text>
       </View>
 
+      {/* Week Strip for date selection */}
+      {activeTab === "meals" && (
+        <View style={styles.weekStripWrap}>
+          <WeekStrip selectedDate={selectedDate} onSelectDate={setSelectedDate} />
+        </View>
+      )}
+
       {/* Tab Switcher */}
       <View style={styles.tabRow}>
         <TouchableOpacity
-          style={[styles.tab, activeTab === "today" && styles.tabActive]}
-          onPress={() => setActiveTab("today")}
+          style={[styles.tab, activeTab === "meals" && styles.tabActive]}
+          onPress={() => setActiveTab("meals")}
           activeOpacity={0.7}
         >
-          <Text style={[styles.tabText, activeTab === "today" && styles.tabTextActive]}>
-            Today
+          <Text style={[styles.tabText, activeTab === "meals" && styles.tabTextActive]}>
+            {dateLabel}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -193,18 +216,18 @@ export default function MealsScreen() {
         </TouchableOpacity>
       </View>
 
-      {activeTab === "today" ? (
+      {activeTab === "meals" ? (
         <>
           {/* Daily Summary */}
           <View style={styles.summaryCard}>
             <View style={styles.summaryItem}>
-              <Text style={styles.summaryValue}>{todayCalories}</Text>
+              <Text style={styles.summaryValue}>{dateCalories}</Text>
               <Text style={styles.summaryLabel}>Eaten</Text>
             </View>
             <View style={styles.summaryDivider} />
             <View style={styles.summaryItem}>
               <Text style={[styles.summaryValue, { color: "#FFFFFF" }]}>
-                {Math.max(0, profile.calorieGoal - todayCalories)}
+                {Math.max(0, profile.calorieGoal - dateCalories)}
               </Text>
               <Text style={styles.summaryLabel}>Remaining</Text>
             </View>
@@ -216,10 +239,10 @@ export default function MealsScreen() {
           </View>
 
           {/* Sugar Tracker */}
-          {todayMacros.sugar > 0 && (
+          {dateMacros.sugar > 0 && (
             <View style={styles.sugarBanner}>
-              <Text style={styles.sugarLabel}>Sugar Today</Text>
-              <Text style={styles.sugarValue}>{todayMacros.sugar}g</Text>
+              <Text style={styles.sugarLabel}>Sugar {dateLabel}</Text>
+              <Text style={styles.sugarValue}>{dateMacros.sugar}g</Text>
             </View>
           )}
 
@@ -257,6 +280,8 @@ const styles = StyleSheet.create({
   header: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 8 },
   headerTitle: { fontSize: 26, fontWeight: "900", color: "#F0F0F0" },
   headerDate: { fontSize: 14, marginTop: 4, color: "#666666" },
+
+  weekStripWrap: { paddingHorizontal: 20, marginBottom: 4 },
 
   // Tab switcher
   tabRow: {

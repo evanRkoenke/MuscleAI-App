@@ -175,3 +175,9 @@
 - [x] Support day selection that updates calories/macros display
 - [x] Style with minimalist black-and-white theme matching Muscle AI branding
 - [x] Subtle highlight for currently selected date
+
+## Date-Based Meal Editing
+- [x] Share selected date from dashboard calendar to meals tab
+- [x] Update meals tab to show meals for the selected date (not just today)
+- [x] Allow adding/editing meals for any selected date
+- [x] Update scan-meal to log meals to the selected date

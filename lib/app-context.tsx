@@ -87,6 +87,8 @@ interface AppContextType extends AppState {
   getCaloriesByDate: (date: string) => number;
   getMacrosByDate: (date: string) => { protein: number; carbs: number; fat: number; sugar: number };
   getFavoriteMeals: () => MealEntry[];
+  selectedDate: string;
+  setSelectedDate: (date: string) => void;
   loading: boolean;
 }
 
@@ -121,6 +123,7 @@ const STORAGE_KEY = "muscle_ai_state";
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AppState>(defaultState);
   const [loading, setLoading] = useState(true);
+  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split("T")[0]);
 
   useEffect(() => {
     loadState();
@@ -374,6 +377,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         getCaloriesByDate,
         getMacrosByDate,
         getFavoriteMeals,
+        selectedDate,
+        setSelectedDate,
         loading,
       }}
     >

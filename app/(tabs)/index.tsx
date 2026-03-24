@@ -1,4 +1,4 @@
-import { useCallback, useState, useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -56,9 +56,7 @@ function todayStr() {
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { profile, getCaloriesByDate, getMacrosByDate, getMealsByDate } = useApp();
-
-  const [selectedDate, setSelectedDate] = useState(todayStr);
+  const { profile, getCaloriesByDate, getMacrosByDate, getMealsByDate, selectedDate, setSelectedDate } = useApp();
 
   const cal = useMemo(() => getCaloriesByDate(selectedDate), [getCaloriesByDate, selectedDate]);
   const mac = useMemo(() => getMacrosByDate(selectedDate), [getMacrosByDate, selectedDate]);

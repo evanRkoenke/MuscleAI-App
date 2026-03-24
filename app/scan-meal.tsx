@@ -52,7 +52,7 @@ interface ScanResult {
 
 export default function ScanMealScreen() {
   const router = useRouter();
-  const { addMeal } = useApp();
+  const { addMeal, selectedDate } = useApp();
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [scanning, setScanning] = useState(false);
   const [result, setResult] = useState<ScanResult | null>(null);
@@ -281,7 +281,6 @@ export default function ScanMealScreen() {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
-    const today = new Date().toISOString().split("T")[0];
     const hour = new Date().getHours();
     let mealType: "breakfast" | "lunch" | "dinner" | "snack" = "snack";
     if (hour < 10) mealType = "breakfast";
@@ -290,7 +289,7 @@ export default function ScanMealScreen() {
 
     await addMeal({
       id: Date.now().toString(),
-      date: today,
+      date: selectedDate,
       mealType,
       name: result.mealName,
       calories: result.totalCalories,
@@ -302,7 +301,7 @@ export default function ScanMealScreen() {
       imageUri: imageUri || undefined,
     });
     router.back();
-  }, [result, imageUri, addMeal, router]);
+  }, [result, imageUri, addMeal, selectedDate, router]);
 
   const handleReset = () => {
     setImageUri(null);
