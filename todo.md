@@ -205,3 +205,6 @@
 
 ## Bug: Logo not showing on Expo Go
 - [x] Fix cropped muscle logo not rendering on Expo Go (switched from react-native Image to expo-image)
+
+## Macro Card Font Sizing
+- [x] Make macro numbers dynamically shrink when values are large to prevent text wrapping

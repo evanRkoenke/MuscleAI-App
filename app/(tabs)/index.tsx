@@ -184,15 +184,20 @@ export default function HomeScreen() {
             { val: mac.carbs, unit: "g", label: "CARBS", color: CARB },
             { val: mac.fat, unit: "g", label: "FAT", color: FATR },
             { val: mac.sugar, unit: "g", label: "SUGAR", color: "#A0A0A0" },
-          ].map((m) => (
-            <View key={m.label} style={s.macCard}>
-              <Text style={s.macVal}>
-                {m.val}
-                <Text style={s.macUnit}>{m.unit}</Text>
-              </Text>
-              <Text style={[s.macLbl, { color: m.color }]}>{m.label}</Text>
-            </View>
-          ))}
+          ].map((m) => {
+            const str = String(m.val);
+            const fs = str.length > 4 ? 18 : str.length > 3 ? 22 : 28;
+            const us = str.length > 4 ? 10 : str.length > 3 ? 12 : 14;
+            return (
+              <View key={m.label} style={s.macCard}>
+                <Text style={[s.macVal, { fontSize: fs }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5}>
+                  {m.val}
+                  <Text style={[s.macUnit, { fontSize: us }]}>{m.unit}</Text>
+                </Text>
+                <Text style={[s.macLbl, { color: m.color }]}>{m.label}</Text>
+              </View>
+            );
+          })}
         </View>
 
         {/* ═══ QUICK ACTIONS ═══ */}
