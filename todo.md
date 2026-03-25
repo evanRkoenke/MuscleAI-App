@@ -213,3 +213,11 @@
 - [x] Fix meals going to wrong category (all going to dinner instead of selected category)
 - [x] Pass correct category from meals tab "Add Breakfast/Lunch/Dinner/Snacks" buttons to scan-meal
 - [x] Add meal category picker on scan screen so user can choose category before logging
+
+## Track Weight Entry Deletion
+- [x] Add ability to delete recent weight entries in Track section
+
+## Dynamic Anabolic Forecast
+- [x] Calculate projected milestones based on user's daily calories and protein goal
+- [x] Graph trends upward for caloric surplus with high protein, downward for deficit
+- [x] Update Projected Milestones weights dynamically based on the formula

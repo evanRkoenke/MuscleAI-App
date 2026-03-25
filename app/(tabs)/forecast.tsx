@@ -46,26 +46,86 @@ const T1 = "#F0F0F0";
 const T2 = "#888888";
 const T3 = "#444444";
 
+/**
+ * Dynamic forecast formula:
+ * - TDEE is estimated from current weight (bodyweight × 15 for moderate activity)
+ * - Daily surplus/deficit = calorieGoal - TDEE
+ * - Weekly weight change = surplus/deficit × 7 / 3500 (3500 cal ≈ 1 lb)
+ * - Protein factor: high protein (≥1g/lb) preserves muscle in deficit, enhances lean gain in surplus
+ *   proteinRatio = proteinGoal / currentWeight
+ *   If surplus: higher protein → more lean mass gain (weight gain efficiency +10-20%)
+ *   If deficit: higher protein → less muscle loss (weight loss dampened by 10-20%)
+ * - Monthly change = weekly change × 4.33, with diminishing returns over time
+ */
+function computeForecast(
+  currentWeight: number,
+  calorieGoal: number,
+  proteinGoal: number,
+  targetWeight: number,
+  unit: "lbs" | "kg"
+) {
+  const weightInLbs = unit === "kg" ? currentWeight * 2.205 : currentWeight;
+  const tdee = weightInLbs * 15; // estimated TDEE
+  const dailySurplus = calorieGoal - tdee; // positive = surplus, negative = deficit
+  const weeklyChangeLbs = (dailySurplus * 7) / 3500;
+
+  // Protein ratio: grams per lb of bodyweight
+  const proteinRatio = proteinGoal / weightInLbs;
+  // Protein modifier: high protein (≥1g/lb) boosts efficiency
+  const proteinModifier = Math.min(Math.max(proteinRatio, 0.5), 1.5);
+
+  let adjustedWeeklyChange: number;
+  if (dailySurplus > 0) {
+    // Surplus: higher protein → more efficient lean gain
+    adjustedWeeklyChange = weeklyChangeLbs * (0.85 + 0.15 * proteinModifier);
+  } else {
+    // Deficit: higher protein → preserves muscle, dampens weight loss slightly
+    adjustedWeeklyChange = weeklyChangeLbs * (1.15 - 0.15 * proteinModifier);
+  }
+
+  const monthlyChangeLbs = adjustedWeeklyChange * 4.33;
+  const conversionFactor = unit === "kg" ? 1 / 2.205 : 1;
+
+  const isSurplus = dailySurplus > 0;
+  const pts = [];
+  for (let m = 0; m <= 12; m++) {
+    // Diminishing returns: progress slows as body adapts
+    const diminishing = m === 0 ? 0 : Math.log(1 + m) / Math.log(13);
+    const rawChange = monthlyChangeLbs * m * conversionFactor;
+    // Blend linear and logarithmic for realistic curve
+    const blendedChange = rawChange * (0.4 + 0.6 * (diminishing / (m / 12 || 1)));
+    const projected = Math.round((currentWeight + blendedChange) * 10) / 10;
+    pts.push({ month: m, weight: projected });
+  }
+
+  return { pts, isSurplus, dailySurplus, monthlyChangeLbs: monthlyChangeLbs * conversionFactor };
+}
+
 export default function ForecastScreen() {
-  const { subscription, profile } = useApp();
+  const { subscription, profile, weightLog } = useApp();
   const router = useRouter();
   const isElite = subscription === "elite";
 
-  // Generate 13 data points (month 0–12)
-  const forecastData = useMemo(() => {
-    const start = profile.currentWeight;
-    const target = profile.targetWeight;
-    const diff = target - start;
-    const pts = [];
-    for (let m = 0; m <= 12; m++) {
-      const p = Math.log(1 + m) / Math.log(13);
-      pts.push({
-        month: m,
-        weight: Math.round((start + diff * p) * 10) / 10,
-      });
-    }
-    return pts;
-  }, [profile.currentWeight, profile.targetWeight]);
+  // Use latest weight from log if available
+  const currentWeight = weightLog.length > 0
+    ? weightLog[weightLog.length - 1].weight
+    : profile.currentWeight;
+
+  // Dynamic forecast based on calories and protein
+  const { forecastData, isSurplus, trendDirection } = useMemo(() => {
+    const result = computeForecast(
+      currentWeight,
+      profile.calorieGoal,
+      profile.proteinGoal,
+      profile.targetWeight,
+      profile.unit
+    );
+    return {
+      forecastData: result.pts,
+      isSurplus: result.isSurplus,
+      trendDirection: result.isSurplus ? "up" : "down",
+    };
+  }, [currentWeight, profile.calorieGoal, profile.proteinGoal, profile.targetWeight, profile.unit]);
 
   // Chart geometry
   const { chartPoints, fillPoints, dots } = useMemo(() => {
@@ -139,11 +199,17 @@ export default function ForecastScreen() {
         {/* ═══ WEIGHT + DATE ═══ */}
         <View style={st.wRow}>
           <Text style={st.wVal}>
-            {profile.currentWeight}
+            {currentWeight}
             <Text style={st.wUnit}> {profile.unit}</Text>
           </Text>
           <Text style={st.wDate}>{targetDate}</Text>
         </View>
+
+        {/* Trend indicator */}
+        <Text style={st.trendText}>
+          {isSurplus ? "▲ Trending Up" : "▼ Trending Down"}
+          {" · "}{Math.abs(forecastData[12]?.weight - currentWeight).toFixed(1)} {profile.unit} projected in 12mo
+        </Text>
 
         {/* ═══ CHART ═══ */}
         <View style={st.chartCard}>
@@ -299,11 +365,15 @@ export default function ForecastScreen() {
         {isElite && (
           <View style={st.milestones}>
             <Text style={st.msTitle}>Projected Milestones</Text>
+            <Text style={st.msSub}>
+              Based on {profile.calorieGoal} cal/day &amp; {profile.proteinGoal}g protein
+              {isSurplus ? " (surplus)" : " (deficit)"}
+            </Text>
             {[
-              { month: 1, label: "First visible progress" },
-              { month: 3, label: "Noticeable body composition change" },
-              { month: 6, label: "Halfway to target" },
-              { month: 12, label: "Target weight achieved" },
+              { month: 1, label: isSurplus ? "First visible gains" : "Initial fat loss" },
+              { month: 3, label: isSurplus ? "Noticeable muscle growth" : "Noticeable body composition change" },
+              { month: 6, label: isSurplus ? "Significant strength increase" : "Halfway to target" },
+              { month: 12, label: isSurplus ? "Major physique transformation" : "Target weight achieved" },
             ].map((ms) => (
               <View key={ms.month} style={st.msRow}>
                 <View style={st.msDot} />
@@ -355,6 +425,7 @@ const st = StyleSheet.create({
   wVal: { fontSize: 38, fontWeight: "700", color: T1 },
   wUnit: { fontSize: 18, fontWeight: "600", color: T2 },
   wDate: { fontSize: 14, fontWeight: "400", color: T2 },
+  trendText: { fontSize: 13, fontWeight: "500", color: T2, marginBottom: 10 },
 
   /* Chart */
   chartCard: {
@@ -474,7 +545,8 @@ const st = StyleSheet.create({
 
   /* Milestones */
   milestones: { marginTop: 4 },
-  msTitle: { fontSize: 18, fontWeight: "600", color: T1, marginBottom: 16 },
+  msTitle: { fontSize: 18, fontWeight: "600", color: T1, marginBottom: 4 },
+  msSub: { fontSize: 13, color: T2, marginBottom: 16 },
   msRow: {
     flexDirection: "row",
     alignItems: "center",

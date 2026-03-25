@@ -16,6 +16,7 @@ import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useApp } from "@/lib/app-context";
 import * as Haptics from "expo-haptics";
+import { Alert } from "react-native";
 import { Typography } from "@/constants/typography";
 
 
@@ -29,7 +30,7 @@ type TimeRange = "1M" | "3M" | "6M" | "1Y";
 
 export default function TrackScreen() {
   const router = useRouter();
-  const { weightLog, addWeight, profile, updateProfile } = useApp();
+  const { weightLog, addWeight, removeWeight, profile, updateProfile } = useApp();
   const [timeRange, setTimeRange] = useState<TimeRange>("3M");
   const [showLogModal, setShowLogModal] = useState(false);
   const [newWeight, setNewWeight] = useState("");
@@ -60,6 +61,28 @@ export default function TrackScreen() {
   }, [filteredData]);
 
   const latestWeight = weightLog.length > 0 ? weightLog[weightLog.length - 1].weight : profile.currentWeight;
+
+  const handleDeleteWeight = useCallback(async (id: string) => {
+    if (Platform.OS !== "web") {
+      Alert.alert(
+        "Delete Entry",
+        "Are you sure you want to delete this weight entry?",
+        [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: "Delete",
+            style: "destructive",
+            onPress: async () => {
+              await removeWeight(id);
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            },
+          },
+        ]
+      );
+    } else {
+      await removeWeight(id);
+    }
+  }, [removeWeight]);
 
   const handleLogWeight = useCallback(async () => {
     const weight = parseFloat(newWeight);
@@ -198,9 +221,18 @@ export default function TrackScreen() {
                     day: "numeric",
                   })}
                 </Text>
-                <Text style={styles.entryWeight}>
-                  {entry.weight} {profile.unit}
-                </Text>
+                <View style={styles.entryRight}>
+                  <Text style={styles.entryWeight}>
+                    {entry.weight} {profile.unit}
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() => handleDeleteWeight(entry.id)}
+                    style={styles.deleteButton}
+                    activeOpacity={0.6}
+                  >
+                    <IconSymbol name="trash.fill" size={16} color="#EF4444" />
+                  </TouchableOpacity>
+                </View>
               </View>
             ))
         ) : (
@@ -336,6 +368,8 @@ const styles = StyleSheet.create({
   },
   entryDate: { fontSize: 15, color: "#888888" },
   entryWeight: { fontSize: 15, fontWeight: "400", color: "#F0F0F0" },
+  entryRight: { flexDirection: "row" as const, alignItems: "center" as const, gap: 12 },
+  deleteButton: { padding: 6 },
   emptyText: { fontSize: 14, color: "#666666", textAlign: "center", paddingVertical: 20 },
   shareButton: {
     flexDirection: "row",

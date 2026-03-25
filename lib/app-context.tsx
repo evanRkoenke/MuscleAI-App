@@ -77,6 +77,7 @@ interface AppContextType extends AppState {
   removeMeal: (id: string) => Promise<void>;
   toggleFavoriteMeal: (id: string) => Promise<void>;
   addWeight: (entry: WeightEntry) => Promise<void>;
+  removeWeight: (id: string) => Promise<void>;
   saveGainsCard: (card: GainsCardEntry) => Promise<void>;
   removeGainsCard: (id: string) => Promise<void>;
   updatePersonalRecords: () => Promise<void>;
@@ -225,6 +226,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  const removeWeight = useCallback(async (id: string) => {
+    setState((prev) => {
+      const next = { ...prev, weightLog: prev.weightLog.filter((w) => w.id !== id) };
+      saveState(next);
+      return next;
+    });
+  }, []);
+
   const saveGainsCard = useCallback(async (card: GainsCardEntry) => {
     setState((prev) => {
       const next = { ...prev, gainsCards: [card, ...prev.gainsCards].slice(0, 50) };
@@ -367,6 +376,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         removeMeal,
         toggleFavoriteMeal,
         addWeight,
+        removeWeight,
         saveGainsCard,
         removeGainsCard,
         updatePersonalRecords,
