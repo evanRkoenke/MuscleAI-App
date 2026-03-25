@@ -28,10 +28,11 @@ describe("Subscription Feature Access — Global Gating", () => {
       "manage_payment",
     ];
 
-    it("free tier should only have meal_logging", () => {
+    it("free tier should have meal_logging and ai_scan (limited to 5/day)", () => {
       expect(hasFeatureAccess("free", "meal_logging")).toBe(true);
+      expect(hasFeatureAccess("free", "ai_scan")).toBe(true);
       // Everything else should be locked
-      const lockedFeatures = allFeatures.filter((f) => f !== "meal_logging");
+      const lockedFeatures = allFeatures.filter((f) => f !== "meal_logging" && f !== "ai_scan");
       for (const feature of lockedFeatures) {
         expect(hasFeatureAccess("free", feature)).toBe(false);
       }
@@ -151,8 +152,8 @@ describe("Subscription Feature Access — Global Gating", () => {
       expect(getMinimumTierForFeature("meal_logging")).toBe("free");
     });
 
-    it("ai_scan should require essential tier", () => {
-      expect(getMinimumTierForFeature("ai_scan")).toBe("essential");
+    it("ai_scan should require free tier (limited to 5/day)", () => {
+      expect(getMinimumTierForFeature("ai_scan")).toBe("free");
     });
 
     it("advanced_analytics should require pro tier", () => {

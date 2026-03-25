@@ -235,3 +235,10 @@
 - [x] Update Forecast page to use global subscription gating
 - [x] Update Priority Sync to use global subscription gating
 - [x] Write tests for subscription system
+
+## Free Plan Daily Scan Limit
+- [x] Build scan counter with local persistence (AsyncStorage) and midnight reset
+- [x] Create "Daily Limit Reached" popup with high-contrast "Get Unlimited Scans with Elite" button
+- [x] Integrate limit check into scan flow (block after 5th scan for free users)
+- [x] Paid tiers (Essential/Pro/Elite) bypass the limit entirely
+- [x] Write tests for scan limit logic

@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   View,
   Text,
@@ -18,7 +18,10 @@ import { LinearGradient } from "expo-linear-gradient";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useApp } from "@/lib/app-context";
+import { useSubscription } from "@/hooks/use-subscription";
 import { trpc } from "@/lib/trpc";
+import { getScanCount, incrementScanCount, FREE_DAILY_SCAN_LIMIT } from "@/lib/scan-counter";
+import { ScanLimitModal } from "@/components/scan-limit-modal";
 import * as Haptics from "expo-haptics";
 import { Typography } from "@/constants/typography";
 
@@ -100,6 +103,16 @@ export default function ScanMealScreen() {
   // Confidence confirmation state
   const [pendingConfirmations, setPendingConfirmations] = useState<Set<number>>(new Set());
 
+  // Scan limit state
+  const sub = useSubscription();
+  const [scansUsed, setScansUsed] = useState(0);
+  const [showLimitModal, setShowLimitModal] = useState(false);
+
+  // Load today's scan count on mount
+  useEffect(() => {
+    getScanCount().then(setScansUsed);
+  }, []);
+
   const analyzeMutation = trpc.ai.analyzeMeal.useMutation();
 
   const clearError = () => {
@@ -109,6 +122,17 @@ export default function ScanMealScreen() {
 
   const pickImage = useCallback(async (useCamera: boolean) => {
     clearError();
+
+    // Check scan limit for free-plan users
+    if (!sub.canAccessUnlimitedScans) {
+      const currentCount = await getScanCount();
+      if (currentCount >= FREE_DAILY_SCAN_LIMIT) {
+        setScansUsed(currentCount);
+        setShowLimitModal(true);
+        return;
+      }
+    }
+
     try {
       const options: ImagePicker.ImagePickerOptions = {
         mediaTypes: ["images"],
@@ -167,6 +191,12 @@ export default function ScanMealScreen() {
         scanResult.totalSugar = scanResult.totalSugar ?? scanResult.foods.reduce((s, f) => s + f.sugar, 0);
         setResult(scanResult);
 
+        // Increment scan counter for free users
+        if (!sub.canAccessUnlimitedScans) {
+          const newCount = await incrementScanCount();
+          setScansUsed(newCount);
+        }
+
         // Check for low-confidence items
         const lowConfidence = new Set<number>();
         scanResult.foods.forEach((f, i) => {
@@ -195,6 +225,13 @@ export default function ScanMealScreen() {
         };
         setResult(mockResult);
         setPendingConfirmations(new Set());
+
+        // Increment scan counter for free users (fallback also counts)
+        if (!sub.canAccessUnlimitedScans) {
+          const newCount = await incrementScanCount();
+          setScansUsed(newCount);
+        }
+
         if (Platform.OS !== "web") {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         }
@@ -379,6 +416,15 @@ export default function ScanMealScreen() {
               <Text style={styles.cameraSubtext}>
                 Take a photo or choose from gallery to analyze nutritional content
               </Text>
+
+              {/* Remaining scans indicator for free users */}
+              {!sub.canAccessUnlimitedScans && (
+                <View style={styles.scanCounterBadge}>
+                  <Text style={styles.scanCounterText}>
+                    {Math.max(0, FREE_DAILY_SCAN_LIMIT - scansUsed)} of {FREE_DAILY_SCAN_LIMIT} free scans remaining today
+                  </Text>
+                </View>
+              )}
             </View>
 
             <View style={styles.buttonRow}>
@@ -774,6 +820,17 @@ export default function ScanMealScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* Daily Scan Limit Modal */}
+      <ScanLimitModal
+        visible={showLimitModal}
+        scansUsed={scansUsed}
+        onUpgrade={() => {
+          setShowLimitModal(false);
+          router.push("/paywall" as any);
+        }}
+        onDismiss={() => setShowLimitModal(false)}
+      />
     </ScreenContainer>
   );
 }
@@ -1148,5 +1205,22 @@ const styles = StyleSheet.create({
   categoryLabelActive: {
     color: "#FFFFFF",
     fontWeight: "600" as const,
+  },
+
+  // Scan counter badge
+  scanCounterBadge: {
+    marginTop: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 20,
+    backgroundColor: "rgba(255,255,255,0.06)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.1)",
+  },
+  scanCounterText: {
+    fontSize: 12,
+    fontWeight: "500",
+    color: "#888888",
+    textAlign: "center" as const,
   },
 });

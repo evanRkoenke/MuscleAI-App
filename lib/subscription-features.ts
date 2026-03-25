@@ -32,6 +32,7 @@ export type Feature =
 const TIER_FEATURES: Record<SubscriptionTier, Set<Feature>> = {
   free: new Set([
     "meal_logging",
+    "ai_scan",
   ]),
   essential: new Set([
     "meal_logging",
