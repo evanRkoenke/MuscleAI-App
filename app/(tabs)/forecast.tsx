@@ -24,6 +24,8 @@ import { LinearGradient } from "expo-linear-gradient";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useApp } from "@/lib/app-context";
+import { useSubscription } from "@/hooks/use-subscription";
+import { isPaidTier } from "@/lib/subscription-features";
 import { Typography } from "@/constants/typography";
 
 
@@ -103,8 +105,13 @@ function computeForecast(
 
 export default function ForecastScreen() {
   const { subscription, profile, weightLog } = useApp();
+  const sub = useSubscription();
   const router = useRouter();
-  const isElite = subscription === "elite";
+  // Forecast chart is unlocked for Elite; Priority Sync is Elite-only
+  // All paid tiers get basic forecast access; Elite gets full 12-month + priority sync
+  const canSeeForecast = sub.canAccessForecast;
+  const canUsePrioritySync = sub.canAccessPrioritySync;
+  const isPaid = sub.isPaid;
 
   // Use latest weight from log if available
   const currentWeight = weightLog.length > 0
@@ -213,7 +220,7 @@ export default function ForecastScreen() {
 
         {/* ═══ CHART ═══ */}
         <View style={st.chartCard}>
-          <View style={isElite ? undefined : st.blurred}>
+          <View style={canSeeForecast ? undefined : st.blurred}>
             <Svg width={CHART_W} height={CHART_H}>
               <Defs>
                 <SvgGrad id="fillG" x1="0" y1="0" x2="0" y2="1">
@@ -293,7 +300,7 @@ export default function ForecastScreen() {
           </View>
 
           {/* Lock overlay for non-Elite */}
-          {!isElite && (
+          {!canSeeForecast && (
             <View style={st.lockOverlay}>
               <View style={st.lockCircle}>
                 <IconSymbol name="lock.fill" size={28} color={ACCENT} />
@@ -304,10 +311,10 @@ export default function ForecastScreen() {
         </View>
 
         {/* ═══ PRIORITY SYNC CARD ═══ */}
-        <View style={[st.syncCard, isElite && st.syncCardActive]}>
+        <View style={[st.syncCard, canUsePrioritySync && st.syncCardActive]}>
           <View style={st.syncRow}>
-            <View style={[st.syncIcon, isElite && st.syncIconActive]}>
-              {isElite ? (
+            <View style={[st.syncIcon, canUsePrioritySync && st.syncIconActive]}>
+              {canUsePrioritySync ? (
                 <IconSymbol name="checkmark.circle.fill" size={18} color="#4ADE80" />
               ) : (
                 <IconSymbol name="lock.fill" size={16} color={T3} />
@@ -315,7 +322,7 @@ export default function ForecastScreen() {
             </View>
             <View style={st.syncInfo}>
               <Text style={st.syncTitle}>Priority Sync</Text>
-              {isElite ? (
+              {canUsePrioritySync ? (
                 <View style={st.syncActiveRow}>
                   <View style={st.syncDot} />
                   <Text style={st.syncActiveSub}>Live — syncing with your daily nutrition data</Text>
@@ -324,12 +331,12 @@ export default function ForecastScreen() {
                 <Text style={st.syncSub}>Upgrade to Elite to unlock real-time sync</Text>
               )}
             </View>
-            {!isElite && <IconSymbol name="chevron.right" size={14} color={T3} />}
+            {!canUsePrioritySync && <IconSymbol name="chevron.right" size={14} color={T3} />}
           </View>
         </View>
 
         {/* ═══ PREMIUM UPSELL BOX ═══ */}
-        {!isElite && (
+        {!canSeeForecast && (
           <View style={st.upsellCard}>
             <LinearGradient
               colors={["rgba(0,122,255,0.06)", "rgba(255,59,48,0.03)"]}
@@ -369,7 +376,7 @@ export default function ForecastScreen() {
         )}
 
         {/* ═══ MILESTONES (Elite only) ═══ */}
-        {isElite && (
+        {canSeeForecast && (
           <View style={st.milestones}>
             <Text style={st.msTitle}>Projected Milestones</Text>
             <Text style={st.msSub}>

@@ -13,6 +13,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useApp } from "@/lib/app-context";
+import { useSubscription } from "@/hooks/use-subscription";
 import * as Haptics from "expo-haptics";
 import { Typography } from "@/constants/typography";
 
@@ -24,6 +25,7 @@ const PROTEIN_LIGHT = "#E0E0E0";
 export default function GainsCardScreen() {
   const router = useRouter();
   const { profile, weightLog, getTodayCalories, getTodayMacros, subscription, saveGainsCard } = useApp();
+  const sub = useSubscription();
 
   const todayCalories = getTodayCalories();
   const todayMacros = getTodayMacros();
@@ -95,7 +97,7 @@ export default function GainsCardScreen() {
             <Text style={styles.cardLogo}>MUSCLE AI</Text>
             <View style={styles.cardBadgeContainer}>
               <Text style={styles.cardBadge}>
-                {subscription === "elite" ? "ELITE" : subscription === "pro" ? "PRO" : "MEMBER"}
+                {sub.label.toUpperCase()}
               </Text>
             </View>
           </View>

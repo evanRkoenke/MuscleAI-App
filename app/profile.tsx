@@ -22,6 +22,7 @@ import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useApp } from "@/lib/app-context";
 import type { GainsCardEntry, PersonalRecord } from "@/lib/app-context";
+import { useSubscription } from "@/hooks/use-subscription";
 import * as ImagePicker from "expo-image-picker";
 import * as Haptics from "expo-haptics";
 import { Typography } from "@/constants/typography";
@@ -74,6 +75,7 @@ export default function ProfileScreen() {
     updateProfile,
     removeGainsCard,
   } = useApp();
+  const sub = useSubscription();
 
   // ─── Edit Profile State ───
   const [editModalVisible, setEditModalVisible] = useState(false);
@@ -200,7 +202,7 @@ export default function ProfileScreen() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
 
-    if (subscription === "free") {
+    if (!sub.canManagePayment) {
       Alert.alert(
         "No Active Subscription",
         "Subscribe to a plan first, then you can manage your payment method here.",
@@ -426,9 +428,9 @@ export default function ProfileScreen() {
             <Text style={styles.editProfileBtnText}>Edit Profile</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.paymentBtn, subscription === "free" && { opacity: 0.4 }]}
+            style={[styles.paymentBtn, !sub.canManagePayment && { opacity: 0.4 }]}
             onPress={() => {
-              if (subscription === "free") {
+              if (!sub.canManagePayment) {
                 Alert.alert(
                   "Premium Feature",
                   "Subscribe to a paid plan to manage your payment method.",
@@ -443,8 +445,8 @@ export default function ProfileScreen() {
             }}
             activeOpacity={0.8}
           >
-            <IconSymbol name={subscription === "free" ? "lock.fill" : "creditcard.fill"} size={14} color={subscription === "free" ? TEXT_TERTIARY : TEXT_PRIMARY} />
-            <Text style={[styles.paymentBtnText, subscription === "free" && { color: TEXT_TERTIARY }]}>{subscription === "free" ? "Locked" : "Payment"}</Text>
+            <IconSymbol name={!sub.canManagePayment ? "lock.fill" : "creditcard.fill"} size={14} color={!sub.canManagePayment ? TEXT_TERTIARY : TEXT_PRIMARY} />
+            <Text style={[styles.paymentBtnText, !sub.canManagePayment && { color: TEXT_TERTIARY }]}>{!sub.canManagePayment ? "Locked" : "Payment"}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -613,7 +615,7 @@ export default function ProfileScreen() {
             {/* Email Field */}
             <View style={styles.fieldContainer}>
               <Text style={styles.fieldLabel}>EMAIL</Text>
-              {subscription === "free" ? (
+              {!sub.canEditEmail ? (
                 <TouchableOpacity
                   style={styles.lockedField}
                   onPress={() => {
@@ -670,7 +672,7 @@ export default function ProfileScreen() {
             </TouchableOpacity>
 
             {/* Payment Method Section */}
-            {subscription === "free" ? (
+            {!sub.canManagePayment ? (
               <TouchableOpacity
                 style={[styles.paymentRow, { opacity: 0.5 }]}
                 onPress={() => {

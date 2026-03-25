@@ -226,3 +226,12 @@
 - [x] Fix Priority Sync card to unlock for Elite Annual subscribers
 - [x] Remove lock icon and overlay when user has Elite plan
 - [x] Show real-time data sync status when unlocked
+
+## Global Subscription Gating & Welcome Popup
+- [x] Global subscription check: unlock all features based on plan tier (Elite/Pro/Essential)
+- [x] Remove all lock overlays when user has active subscription
+- [x] Create sleek "Welcome to Elite" popup after $79.99 purchase
+- [x] Persist subscription status locally with AsyncStorage so features never re-lock
+- [x] Update Forecast page to use global subscription gating
+- [x] Update Priority Sync to use global subscription gating
+- [x] Write tests for subscription system

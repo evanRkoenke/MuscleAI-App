@@ -99,13 +99,9 @@ export default function PaywallScreen() {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         }
 
-        Alert.alert(
-          "Welcome to " + tier.charAt(0).toUpperCase() + tier.slice(1),
-          tier === "elite"
-            ? "Your 12-Month Muscle Forecast and Priority Sync are now unlocked!"
-            : "Your subscription is now active. Enjoy Muscle AI!",
-          [{ text: "Let's Go", onPress: () => router.replace("/(tabs)") }]
-        );
+        // Navigate to tabs — the global WelcomeModal will show automatically
+        // because setSubscription sets justSubscribedTier in AppContext
+        router.replace("/(tabs)");
       } catch (error) {
         console.error("[IAP] Post-purchase error:", error);
         setPurchaseError("Purchase completed but setup failed. Please restart the app.");
@@ -174,9 +170,7 @@ export default function PaywallScreen() {
                 onPress: async () => {
                   await purchaseViaStripe(plan.productId);
                   await setSubscription(plan.id as any);
-                  if (Platform.OS !== "web") {
-                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                  }
+                  // Navigate to tabs — global WelcomeModal handles the celebration
                   router.replace("/(tabs)");
                 },
               },
@@ -195,11 +189,10 @@ export default function PaywallScreen() {
         await purchaseViaStripe(plan.productId);
 
         // Set subscription locally (in production, confirmed via webhook)
+        // setSubscription triggers justSubscribedTier → global WelcomeModal
         await setSubscription(plan.id as any);
 
-        if (Platform.OS !== "web") {
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        }
+        // Navigate to tabs — the WelcomeModal will appear automatically
         router.replace("/(tabs)");
       }
     } catch (error: any) {

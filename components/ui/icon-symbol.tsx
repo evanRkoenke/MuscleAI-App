@@ -43,6 +43,10 @@ const MAPPING = {
   "questionmark.circle": "help-outline",
   "arrow.triangle.2.circlepath": "sync",
   "checkmark.circle.fill": "check-circle",
+  "creditcard.fill": "credit-card",
+  "crown.fill": "workspace-premium",
+  "faceid": "fingerprint",
+  "xmark.circle.fill": "cancel",
 } as IconMapping;
 
 /**

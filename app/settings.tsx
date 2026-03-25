@@ -18,6 +18,7 @@ import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
 import { useApp } from "@/lib/app-context";
+import { useSubscription } from "@/hooks/use-subscription";
 import * as Haptics from "expo-haptics";
 import { Typography } from "@/constants/typography";
 
@@ -56,6 +57,7 @@ export default function SettingsScreen() {
   const colors = useColors();
   const router = useRouter();
   const { profile, subscription, updateProfile, setAuthenticated, setSubscription } = useApp();
+  const sub = useSubscription();
   const [showGoalModal, setShowGoalModal] = useState(false);
   const [editCalories, setEditCalories] = useState(profile.calorieGoal.toString());
   const [editProtein, setEditProtein] = useState(profile.proteinGoal.toString());
@@ -91,7 +93,7 @@ export default function SettingsScreen() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
 
-    if (subscription === "free") {
+    if (!sub.isPaid) {
       // Free users go to paywall to subscribe via native IAP
       (router as any).push("/paywall");
       return;
@@ -224,7 +226,7 @@ export default function SettingsScreen() {
             disabled={managingSubscription}
           >
             <Text style={styles.rowLabel}>
-              {subscription === "free" ? "Subscribe" : "Manage Subscription"}
+              {!sub.isPaid ? "Subscribe" : "Manage Subscription"}
             </Text>
             {managingSubscription ? (
               <ActivityIndicator size="small" color={"#FFFFFF"} />
@@ -232,7 +234,7 @@ export default function SettingsScreen() {
               <IconSymbol name="chevron.right" size={18} color="#666666" />
             )}
           </TouchableOpacity>
-          {subscription !== "free" && (
+          {sub.isPaid && (
             <>
               <View style={styles.divider} />
               <TouchableOpacity
@@ -245,7 +247,7 @@ export default function SettingsScreen() {
               </TouchableOpacity>
             </>
           )}
-          {subscription === "free" && (
+          {!sub.isPaid && (
             <>
               <View style={styles.divider} />
               <TouchableOpacity

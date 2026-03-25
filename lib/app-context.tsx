@@ -72,6 +72,10 @@ interface AppContextType extends AppState {
   completeOnboarding: () => Promise<void>;
   setAuthenticated: (value: boolean) => Promise<void>;
   setSubscription: (tier: SubscriptionTier) => Promise<void>;
+  /** The tier the user just upgraded to (triggers welcome modal). Null when no modal needed. */
+  justSubscribedTier: SubscriptionTier | null;
+  /** Dismiss the welcome modal */
+  dismissWelcomeModal: () => void;
   updateProfile: (updates: Partial<UserProfile>) => Promise<void>;
   addMeal: (meal: MealEntry) => Promise<void>;
   removeMeal: (id: string) => Promise<void>;
@@ -125,6 +129,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AppState>(defaultState);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split("T")[0]);
+  const [justSubscribedTier, setJustSubscribedTier] = useState<SubscriptionTier | null>(null);
 
   useEffect(() => {
     loadState();
@@ -177,8 +182,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [updateState]);
 
   const setSubscription = useCallback(async (tier: SubscriptionTier) => {
+    // Track the upgrade for the welcome modal (only for paid tiers)
+    if (tier !== "free") {
+      setJustSubscribedTier(tier);
+    }
     await updateState({ subscription: tier });
   }, [updateState]);
+
+  const dismissWelcomeModal = useCallback(() => {
+    setJustSubscribedTier(null);
+  }, []);
 
   const updateProfile = useCallback(async (updates: Partial<UserProfile>) => {
     setState((prev) => {
@@ -371,6 +384,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         completeOnboarding,
         setAuthenticated,
         setSubscription,
+        justSubscribedTier,
+        dismissWelcomeModal,
         updateProfile,
         addMeal,
         removeMeal,
