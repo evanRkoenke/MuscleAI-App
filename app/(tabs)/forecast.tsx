@@ -304,20 +304,27 @@ export default function ForecastScreen() {
         </View>
 
         {/* ═══ PRIORITY SYNC CARD ═══ */}
-        <View style={st.syncCard}>
+        <View style={[st.syncCard, isElite && st.syncCardActive]}>
           <View style={st.syncRow}>
-            <View style={st.syncIcon}>
-              <IconSymbol name="lock.fill" size={16} color={T3} />
+            <View style={[st.syncIcon, isElite && st.syncIconActive]}>
+              {isElite ? (
+                <IconSymbol name="checkmark.circle.fill" size={18} color="#4ADE80" />
+              ) : (
+                <IconSymbol name="lock.fill" size={16} color={T3} />
+              )}
             </View>
             <View style={st.syncInfo}>
               <Text style={st.syncTitle}>Priority Sync</Text>
-              <Text style={st.syncSub}>
-                {isElite
-                  ? "Real-time sync with your daily nutrition data."
-                  : "Locked content updates"}
-              </Text>
+              {isElite ? (
+                <View style={st.syncActiveRow}>
+                  <View style={st.syncDot} />
+                  <Text style={st.syncActiveSub}>Live — syncing with your daily nutrition data</Text>
+                </View>
+              ) : (
+                <Text style={st.syncSub}>Upgrade to Elite to unlock real-time sync</Text>
+              )}
             </View>
-            <IconSymbol name="chevron.right" size={14} color={T3} />
+            {!isElite && <IconSymbol name="chevron.right" size={14} color={T3} />}
           </View>
         </View>
 
@@ -476,6 +483,28 @@ const st = StyleSheet.create({
   syncInfo: { flex: 1, gap: 2 },
   syncTitle: { fontSize: 16, fontWeight: "600", color: T1 },
   syncSub: { fontSize: 13, color: T2 },
+  syncCardActive: {
+    borderColor: "rgba(74,222,128,0.3)",
+    backgroundColor: "rgba(74,222,128,0.05)",
+  },
+  syncIconActive: {
+    backgroundColor: "rgba(74,222,128,0.15)",
+  },
+  syncActiveRow: {
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    gap: 6,
+  },
+  syncDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: "#4ADE80",
+  },
+  syncActiveSub: {
+    fontSize: 13,
+    color: "#4ADE80",
+  },
 
   /* Upsell */
   upsellCard: {

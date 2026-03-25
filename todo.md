@@ -221,3 +221,8 @@
 - [x] Calculate projected milestones based on user's daily calories and protein goal
 - [x] Graph trends upward for caloric surplus with high protein, downward for deficit
 - [x] Update Projected Milestones weights dynamically based on the formula
+
+## Priority Sync Unlock Fix
+- [x] Fix Priority Sync card to unlock for Elite Annual subscribers
+- [x] Remove lock icon and overlay when user has Elite plan
+- [x] Show real-time data sync status when unlocked

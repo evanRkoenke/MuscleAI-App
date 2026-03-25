@@ -41,6 +41,8 @@ const MAPPING = {
   "pencil": "edit",
   "minus.circle.fill": "remove-circle",
   "questionmark.circle": "help-outline",
+  "arrow.triangle.2.circlepath": "sync",
+  "checkmark.circle.fill": "check-circle",
 } as IconMapping;
 
 /**
