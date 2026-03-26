@@ -316,3 +316,25 @@
 - [x] Persist subscription tier ($9.99/mo Essential, $19.99/mo Pro, $79.99/yr Elite) to database
 - [x] Ensure progress restores when paid users sign in on any device
 - [x] Write tests for sync logic (21 tests covering data prep, merge, formatting, tier gating)
+
+## Auto-Sync on App Launch
+- [x] Auto-pull cloud data when paid user opens the app
+- [x] Auto-push local changes to cloud after pull completes
+- [x] Restore subscription tier from server on launch
+- [x] Skip auto-sync for free users
+
+## Restore Purchases on Paywall
+- [x] Add "Restore Purchases" button to paywall screen with loading state
+- [x] Call server restorePurchases endpoint to check for active subscriptions
+- [x] Update local subscription tier if active subscription found
+- [x] Show success/failure feedback with haptic confirmation
+
+## Offline Sync Queue
+- [x] Build offline queue that buffers data changes when offline (AsyncStorage)
+- [x] Detect network connectivity changes using expo-network
+- [x] Auto-push queued changes when connectivity returns (NetworkSyncManager)
+- [x] Persist queue in AsyncStorage so it survives app restart
+- [x] Queue compaction (dedup full_sync, merge profile_updates)
+- [x] Retry tracking with max-retry pruning
+- [x] Offline queue status indicator in Settings (Cloud Sync section)
+- [x] Write tests for offline queue logic (16 tests)

@@ -55,6 +55,7 @@ const MAPPING = {
   "doc.text.fill": "description",
   "trophy.fill": "emoji-events",
   "icloud.fill": "cloud",
+  "arrow.clockwise": "refresh",
 } as IconMapping;
 
 /**

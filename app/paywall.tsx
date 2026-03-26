@@ -210,33 +210,69 @@ export default function PaywallScreen() {
     }
   };
 
+  const [restoring, setRestoring] = useState(false);
+
   // ─── Restore purchases ───
   const handleRestore = async () => {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
+    setRestoring(true);
+    setPurchaseError(null);
 
-    if (isNativeIAPAvailable() && useIAPHook) {
-      // In production with real IAP:
-      // const purchases = await getAvailablePurchases();
-      // Find active subscription and restore tier
+    try {
+      // Try server-side restore first (checks DB for active subscription linked to account)
+      const { trpc: trpcClient } = await import("@/lib/trpc");
+      const result = await (trpcClient as any).iap.restorePurchases.mutate({
+        platform: Platform.OS === "ios" ? "ios" : Platform.OS === "android" ? "android" : "web",
+      });
+
+      if (result.success && result.tier && result.tier !== "free") {
+        // Found active subscription on server
+        await setSubscription(result.tier);
+        if (Platform.OS !== "web") {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        }
+        Alert.alert(
+          "Subscription Restored",
+          `Your ${result.tier.charAt(0).toUpperCase() + result.tier.slice(1)} plan has been restored. Welcome back!`,
+          [{ text: "Continue", onPress: () => router.replace("/(tabs)") }]
+        );
+      } else {
+        // No active subscription found on server — try native IAP restore
+        if (isNativeIAPAvailable() && useIAPHook) {
+          Alert.alert(
+            "No Active Subscription Found",
+            "We couldn't find an active subscription linked to your account. If you purchased via Apple or Google, make sure you're signed in with the same Apple ID or Google account.\n\nNeed help? Contact Muscle Support.",
+            [
+              { text: "Contact Support", onPress: () => (router as any).push("/support") },
+              { text: "OK", style: "cancel" },
+            ]
+          );
+        } else {
+          Alert.alert(
+            "No Active Subscription Found",
+            "We couldn't find an active subscription linked to your account. Sign in with the same Google or Apple account you used to purchase.\n\nNeed help? Contact Muscle Support.",
+            [
+              { text: "Contact Support", onPress: () => (router as any).push("/support") },
+              { text: "OK", style: "cancel" },
+            ]
+          );
+        }
+      }
+    } catch (error: any) {
+      console.error("[Paywall] Restore error:", error);
+      // If server call fails (e.g., not authenticated), show generic message
       Alert.alert(
-        "Restore Purchases",
-        "To restore purchases on a native build:\n1. Build with EAS\n2. Sign in with the Apple ID used for purchase\n3. Tap Restore again\n\nYour subscription will be automatically detected.",
+        "Restore Failed",
+        "Please make sure you're signed in with the account you used to purchase. If the issue persists, contact Muscle Support.",
         [
           { text: "Contact Support", onPress: () => (router as any).push("/support") },
           { text: "OK", style: "cancel" },
         ]
       );
-    } else {
-      Alert.alert(
-        "Restore Purchases",
-        "Sign in with the same account to restore your subscription. If you're having issues, contact Muscle Support.",
-        [
-          { text: "Contact Support", onPress: () => (router as any).push("/support") },
-          { text: "OK", style: "cancel" },
-        ]
-      );
+    } finally {
+      setRestoring(false);
     }
   };
 
@@ -384,8 +420,19 @@ export default function PaywallScreen() {
           style={styles.restoreButton}
           onPress={handleRestore}
           activeOpacity={0.7}
+          disabled={restoring}
         >
-          <Text style={styles.restoreText}>Restore Purchases</Text>
+          {restoring ? (
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+              <ActivityIndicator size="small" color="#888888" />
+              <Text style={styles.restoreText}>Restoring...</Text>
+            </View>
+          ) : (
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+              <IconSymbol name="arrow.clockwise" size={14} color="#888888" />
+              <Text style={styles.restoreText}>Restore Purchases</Text>
+            </View>
+          )}
         </TouchableOpacity>
 
         {/* ─── Legal ─── */}

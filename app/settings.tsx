@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -21,6 +21,7 @@ import { useApp } from "@/lib/app-context";
 import { useSubscription } from "@/hooks/use-subscription";
 import { CloudSyncUpsell } from "@/components/cloud-sync-upsell";
 import { formatLastSync } from "@/lib/cloud-sync";
+import { getPendingCount, formatQueueStatus } from "@/lib/offline-queue";
 import * as Haptics from "expo-haptics";
 import { Typography } from "@/constants/typography";
 import { ProteinWidgetSmall, ProteinWidgetMedium } from "@/components/protein-widget";
@@ -70,6 +71,11 @@ export default function SettingsScreen() {
   const [managingSubscription, setManagingSubscription] = useState(false);
   const [showSyncUpsell, setShowSyncUpsell] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [pendingQueueCount, setPendingQueueCount] = useState(0);
+
+  useEffect(() => {
+    getPendingCount().then(setPendingQueueCount).catch(() => {});
+  }, []);
 
   const handleSaveGoals = async () => {
     if (Platform.OS !== "web") {
@@ -284,6 +290,11 @@ export default function SettingsScreen() {
             </Text>
           </View>
           <View style={styles.divider} />
+          <View style={styles.row}>
+            <Text style={styles.rowLabel}>Offline Queue</Text>
+            <Text style={styles.rowValue}>{formatQueueStatus(pendingQueueCount)}</Text>
+          </View>
+          <View style={styles.divider} />
           {sub.isPaid ? (
             <TouchableOpacity
               style={styles.row}
@@ -292,6 +303,8 @@ export default function SettingsScreen() {
                 setIsSyncing(true);
                 const result = await syncToCloud();
                 setIsSyncing(false);
+                // Refresh pending count after sync
+                getPendingCount().then(setPendingQueueCount).catch(() => {});
                 Alert.alert(result.success ? "Synced" : "Sync Failed", result.message);
               }}
               activeOpacity={0.7}

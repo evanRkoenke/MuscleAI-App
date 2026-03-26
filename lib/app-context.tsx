@@ -282,7 +282,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       saveState(next);
       return next;
     });
-  }, []);
+    if (state.subscription !== "free") {
+      import("./offline-queue").then(({ enqueue }) => enqueue("profile_update", updates)).catch(() => {});
+    }
+  }, [state.subscription]);
 
   const addMeal = useCallback(async (meal: MealEntry) => {
     const mealWithDefaults = { ...meal, sugar: meal.sugar ?? 0, isFavorite: meal.isFavorite ?? false };
@@ -291,7 +294,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       saveState(next);
       return next;
     });
-  }, []);
+    // Queue for offline sync if paid user
+    if (state.subscription !== "free") {
+      import("./offline-queue").then(({ enqueue }) => enqueue("meal_add", mealWithDefaults)).catch(() => {});
+    }
+  }, [state.subscription]);
 
   const removeMeal = useCallback(async (id: string) => {
     setState((prev) => {
@@ -299,7 +306,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       saveState(next);
       return next;
     });
-  }, []);
+    if (state.subscription !== "free") {
+      import("./offline-queue").then(({ enqueue }) => enqueue("meal_remove", { id })).catch(() => {});
+    }
+  }, [state.subscription]);
 
   const toggleFavoriteMeal = useCallback(async (id: string) => {
     setState((prev) => {
@@ -320,7 +330,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       saveState(next);
       return next;
     });
-  }, []);
+    if (state.subscription !== "free") {
+      import("./offline-queue").then(({ enqueue }) => enqueue("weight_add", entry)).catch(() => {});
+    }
+  }, [state.subscription]);
 
   const removeWeight = useCallback(async (id: string) => {
     setState((prev) => {
@@ -328,7 +341,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       saveState(next);
       return next;
     });
-  }, []);
+    if (state.subscription !== "free") {
+      import("./offline-queue").then(({ enqueue }) => enqueue("weight_remove", { id })).catch(() => {});
+    }
+  }, [state.subscription]);
 
   const saveGainsCard = useCallback(async (card: GainsCardEntry) => {
     setState((prev) => {
@@ -336,7 +352,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       saveState(next);
       return next;
     });
-  }, []);
+    if (state.subscription !== "free") {
+      import("./offline-queue").then(({ enqueue }) => enqueue("gains_card_save", card)).catch(() => {});
+    }
+  }, [state.subscription]);
 
   const removeGainsCard = useCallback(async (id: string) => {
     setState((prev) => {
