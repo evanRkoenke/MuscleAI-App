@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   Share,
   Platform,
   Alert,
+  Dimensions,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
@@ -17,10 +18,7 @@ import { useSubscription } from "@/hooks/use-subscription";
 import * as Haptics from "expo-haptics";
 import { Typography } from "@/constants/typography";
 
-
-const PRIMARY_WHITE = "#FFFFFF";
-const SILVER = "#C0C0C0";
-const PROTEIN_LIGHT = "#E0E0E0";
+const { width: SW } = Dimensions.get("window");
 
 export default function GainsCardScreen() {
   const router = useRouter();
@@ -35,15 +33,24 @@ export default function GainsCardScreen() {
     const currentWeight = weightLog.length > 0 ? weightLog[weightLog.length - 1].weight : profile.currentWeight;
     const change = currentWeight - startWeight;
     const daysTracked = weightLog.length;
-    return { startWeight, currentWeight, change, daysTracked };
+    const streak = daysTracked; // simplified
+    return { startWeight, currentWeight, change, daysTracked, streak };
   }, [weightLog, profile.currentWeight]);
 
-  const handleShare = async () => {
+  const shareText = useMemo(() => {
+    return `🏋️ My Muscle AI Stats\n\n` +
+      `⚖️ ${stats.currentWeight} ${profile.unit}\n` +
+      `🥩 ${todayMacros.protein}g protein today\n` +
+      `🔥 ${todayCalories} calories tracked\n` +
+      `📅 ${stats.daysTracked} days tracked\n\n` +
+      `Track your gains with @muscleai.app`;
+  }, [stats, todayMacros, todayCalories, profile.unit]);
+
+  const handleSaveAndShare = async (platform: "instagram" | "tiktok" | "general" | "copy") => {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
     try {
-      // Save card to gallery
       const card = {
         id: `gc_${Date.now()}`,
         date: new Date().toISOString().split("T")[0],
@@ -56,8 +63,17 @@ export default function GainsCardScreen() {
       };
       await saveGainsCard(card);
 
+      if (platform === "copy") {
+        // Copy to clipboard
+        if (Platform.OS !== "web") {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        }
+        Alert.alert("Copied!", "Your stats have been copied to clipboard.", [{ text: "OK" }]);
+        return;
+      }
+
       await Share.share({
-        message: `Check out my progress on Muscle AI!\n\nCurrent Weight: ${stats.currentWeight} ${profile.unit}\nToday's Protein: ${todayMacros.protein}g\nCalories Tracked: ${todayCalories}\n\nDownload Muscle AI to optimize your nutrition!\n\n@muscleai.app`,
+        message: shareText,
         title: "My Muscle AI Gains Card",
       });
     } catch (e) {
@@ -69,50 +85,57 @@ export default function GainsCardScreen() {
     }
   };
 
+  const dateStr = new Date().toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+
   return (
     <ScreenContainer edges={["top", "bottom", "left", "right"]}>
-      <View style={styles.topBar}>
+      <View style={st.topBar}>
         <TouchableOpacity
           onPress={() => router.back()}
-          style={styles.backButton}
+          style={st.backButton}
           activeOpacity={0.7}
         >
           <IconSymbol name="xmark" size={24} color="#F0F0F0" />
         </TouchableOpacity>
-        <Text style={styles.topBarTitle}>Gains Card</Text>
-        <View style={styles.backButton} />
+        <Text style={st.topBarTitle}>Gains Card</Text>
+        <View style={st.backButton} />
       </View>
 
-      <View style={styles.cardContainer}>
-        {/* The Gains Card */}
-        <View style={styles.gainsCard}>
+      <View style={st.cardContainer}>
+        {/* The Gains Card — Instagram Stories 9:16 aspect ratio card */}
+        <View style={st.gainsCard}>
           <LinearGradient
-            colors={["rgba(0,122,255,0.06)", "rgba(0,212,255,0.02)", "transparent"]}
+            colors={["rgba(255,255,255,0.04)", "rgba(255,255,255,0.01)", "transparent"]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={StyleSheet.absoluteFill}
           />
+
           {/* Card Header */}
-          <View style={styles.cardHeader}>
-            <Text style={styles.cardLogo}>MUSCLE AI</Text>
-            <View style={styles.cardBadgeContainer}>
-              <Text style={styles.cardBadge}>
+          <View style={st.cardHeader}>
+            <Text style={st.cardLogo}>MUSCLE AI</Text>
+            <View style={st.cardBadgeContainer}>
+              <Text style={st.cardBadge}>
                 {sub.label.toUpperCase()}
               </Text>
             </View>
           </View>
 
           {/* Weight Section */}
-          <View style={styles.cardWeightSection}>
-            <Text style={styles.cardWeightLabel}>CURRENT WEIGHT</Text>
-            <Text style={styles.cardWeightValue}>
+          <View style={st.cardWeightSection}>
+            <Text style={st.cardWeightLabel}>CURRENT WEIGHT</Text>
+            <Text style={st.cardWeightValue}>
               {stats.currentWeight}
-              <Text style={styles.cardWeightUnit}> {profile.unit}</Text>
+              <Text style={st.cardWeightUnit}> {profile.unit}</Text>
             </Text>
             {stats.change !== 0 && (
               <Text
                 style={[
-                  styles.cardWeightChange,
+                  st.cardWeightChange,
                   { color: stats.change > 0 ? "#C0C0C0" : "#FF3D3D" },
                 ]}
               >
@@ -123,69 +146,77 @@ export default function GainsCardScreen() {
           </View>
 
           {/* Stats Grid */}
-          <View style={styles.cardStatsGrid}>
-            <View style={styles.cardStatItem}>
-              <Text style={[styles.cardStatValue, { color: "#E0E0E0" }]}>{todayMacros.protein}g</Text>
-              <Text style={styles.cardStatLabel}>PROTEIN</Text>
+          <View style={st.cardStatsGrid}>
+            <View style={st.cardStatItem}>
+              <Text style={[st.cardStatValue, { color: "#E0E0E0" }]}>{todayMacros.protein}g</Text>
+              <Text style={st.cardStatLabel}>PROTEIN</Text>
             </View>
-            <View style={styles.cardStatItem}>
-              <Text style={styles.cardStatValue}>{todayCalories}</Text>
-              <Text style={styles.cardStatLabel}>CALORIES</Text>
+            <View style={st.cardStatItem}>
+              <Text style={st.cardStatValue}>{todayCalories}</Text>
+              <Text style={st.cardStatLabel}>CALORIES</Text>
             </View>
-            <View style={styles.cardStatItem}>
-              <Text style={styles.cardStatValue}>{stats.daysTracked}</Text>
-              <Text style={styles.cardStatLabel}>DAYS</Text>
+            <View style={st.cardStatItem}>
+              <Text style={st.cardStatValue}>{stats.daysTracked}</Text>
+              <Text style={st.cardStatLabel}>DAYS</Text>
             </View>
           </View>
 
           {/* Macro Bars */}
-          <View style={styles.cardMacroBars}>
-            <MacroBar label="Protein" value={todayMacros.protein} goal={profile.proteinGoal} color={"#E0E0E0"} />
+          <View style={st.cardMacroBars}>
+            <MacroBar label="Protein" value={todayMacros.protein} goal={profile.proteinGoal} color="#E0E0E0" />
             <MacroBar label="Carbs" value={todayMacros.carbs} goal={profile.carbsGoal} color="#B0B0B0" />
             <MacroBar label="Fat" value={todayMacros.fat} goal={profile.fatGoal} color="#FF4444" />
           </View>
 
           {/* Card Footer */}
-          <View style={styles.cardFooter}>
-            <Text style={styles.cardFooterText}>@muscleai.app</Text>
-            <Text style={styles.cardFooterDate}>
-              {new Date().toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-                year: "numeric",
-              })}
-            </Text>
+          <View style={st.cardFooter}>
+            <Text style={st.cardFooterText}>@muscleai.app</Text>
+            <Text style={st.cardFooterDate}>{dateStr}</Text>
           </View>
         </View>
       </View>
 
       {/* Share Buttons */}
-      <View style={styles.shareSection}>
+      <View style={st.shareSection}>
+        {/* Primary: Instagram Stories */}
         <TouchableOpacity
-          style={styles.shareButton}
-          onPress={handleShare}
+          style={st.shareButton}
+          onPress={() => handleSaveAndShare("instagram")}
           activeOpacity={0.8}
         >
           <LinearGradient
             colors={["#444444", "#333333"]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
-            style={styles.shareGradient}
+            style={st.shareGradient}
           >
-            <IconSymbol name="square.and.arrow.up" size={22} color="#FFFFFF" />
-            <Text style={styles.shareButtonText}>Share to Stories</Text>
+            <IconSymbol name="camera.on.rectangle" size={22} color="#FFFFFF" />
+            <Text style={st.shareButtonText}>Share to Instagram Stories</Text>
           </LinearGradient>
         </TouchableOpacity>
 
-        <View style={styles.shareRow}>
-          <TouchableOpacity style={styles.shareSmallButton} onPress={handleShare} activeOpacity={0.7}>
-            <Text style={styles.shareSmallText}>Instagram</Text>
+        {/* Secondary share row */}
+        <View style={st.shareRow}>
+          <TouchableOpacity
+            style={st.shareSmallButton}
+            onPress={() => handleSaveAndShare("tiktok")}
+            activeOpacity={0.7}
+          >
+            <Text style={st.shareSmallText}>TikTok</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.shareSmallButton} onPress={handleShare} activeOpacity={0.7}>
-            <Text style={styles.shareSmallText}>TikTok</Text>
+          <TouchableOpacity
+            style={st.shareSmallButton}
+            onPress={() => handleSaveAndShare("general")}
+            activeOpacity={0.7}
+          >
+            <Text style={st.shareSmallText}>More</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.shareSmallButton} onPress={handleShare} activeOpacity={0.7}>
-            <Text style={styles.shareSmallText}>Copy</Text>
+          <TouchableOpacity
+            style={st.shareSmallButton}
+            onPress={() => handleSaveAndShare("copy")}
+            activeOpacity={0.7}
+          >
+            <Text style={st.shareSmallText}>Copy</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -204,21 +235,21 @@ function MacroBar({
   goal: number;
   color: string;
 }) {
-  const pct = Math.min(100, (value / goal) * 100);
+  const pct = Math.min(100, goal > 0 ? (value / goal) * 100 : 0);
   return (
-    <View style={styles.macroBarContainer}>
-      <View style={styles.macroBarHeader}>
-        <Text style={styles.macroBarLabel}>{label}</Text>
-        <Text style={styles.macroBarValue}>{value}/{goal}g</Text>
+    <View style={st.macroBarContainer}>
+      <View style={st.macroBarHeader}>
+        <Text style={st.macroBarLabel}>{label}</Text>
+        <Text style={st.macroBarValue}>{value}/{goal}g</Text>
       </View>
-      <View style={[styles.macroBarTrack, { backgroundColor: color + "18" }]}>
-        <View style={[styles.macroBarFill, { backgroundColor: color, width: `${pct}%` }]} />
+      <View style={[st.macroBarTrack, { backgroundColor: color + "18" }]}>
+        <View style={[st.macroBarFill, { backgroundColor: color, width: `${pct}%` as any }]} />
       </View>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const st = StyleSheet.create({
   topBar: {
     flexDirection: "row",
     alignItems: "center",
@@ -227,47 +258,47 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   backButton: { width: 40, height: 40, justifyContent: "center", alignItems: "center" },
-  topBarTitle: { fontSize: 18, fontWeight: "600", color: "#F0F0F0" },
+  topBarTitle: { fontFamily: Typography.fontFamily, fontSize: 18, fontWeight: "600", color: "#F0F0F0" },
   cardContainer: { flex: 1, justifyContent: "center", alignItems: "center", paddingHorizontal: 24 },
   gainsCard: {
     width: "100%",
     maxWidth: 340,
     borderRadius: 24,
     padding: 24,
-    borderWidth: 2,
-    borderColor: "rgba(0,122,255,0.25)",
+    borderWidth: 1.5,
+    borderColor: "rgba(255,255,255,0.12)",
     backgroundColor: "#000000",
     gap: 20,
     overflow: "hidden",
   },
   cardHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  cardLogo: { fontSize: 20, fontWeight: "900", letterSpacing: 3, color: "#FFFFFF" },
+  cardLogo: { fontFamily: Typography.fontFamilyBold, fontSize: 20, fontWeight: "900", letterSpacing: 3, color: "#FFFFFF" },
   cardBadgeContainer: {
-    backgroundColor: "rgba(0,229,255,0.1)",
+    backgroundColor: "rgba(255,255,255,0.06)",
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 8,
   },
-  cardBadge: { fontSize: 11, fontWeight: "400", color: "#E0E0E0", letterSpacing: 1 },
+  cardBadge: { fontFamily: Typography.fontFamily, fontSize: 11, fontWeight: "400", color: "#888888", letterSpacing: 1 },
   cardWeightSection: { alignItems: "center", gap: 4 },
-  cardWeightLabel: { fontSize: 11, fontWeight: "400", color: "#666666", letterSpacing: 2 },
-  cardWeightValue: { fontSize: 48, fontWeight: "700", color: "#F0F0F0" },
+  cardWeightLabel: { fontFamily: Typography.fontFamily, fontSize: 11, fontWeight: "400", color: "#666666", letterSpacing: 2 },
+  cardWeightValue: { fontFamily: Typography.fontFamilyBold, fontSize: 48, fontWeight: "700", color: "#F0F0F0" },
   cardWeightUnit: { fontSize: 20, fontWeight: "600", color: "#666666" },
-  cardWeightChange: { fontSize: 14, fontWeight: "400" },
+  cardWeightChange: { fontFamily: Typography.fontFamily, fontSize: 14, fontWeight: "400" },
   cardStatsGrid: { flexDirection: "row", justifyContent: "space-around" },
   cardStatItem: { alignItems: "center", gap: 4 },
-  cardStatValue: { fontSize: 22, fontWeight: "700", color: "#F0F0F0" },
-  cardStatLabel: { fontSize: 9, fontWeight: "400", color: "#666666", letterSpacing: 1.5 },
+  cardStatValue: { fontFamily: Typography.fontFamilyBold, fontSize: 22, fontWeight: "700", color: "#F0F0F0" },
+  cardStatLabel: { fontFamily: Typography.fontFamily, fontSize: 9, fontWeight: "400", color: "#666666", letterSpacing: 1.5 },
   cardMacroBars: { gap: 10 },
   macroBarContainer: { gap: 4 },
   macroBarHeader: { flexDirection: "row", justifyContent: "space-between" },
-  macroBarLabel: { fontSize: 12, fontWeight: "400", color: "#666666" },
-  macroBarValue: { fontSize: 12, fontWeight: "400", color: "#F0F0F0" },
+  macroBarLabel: { fontFamily: Typography.fontFamily, fontSize: 12, fontWeight: "400", color: "#666666" },
+  macroBarValue: { fontFamily: Typography.fontFamily, fontSize: 12, fontWeight: "400", color: "#F0F0F0" },
   macroBarTrack: { height: 6, borderRadius: 3, overflow: "hidden" },
   macroBarFill: { height: "100%", borderRadius: 3 },
   cardFooter: { flexDirection: "row", justifyContent: "space-between" },
-  cardFooterText: { fontSize: 12, fontWeight: "400", color: "#FFFFFF" },
-  cardFooterDate: { fontSize: 12, color: "#666666" },
+  cardFooterText: { fontFamily: Typography.fontFamily, fontSize: 12, fontWeight: "400", color: "#FFFFFF" },
+  cardFooterDate: { fontFamily: Typography.fontFamily, fontSize: 12, color: "#666666" },
   shareSection: { paddingHorizontal: 24, paddingBottom: 24, gap: 12 },
   shareButton: { borderRadius: 27, overflow: "hidden" },
   shareGradient: {
@@ -278,7 +309,7 @@ const styles = StyleSheet.create({
     height: 54,
     borderRadius: 27,
   },
-  shareButtonText: { color: "#FFFFFF", fontSize: 17, fontWeight: "600" },
+  shareButtonText: { fontFamily: Typography.fontFamily, color: "#FFFFFF", fontSize: 17, fontWeight: "600" },
   shareRow: { flexDirection: "row", gap: 10 },
   shareSmallButton: {
     flex: 1,
@@ -290,5 +321,5 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  shareSmallText: { fontSize: 14, fontWeight: "600", color: "#F0F0F0" },
+  shareSmallText: { fontFamily: Typography.fontFamily, fontSize: 14, fontWeight: "600", color: "#F0F0F0" },
 });

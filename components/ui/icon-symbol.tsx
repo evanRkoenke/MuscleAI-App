@@ -47,6 +47,13 @@ const MAPPING = {
   "crown.fill": "workspace-premium",
   "faceid": "fingerprint",
   "xmark.circle.fill": "cancel",
+  "camera.on.rectangle": "photo-camera",
+  "storefront.fill": "storefront",
+  "leaf.fill": "eco",
+  "clock.fill": "schedule",
+  "map.fill": "map",
+  "doc.text.fill": "description",
+  "trophy.fill": "emoji-events",
 } as IconMapping;
 
 /**
@@ -64,5 +71,9 @@ export function IconSymbol({
   style?: StyleProp<TextStyle>;
   weight?: SymbolWeight;
 }) {
-  return <MaterialIcons color={color} size={size} name={MAPPING[name]} style={style} />;
+  const mapped = MAPPING[name] ?? "help-outline";
+  if (!MAPPING[name]) {
+    console.warn(`[IconSymbol] Missing mapping for SF Symbol: "${name}", falling back to help-outline`);
+  }
+  return <MaterialIcons color={color} size={size} name={mapped} style={style} />;
 }

@@ -21,6 +21,7 @@ import { useApp } from "@/lib/app-context";
 import { useSubscription } from "@/hooks/use-subscription";
 import * as Haptics from "expo-haptics";
 import { Typography } from "@/constants/typography";
+import { ProteinWidgetSmall, ProteinWidgetMedium } from "@/components/protein-widget";
 
 
 const PRIMARY_WHITE = "#FFFFFF";
@@ -288,6 +289,21 @@ export default function SettingsScreen() {
             <Text style={[styles.rowLabel, { color: "#FFFFFF" }]}>Edit Goals</Text>
             <IconSymbol name="chevron.right" size={18} color={"#FFFFFF"} />
           </TouchableOpacity>
+        </View>
+
+        {/* Widget Preview */}
+        <Text style={styles.sectionLabel}>HOME SCREEN WIDGET</Text>
+        <View style={styles.widgetPreviewContainer}>
+          <Text style={styles.widgetPreviewLabel}>Add to your home screen for quick protein tracking</Text>
+          <View style={styles.widgetRow}>
+            <ProteinWidgetSmall
+              proteinCurrent={profile.proteinGoal > 0 ? Math.round(profile.proteinGoal * 0.6) : 120}
+              proteinGoal={profile.proteinGoal}
+              caloriesCurrent={0}
+              caloriesGoal={profile.calorieGoal}
+            />
+          </View>
+          <Text style={styles.widgetHint}>Long press your home screen → tap + → search "Muscle AI"</Text>
         </View>
 
         {/* Preferences */}
@@ -568,5 +584,32 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: "#FFFFFF",
+  },
+  widgetPreviewContainer: {
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#222222",
+    backgroundColor: "#111111",
+    padding: 16,
+    alignItems: "center",
+    gap: 12,
+  },
+  widgetPreviewLabel: {
+    fontFamily: Typography.fontFamily,
+    fontSize: 13,
+    color: "#888888",
+    textAlign: "center",
+  },
+  widgetRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 12,
+  },
+  widgetHint: {
+    fontFamily: Typography.fontFamily,
+    fontSize: 11,
+    color: "#444444",
+    textAlign: "center",
+    lineHeight: 16,
   },
 });

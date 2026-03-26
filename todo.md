@@ -264,3 +264,43 @@
 - [x] Add 300ms fade transition to all Stack navigation (tabs, settings, modals)
 - [x] Add 300ms fade transition to tab switching
 - [x] Ensure fluid premium feel across all navigation
+
+## SF Pro Font Enforcement
+- [x] Ensure SF Pro is the system font on all text elements across all screens
+- [x] Audit and fix any hardcoded fontFamily references that aren't SF Pro
+- [x] Added Typography import to onboarding, welcome-modal, scan-limit-modal
+
+## Debug Pass — Fix Broken Buttons
+- [x] Audit all onPress handlers across all screens for dead ends
+- [x] Fix any non-functional buttons or navigation issues
+- [x] Verify all flows end-to-end (onboarding → auth → paywall → dashboard → scan → meals)
+- [x] Added runtime safety guard to IconSymbol for unmapped icons
+- [x] Fixed AuthGate route matching to prevent redirect loops
+
+## AI Coach Insight Box
+- [x] Add AI Coach insight box below every scan result explaining the Anabolic Score
+- [x] Local insight generation based on protein density, sources, and sugar analysis
+- [x] Match monochrome theme styling with grade badges (ELITE/STRONG/MODERATE/LOW)
+
+## Instagram Stories Gains Card Share
+- [x] Add Instagram Stories share button on Gains Card screen
+- [x] Generate aesthetic shareable card with user stats and macro bars
+- [x] Share to Instagram Stories, TikTok, or general share sheet
+
+## Fast Food Pro Directory
+- [x] Build Fast Food Pro screen with 8 major chain restaurants
+- [x] Show highest protein options at each chain (Culver's, McDonald's, Chick-fil-A, etc.)
+- [x] Add search/filter functionality with protein density ranking
+- [x] Match monochrome theme styling with pro tips per item
+
+## iOS Home Screen Widget
+- [x] Create widget data provider and preview components
+- [x] Show protein consumed vs goal in compact and medium widget layouts
+- [x] Widget preview section added to Settings screen
+- [x] Match monochrome theme styling
+
+## Tests for Retention Features
+- [x] AI Coach insight logic tests (5 tests)
+- [x] Fast Food Pro protein score and sorting tests (4 tests)
+- [x] Widget data structure and progress calculation tests (3 tests)
+- [x] Score grading tests (4 tests)

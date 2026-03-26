@@ -20,6 +20,7 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import * as Haptics from "expo-haptics";
+import { Typography } from "@/constants/typography";
 import {
   type SubscriptionTier,
   WELCOME_MESSAGES,
@@ -258,11 +259,13 @@ const st = StyleSheet.create({
     marginBottom: 16,
   },
   tierBadgeText: {
+    fontFamily: Typography.fontFamily,
     fontSize: 11,
     fontWeight: "700",
     letterSpacing: 2,
   },
   title: {
+    fontFamily: Typography.fontFamilyBold,
     fontSize: 26,
     fontWeight: "700",
     color: "#F0F0F0",
@@ -271,6 +274,7 @@ const st = StyleSheet.create({
     marginBottom: 10,
   },
   body: {
+    fontFamily: Typography.fontFamily,
     fontSize: 15,
     fontWeight: "400",
     color: "#888888",
@@ -291,6 +295,7 @@ const st = StyleSheet.create({
     gap: 10,
   },
   featureText: {
+    fontFamily: Typography.fontFamily,
     fontSize: 14,
     fontWeight: "500",
     color: "#D0D0D0",
@@ -307,6 +312,7 @@ const st = StyleSheet.create({
     alignItems: "center",
   },
   ctaText: {
+    fontFamily: Typography.fontFamily,
     color: "#FFFFFF",
     fontSize: 17,
     fontWeight: "600",

@@ -21,6 +21,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import * as Haptics from "expo-haptics";
 import { FREE_DAILY_SCAN_LIMIT } from "@/lib/scan-counter";
+import { Typography } from "@/constants/typography";
 
 const { width: SW } = Dimensions.get("window");
 
@@ -205,6 +206,7 @@ const st = StyleSheet.create({
     marginBottom: 16,
   },
   title: {
+    fontFamily: Typography.fontFamilyBold,
     fontSize: 24,
     fontWeight: "700",
     color: "#F0F0F0",
@@ -213,6 +215,7 @@ const st = StyleSheet.create({
     marginBottom: 10,
   },
   body: {
+    fontFamily: Typography.fontFamily,
     fontSize: 15,
     fontWeight: "400",
     color: "#888888",
@@ -240,6 +243,7 @@ const st = StyleSheet.create({
     borderColor: "#555555",
   },
   counterLabel: {
+    fontFamily: Typography.fontFamily,
     fontSize: 12,
     fontWeight: "600",
     color: "#666666",
@@ -261,6 +265,7 @@ const st = StyleSheet.create({
     gap: 8,
   },
   upgradeText: {
+    fontFamily: Typography.fontFamilyBold,
     color: "#000000",
     fontSize: 16,
     fontWeight: "700",
@@ -271,6 +276,7 @@ const st = StyleSheet.create({
     paddingHorizontal: 24,
   },
   dismissText: {
+    fontFamily: Typography.fontFamily,
     color: "#555555",
     fontSize: 14,
     fontWeight: "500",

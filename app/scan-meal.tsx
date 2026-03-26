@@ -24,6 +24,7 @@ import { getScanCount, incrementScanCount, FREE_DAILY_SCAN_LIMIT } from "@/lib/s
 import { ScanLimitModal } from "@/components/scan-limit-modal";
 import * as Haptics from "expo-haptics";
 import { Typography } from "@/constants/typography";
+import { AICoachInsight } from "@/components/ai-coach-insight";
 
 
 const PRIMARY_WHITE = "#FFFFFF";
@@ -491,6 +492,18 @@ export default function ScanMealScreen() {
                 ANABOLIC SCORE
               </Text>
             </View>
+
+            {/* AI Coach Insight */}
+            <AICoachInsight
+              anabolicScore={result.anabolicScore}
+              totalProtein={result.totalProtein}
+              totalCalories={result.totalCalories}
+              totalCarbs={result.totalCarbs}
+              totalFat={result.totalFat}
+              totalSugar={result.totalSugar}
+              foods={result.foods}
+              mealName={result.mealName}
+            />
 
             {/* Meal Name */}
             <Text style={styles.mealName}>{result.mealName}</Text>

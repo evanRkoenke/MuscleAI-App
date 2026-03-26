@@ -1,0 +1,38 @@
+Icon Audit - All used SF Symbol names vs MAPPING:
+
+Used icons (from grep):
+- scalemass.fill → fitness-center ✓
+- flame.fill → local-fire-department ✓
+- checkmark.circle.fill → check-circle ✓
+- bolt.fill → flash-on ✓
+- heart.fill → favorite ✓
+- chart.line.uptrend.xyaxis → trending-up ✓
+- arrow.left → arrow-back ✓
+- chevron.right → chevron-right ✓
+- person.fill → person ✓
+- paperplane.fill → send ✓
+- lock.fill → lock ✓
+- xmark.circle.fill → cancel ✓
+- chevron.left.forwardslash.chevron.right → code ✓
+- checkmark → check ✓
+- xmark → close ✓
+- faceid → fingerprint ✓
+- camera.fill → camera-alt ✓
+- magnifyingglass → search ✓
+- questionmark.circle → help-outline ✓
+- plus → add ✓
+- pencil → edit ✓
+- minus.circle.fill → remove-circle ✓
+- star.fill → star ✓
+- trash.fill → delete ✓
+- square.and.arrow.up → share ✓
+- gearshape.fill → settings ✓
+- fork.knife → restaurant ✓
+- chart.bar.fill → bar-chart ✓
+- bubble.left.fill → chat ✓
+- house.fill → home ✓
+- crown.fill → workspace-premium ✓
+- creditcard.fill → credit-card ✓
+
+Result: ALL icons are properly mapped. No missing mappings found.
+The issue is likely elsewhere - need to add runtime safety guard anyway.

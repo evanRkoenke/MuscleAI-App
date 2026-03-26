@@ -17,6 +17,7 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useApp } from "@/lib/app-context";
 import type { FitnessGoal, DietaryRestriction, OnboardingData } from "@/lib/app-context";
 import * as Haptics from "expo-haptics";
+import { Typography } from "@/constants/typography";
 
 const { width: SW } = Dimensions.get("window");
 const TOTAL_STEPS = 5;
@@ -436,10 +437,11 @@ const styles = StyleSheet.create({
   topButton: { width: 50, alignItems: "center" },
   progressRow: { flexDirection: "row", alignItems: "center", gap: 6 },
   progressDot: { height: 6, borderRadius: 3 },
-  skipText: { fontSize: 15, fontWeight: "500", color: "#666666" },
+  skipText: { fontFamily: Typography.fontFamily, fontSize: 15, fontWeight: "500", color: "#666666" },
 
   // Step counter
   stepCounter: {
+    fontFamily: Typography.fontFamily,
     fontSize: 12,
     fontWeight: "500",
     color: "#444444",
@@ -465,6 +467,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   stepTitle: {
+    fontFamily: Typography.fontFamily,
     fontSize: 28,
     fontWeight: "700",
     color: "#F0F0F0",
@@ -472,6 +475,7 @@ const styles = StyleSheet.create({
     lineHeight: 36,
   },
   stepSubtitle: {
+    fontFamily: Typography.fontFamily,
     fontSize: 15,
     color: "#888888",
     textAlign: "center",
@@ -496,11 +500,12 @@ const styles = StyleSheet.create({
   unitButtonActive: {
     backgroundColor: "#333333",
   },
-  unitText: { fontSize: 14, fontWeight: "500", color: "#666666" },
+  unitText: { fontFamily: Typography.fontFamily, fontSize: 14, fontWeight: "500", color: "#666666" },
   unitTextActive: { color: "#FFFFFF" },
 
   // Field labels
   fieldLabel: {
+    fontFamily: Typography.fontFamily,
     fontSize: 12,
     fontWeight: "600",
     color: "#666666",
@@ -525,6 +530,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   numberInput: {
+    fontFamily: Typography.fontFamily,
     flex: 1,
     fontSize: 22,
     fontWeight: "600",
@@ -551,9 +557,9 @@ const styles = StyleSheet.create({
   },
   goalIcon: { fontSize: 28 },
   goalTextWrap: { flex: 1 },
-  goalLabel: { fontSize: 17, fontWeight: "600", color: "#F0F0F0" },
+  goalLabel: { fontFamily: Typography.fontFamily, fontSize: 17, fontWeight: "600", color: "#F0F0F0" },
   goalLabelActive: { color: "#FFFFFF" },
-  goalDesc: { fontSize: 13, color: "#888888", marginTop: 2, lineHeight: 18 },
+  goalDesc: { fontFamily: Typography.fontFamily, fontSize: 13, color: "#888888", marginTop: 2, lineHeight: 18 },
 
   // Training grid
   trainingGrid: {
@@ -578,9 +584,9 @@ const styles = StyleSheet.create({
     borderColor: "#555555",
     backgroundColor: "#1A1A1A",
   },
-  trainingNumber: { fontSize: 24, fontWeight: "700", color: "#F0F0F0" },
+  trainingNumber: { fontFamily: Typography.fontFamily, fontSize: 24, fontWeight: "700", color: "#F0F0F0" },
   trainingNumberActive: { color: "#FFFFFF" },
-  trainingLabel: { fontSize: 11, fontWeight: "500", color: "#666666" },
+  trainingLabel: { fontFamily: Typography.fontFamily, fontSize: 11, fontWeight: "500", color: "#666666" },
   trainingLabelActive: { color: "#FFFFFF" },
 
   // Restriction grid
@@ -603,7 +609,7 @@ const styles = StyleSheet.create({
     borderColor: "#555555",
     backgroundColor: "#1A1A1A",
   },
-  restrictionLabel: { fontSize: 14, fontWeight: "500", color: "#888888" },
+  restrictionLabel: { fontFamily: Typography.fontFamily, fontSize: 14, fontWeight: "500", color: "#888888" },
   restrictionLabelActive: { color: "#FFFFFF" },
 
   // Target weight
@@ -622,6 +628,7 @@ const styles = StyleSheet.create({
     maxWidth: 240,
   },
   targetInput: {
+    fontFamily: Typography.fontFamily,
     flex: 1,
     fontSize: 36,
     fontWeight: "700",
@@ -649,5 +656,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 8,
   },
-  nextText: { color: "#FFFFFF", fontSize: 17, fontWeight: "600", letterSpacing: 0.5 },
+  nextText: { fontFamily: Typography.fontFamily, color: "#FFFFFF", fontSize: 17, fontWeight: "600", letterSpacing: 0.5 },
 });

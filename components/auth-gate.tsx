@@ -21,7 +21,7 @@ export function AuthGate() {
   useEffect(() => {
     if (loading) return;
 
-    const currentRoute = segments.join("/");
+    const currentRoute = "/" + segments.join("/");
     // Don't redirect if on oauth callback
     if (currentRoute.includes("oauth")) return;
 
@@ -39,10 +39,12 @@ export function AuthGate() {
       // Fully authenticated — ensure they're in the main app
       if (
         currentRoute.includes("onboarding") ||
-        (currentRoute === "auth" && !hasRedirected.current)
+        currentRoute.includes("auth")
       ) {
-        hasRedirected.current = true;
-        router.replace("/(tabs)");
+        if (!hasRedirected.current) {
+          hasRedirected.current = true;
+          router.replace("/(tabs)");
+        }
       }
     }
   }, [hasCompletedOnboarding, isAuthenticated, loading, segments]);

@@ -246,6 +246,26 @@ export default function HomeScreen() {
           )}
         </View>
 
+        {/* ═══ FAST FOOD PRO ═══ */}
+        <TouchableOpacity
+          style={s.supCard}
+          onPress={() => (router as any).push("/fast-food-pro")}
+          activeOpacity={0.7}
+        >
+          <LinearGradient
+            colors={["rgba(255,255,255,0.06)", "rgba(255,255,255,0.02)"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={StyleSheet.absoluteFill}
+          />
+          <IconSymbol name="storefront.fill" size={22} color={ACCENT} />
+          <View style={s.supInfo}>
+            <Text style={s.supTitle}>Fast Food Pro</Text>
+            <Text style={s.supSub}>Highest protein at every chain</Text>
+          </View>
+          <IconSymbol name="chevron.right" size={16} color={T3} />
+        </TouchableOpacity>
+
         {/* ═══ MUSCLE SUPPORT ═══ */}
         <TouchableOpacity
           style={s.supCard}
