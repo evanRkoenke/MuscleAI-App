@@ -122,6 +122,17 @@ interface AppContextType extends AppState {
   selectedDate: string;
   setSelectedDate: (date: string) => void;
   loading: boolean;
+  /** Cloud sync: push local data to server (paid only) */
+  syncToCloud: () => Promise<{ success: boolean; message: string }>;
+  /** Cloud sync: pull cloud data to local (paid only) */
+  syncFromCloud: () => Promise<{ success: boolean; message: string }>;
+  /** Cloud sync: restore subscription from server on login */
+  restoreSubscriptionFromCloud: () => Promise<void>;
+  /** Merge cloud data into local state */
+  mergeCloudDataIntoLocal: (cloudData: any) => Promise<void>;
+  /** Cloud sync status */
+  syncStatus: "idle" | "syncing" | "success" | "error" | "upgrade_required";
+  lastSyncTime: string | null;
 }
 
 const defaultProfile: UserProfile = {
@@ -158,6 +169,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split("T")[0]);
   const [justSubscribedTier, setJustSubscribedTier] = useState<SubscriptionTier | null>(null);
+  const [syncStatus, setSyncStatusState] = useState<"idle" | "syncing" | "success" | "error" | "upgrade_required">("idle");
+  const [lastSyncTime, setLastSyncTimeState] = useState<string | null>(null);
 
   useEffect(() => {
     loadState();
@@ -447,6 +460,126 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return state.meals.filter((m) => m.isFavorite);
   }, [state.meals]);
 
+  // ─── Cloud Sync Methods ───
+  const syncToCloud = useCallback(async (): Promise<{ success: boolean; message: string }> => {
+    if (state.subscription === "free") {
+      setSyncStatusState("upgrade_required");
+      return { success: false, message: "Cloud sync requires a paid subscription." };
+    }
+    setSyncStatusState("syncing");
+    try {
+      // Dynamic import to avoid circular deps
+      const { prepareDataForPush, setLastSyncTime, setSyncStatus } = await import("./cloud-sync");
+      const { trpc } = await import("./trpc");
+      const pushData = prepareDataForPush(state);
+      await (trpc as any).sync.pushData.mutate(pushData);
+      await setLastSyncTime();
+      await setSyncStatus("success");
+      const now = new Date().toISOString();
+      setLastSyncTimeState(now);
+      setSyncStatusState("success");
+      return { success: true, message: "Data synced to cloud successfully." };
+    } catch (error: any) {
+      const msg = error?.message || "Sync failed";
+      if (msg.includes("SYNC_REQUIRES_SUBSCRIPTION")) {
+        setSyncStatusState("upgrade_required");
+        return { success: false, message: "Cloud sync requires a paid subscription." };
+      }
+      setSyncStatusState("error");
+      return { success: false, message: msg };
+    }
+  }, [state]);
+
+  const syncFromCloud = useCallback(async (): Promise<{ success: boolean; message: string }> => {
+    if (state.subscription === "free") {
+      setSyncStatusState("upgrade_required");
+      return { success: false, message: "Cloud sync requires a paid subscription." };
+    }
+    setSyncStatusState("syncing");
+    try {
+      const { mergeCloudData, setLastSyncTime, setSyncStatus } = await import("./cloud-sync");
+      const { trpc } = await import("./trpc");
+      const cloudData = await (trpc as any).sync.pullData.query();
+
+      // Merge cloud data into local state
+      const mergedMeals = mergeCloudData(state.meals, cloudData.meals || []);
+      const mergedWeightLog = mergeCloudData(state.weightLog, cloudData.weightLog || []);
+      const mergedGainsCards = mergeCloudData(state.gainsCards, cloudData.gainsCards || []);
+
+      const profileUpdates: Partial<typeof state.profile> = {};
+      if (cloudData.profile) {
+        if (cloudData.profile.targetWeight) profileUpdates.targetWeight = cloudData.profile.targetWeight;
+        if (cloudData.profile.currentWeight) profileUpdates.currentWeight = cloudData.profile.currentWeight;
+        if (cloudData.profile.calorieGoal) profileUpdates.calorieGoal = cloudData.profile.calorieGoal;
+        if (cloudData.profile.proteinGoal) profileUpdates.proteinGoal = cloudData.profile.proteinGoal;
+        if (cloudData.profile.carbsGoal) profileUpdates.carbsGoal = cloudData.profile.carbsGoal;
+        if (cloudData.profile.fatGoal) profileUpdates.fatGoal = cloudData.profile.fatGoal;
+        if (cloudData.profile.unit) profileUpdates.unit = cloudData.profile.unit;
+      }
+
+      await updateState({
+        meals: mergedMeals as MealEntry[],
+        weightLog: mergedWeightLog as WeightEntry[],
+        gainsCards: mergedGainsCards as GainsCardEntry[],
+        profile: { ...state.profile, ...profileUpdates },
+      });
+
+      await setLastSyncTime();
+      await setSyncStatus("success");
+      const now = new Date().toISOString();
+      setLastSyncTimeState(now);
+      setSyncStatusState("success");
+      return { success: true, message: "Cloud data restored successfully." };
+    } catch (error: any) {
+      const msg = error?.message || "Sync failed";
+      if (msg.includes("SYNC_REQUIRES_SUBSCRIPTION")) {
+        setSyncStatusState("upgrade_required");
+        return { success: false, message: "Cloud sync requires a paid subscription." };
+      }
+      setSyncStatusState("error");
+      return { success: false, message: msg };
+    }
+  }, [state, updateState]);
+
+  const restoreSubscriptionFromCloud = useCallback(async () => {
+    try {
+      const { trpc } = await import("./trpc");
+      const result = await (trpc as any).sync.getSubscription.query();
+      if (result.tier && result.tier !== "free" && result.tier !== state.subscription) {
+        await updateState({ subscription: result.tier });
+      }
+    } catch (error) {
+      console.warn("[CloudSync] Failed to restore subscription:", error);
+    }
+  }, [state.subscription, updateState]);
+
+  const mergeCloudDataIntoLocal = useCallback(async (cloudData: any) => {
+    try {
+      const { mergeCloudData } = await import("./cloud-sync");
+      const mergedMeals = mergeCloudData(state.meals, cloudData.meals || []);
+      const mergedWeightLog = mergeCloudData(state.weightLog, cloudData.weightLog || []);
+      const mergedGainsCards = mergeCloudData(state.gainsCards, cloudData.gainsCards || []);
+      await updateState({
+        meals: mergedMeals as MealEntry[],
+        weightLog: mergedWeightLog as WeightEntry[],
+        gainsCards: mergedGainsCards as GainsCardEntry[],
+      });
+    } catch (error) {
+      console.warn("[CloudSync] Failed to merge cloud data:", error);
+    }
+  }, [state.meals, state.weightLog, state.gainsCards, updateState]);
+
+  // Load last sync time on mount
+  useEffect(() => {
+    (async () => {
+      try {
+        const { getLastSyncTime } = await import("./cloud-sync");
+        const time = await getLastSyncTime();
+        setLastSyncTimeState(time);
+      } catch {}
+    })();
+  }, []);
+
   return (
     <AppContext.Provider
       value={{
@@ -476,6 +609,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         selectedDate,
         setSelectedDate,
         loading,
+        syncToCloud,
+        syncFromCloud,
+        restoreSubscriptionFromCloud,
+        mergeCloudDataIntoLocal,
+        syncStatus,
+        lastSyncTime,
       }}
     >
       {children}

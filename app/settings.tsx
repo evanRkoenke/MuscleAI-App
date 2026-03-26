@@ -19,6 +19,8 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
 import { useApp } from "@/lib/app-context";
 import { useSubscription } from "@/hooks/use-subscription";
+import { CloudSyncUpsell } from "@/components/cloud-sync-upsell";
+import { formatLastSync } from "@/lib/cloud-sync";
 import * as Haptics from "expo-haptics";
 import { Typography } from "@/constants/typography";
 import { ProteinWidgetSmall, ProteinWidgetMedium } from "@/components/protein-widget";
@@ -57,7 +59,7 @@ const STRIPE_CUSTOMER_PORTAL = "https://billing.stripe.com/p/login/test_muscleai
 export default function SettingsScreen() {
   const colors = useColors();
   const router = useRouter();
-  const { profile, subscription, updateProfile, setAuthenticated, setSubscription } = useApp();
+  const { profile, subscription, updateProfile, setAuthenticated, setSubscription, syncToCloud, lastSyncTime } = useApp();
   const sub = useSubscription();
   const [showGoalModal, setShowGoalModal] = useState(false);
   const [editCalories, setEditCalories] = useState(profile.calorieGoal.toString());
@@ -66,6 +68,8 @@ export default function SettingsScreen() {
   const [editFat, setEditFat] = useState(profile.fatGoal.toString());
   const [editTargetWeight, setEditTargetWeight] = useState(profile.targetWeight.toString());
   const [managingSubscription, setManagingSubscription] = useState(false);
+  const [showSyncUpsell, setShowSyncUpsell] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const handleSaveGoals = async () => {
     if (Platform.OS !== "web") {
@@ -263,6 +267,57 @@ export default function SettingsScreen() {
           )}
         </View>
 
+        {/* Cloud Sync */}
+        <Text style={styles.sectionLabel}>CLOUD SYNC</Text>
+        <View style={styles.card}>
+          <View style={styles.row}>
+            <Text style={styles.rowLabel}>Status</Text>
+            <Text style={styles.rowValue}>
+              {sub.isPaid ? "Active" : "Local Only"}
+            </Text>
+          </View>
+          <View style={styles.divider} />
+          <View style={styles.row}>
+            <Text style={styles.rowLabel}>Last Synced</Text>
+            <Text style={styles.rowValue}>
+              {formatLastSync(lastSyncTime)}
+            </Text>
+          </View>
+          <View style={styles.divider} />
+          {sub.isPaid ? (
+            <TouchableOpacity
+              style={styles.row}
+              onPress={async () => {
+                if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setIsSyncing(true);
+                const result = await syncToCloud();
+                setIsSyncing(false);
+                Alert.alert(result.success ? "Synced" : "Sync Failed", result.message);
+              }}
+              activeOpacity={0.7}
+              disabled={isSyncing}
+            >
+              <Text style={[styles.rowLabel, { color: "#FFFFFF" }]}>
+                {isSyncing ? "Syncing..." : "Sync Now"}
+              </Text>
+              {isSyncing ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <IconSymbol name="icloud.fill" size={18} color="#FFFFFF" />
+              )}
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              style={styles.row}
+              onPress={() => setShowSyncUpsell(true)}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.rowLabel, { color: "#FFFFFF" }]}>Unlock Cloud Sync</Text>
+              <IconSymbol name="lock.fill" size={18} color="#FFFFFF" />
+            </TouchableOpacity>
+          )}
+        </View>
+
         {/* Nutrition Goals */}
         <Text style={styles.sectionLabel}>NUTRITION GOALS</Text>
         <View style={styles.card}>
@@ -413,6 +468,12 @@ export default function SettingsScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* Cloud Sync Upsell Modal */}
+      <CloudSyncUpsell
+        visible={showSyncUpsell}
+        onClose={() => setShowSyncUpsell(false)}
+      />
     </ScreenContainer>
   );
 }

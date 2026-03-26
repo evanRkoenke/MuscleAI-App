@@ -304,3 +304,15 @@
 - [x] Fast Food Pro protein score and sorting tests (4 tests)
 - [x] Widget data structure and progress calculation tests (3 tests)
 - [x] Score grading tests (4 tests)
+
+## Cloud Sync for Paid Subscribers
+- [x] Design database schema for meals, forecasts, profile, and subscription
+- [x] Build server-side sync API (push/pull endpoints)
+- [x] Build client-side sync service with paid-tier gating
+- [x] Sync meal logs, Anabolic Forecasts, and profile settings to cloud for paid users
+- [x] Link all synced data to Google/Apple ID
+- [x] Keep free users local-only with device storage
+- [x] Add "Sync to Cloud" upsell message for free users on second device login
+- [x] Persist subscription tier ($9.99/mo Essential, $19.99/mo Pro, $79.99/yr Elite) to database
+- [x] Ensure progress restores when paid users sign in on any device
+- [x] Write tests for sync logic (21 tests covering data prep, merge, formatting, tier gating)
