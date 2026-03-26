@@ -20,6 +20,7 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
 import { useApp } from "@/lib/app-context";
 import * as Haptics from "expo-haptics";
+
 import { Typography } from "@/constants/typography";
 
 
@@ -37,7 +38,7 @@ export default function AuthScreen() {
   const [successMessage, setSuccessMessage] = useState("");
   const router = useRouter();
   const colors = useColors();
-  const { setAuthenticated, updateProfile } = useApp();
+  const { setAuthenticated, updateProfile, resetOnboarding } = useApp();
 
   const clearMessages = useCallback(() => {
     setError("");
@@ -342,6 +343,22 @@ export default function AuthScreen() {
                     </Text>
                   </Text>
                 </TouchableOpacity>
+
+                {/* Retake Quiz link */}
+                <TouchableOpacity
+                  style={styles.retakeButton}
+                  onPress={async () => {
+                    if (Platform.OS !== "web") {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    }
+                    await resetOnboarding();
+                    router.replace("/onboarding");
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <IconSymbol name="arrow.left" size={14} color="#666666" />
+                  <Text style={styles.retakeText}>Retake Onboarding Quiz</Text>
+                </TouchableOpacity>
               </>
             )}
           </View>
@@ -531,5 +548,18 @@ const styles = StyleSheet.create({
   toggleHighlight: {
     color: "#FFFFFF",
     fontWeight: "400",
+  },
+  retakeButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    marginTop: 12,
+    paddingVertical: 8,
+  },
+  retakeText: {
+    fontSize: 14,
+    fontWeight: "400",
+    color: "#666666",
   },
 });

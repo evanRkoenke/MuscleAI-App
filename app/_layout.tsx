@@ -24,6 +24,7 @@ import { trpc, createTRPCClient } from "@/lib/trpc";
 import { initManusRuntime, subscribeSafeAreaInsets } from "@/lib/_core/manus-runtime";
 import { AppProvider } from "@/lib/app-context";
 import { GlobalWelcome } from "@/components/global-welcome";
+import { AuthGate } from "@/components/auth-gate";
 
 const DEFAULT_WEB_INSETS: EdgeInsets = { top: 0, right: 0, bottom: 0, left: 0 };
 const DEFAULT_WEB_FRAME: Rect = { x: 0, y: 0, width: 0, height: 0 };
@@ -84,18 +85,26 @@ export default function RootLayout() {
       <trpc.Provider client={trpcClient} queryClient={queryClient}>
         <QueryClientProvider client={queryClient}>
           <AppProvider>
-            <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: "#000000" } }}>
+            <Stack
+              screenOptions={{
+                headerShown: false,
+                contentStyle: { backgroundColor: "#000000" },
+                animation: "fade",
+                animationDuration: 300,
+              }}
+            >
               <Stack.Screen name="(tabs)" />
               <Stack.Screen name="onboarding" options={{ gestureEnabled: false }} />
               <Stack.Screen name="auth" options={{ gestureEnabled: false }} />
-              <Stack.Screen name="paywall" options={{ gestureEnabled: false, presentation: "fullScreenModal" }} />
-              <Stack.Screen name="support" options={{ presentation: "modal" }} />
-              <Stack.Screen name="settings" />
-              <Stack.Screen name="gains-card" options={{ presentation: "modal" }} />
-              <Stack.Screen name="profile" />
-              <Stack.Screen name="scan-meal" options={{ presentation: "modal" }} />
+              <Stack.Screen name="paywall" options={{ gestureEnabled: false, presentation: "fullScreenModal", animation: "fade", animationDuration: 300 }} />
+              <Stack.Screen name="support" options={{ presentation: "modal", animation: "fade", animationDuration: 300 }} />
+              <Stack.Screen name="settings" options={{ animation: "fade", animationDuration: 300 }} />
+              <Stack.Screen name="gains-card" options={{ presentation: "modal", animation: "fade", animationDuration: 300 }} />
+              <Stack.Screen name="profile" options={{ animation: "fade", animationDuration: 300 }} />
+              <Stack.Screen name="scan-meal" options={{ presentation: "modal", animation: "fade", animationDuration: 300 }} />
               <Stack.Screen name="oauth/callback" />
             </Stack>
+            <AuthGate />
             <GlobalWelcome />
             <StatusBar style="light" />
           </AppProvider>

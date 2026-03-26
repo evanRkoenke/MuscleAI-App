@@ -1,0 +1,12 @@
+Onboarding Step 1 Screenshot Review:
+- The onboarding quiz is showing as the first screen (AuthGate is working)
+- Step 1 of 5 is displayed with progress dots at the top
+- Skip button is visible in the top right
+- Question: "What's your current height and weight?"
+- Subtitle: "This helps us calculate your daily calorie needs"
+- Imperial/Metric toggle is present and working
+- Height inputs: 5 ft, 10 in
+- Weight input: 175 lbs
+- Continue button at the bottom with chevron icon
+- Dark theme with proper styling
+- All elements are properly aligned and readable

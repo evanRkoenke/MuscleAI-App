@@ -64,10 +64,13 @@ function computeForecast(
   calorieGoal: number,
   proteinGoal: number,
   targetWeight: number,
-  unit: "lbs" | "kg"
+  unit: "lbs" | "kg",
+  trainingDays: number = 4
 ) {
   const weightInLbs = unit === "kg" ? currentWeight * 2.205 : currentWeight;
-  const tdee = weightInLbs * 15; // estimated TDEE
+  // TDEE adjusted by training frequency from onboarding
+  const activityMultiplier = 13 + trainingDays * 0.5; // 13 (sedentary) + 0.5 per training day
+  const tdee = weightInLbs * activityMultiplier;
   const dailySurplus = calorieGoal - tdee; // positive = surplus, negative = deficit
   const weeklyChangeLbs = (dailySurplus * 7) / 3500;
 
@@ -104,7 +107,7 @@ function computeForecast(
 }
 
 export default function ForecastScreen() {
-  const { subscription, profile, weightLog } = useApp();
+  const { subscription, profile, weightLog, onboardingData } = useApp();
   const sub = useSubscription();
   const router = useRouter();
   // Forecast chart is unlocked for Elite; Priority Sync is Elite-only
@@ -125,14 +128,15 @@ export default function ForecastScreen() {
       profile.calorieGoal,
       profile.proteinGoal,
       profile.targetWeight,
-      profile.unit
+      profile.unit,
+      onboardingData?.trainingDays ?? 4
     );
     return {
       forecastData: result.pts,
       isSurplus: result.isSurplus,
       trendDirection: result.isSurplus ? "up" : "down",
     };
-  }, [currentWeight, profile.calorieGoal, profile.proteinGoal, profile.targetWeight, profile.unit]);
+  }, [currentWeight, profile.calorieGoal, profile.proteinGoal, profile.targetWeight, profile.unit, onboardingData?.trainingDays]);
 
   // Chart geometry
   const { chartPoints, fillPoints, dots } = useMemo(() => {

@@ -4,6 +4,7 @@ import { HapticTab } from "@/components/haptic-tab";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Platform } from "react-native";
 import { Typography } from "@/constants/typography";
+import type { NativeStackNavigationOptions } from "@react-navigation/native-stack";
 
 
 ;
@@ -23,6 +24,7 @@ export default function TabLayout() {
         tabBarInactiveTintColor: TAB_INACTIVE,
         headerShown: false,
         tabBarButton: HapticTab,
+        animation: "fade" as any,
         tabBarStyle: {
           paddingTop: 8,
           paddingBottom: bottomPadding,

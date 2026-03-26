@@ -57,11 +57,37 @@ export interface PersonalRecord {
   date: string;
 }
 
+export type FitnessGoal = "build_muscle" | "lean_bulk" | "maintenance";
+export type DietaryRestriction = "none" | "vegetarian" | "vegan" | "gluten_free" | "dairy_free" | "keto" | "halal";
+
+export interface OnboardingData {
+  heightFt: number;
+  heightIn: number;
+  weight: number;
+  goal: FitnessGoal;
+  trainingDays: number;
+  dietaryRestrictions: DietaryRestriction[];
+  targetWeight: number;
+  unit: "lbs" | "kg";
+}
+
+const defaultOnboarding: OnboardingData = {
+  heightFt: 5,
+  heightIn: 10,
+  weight: 175,
+  goal: "build_muscle",
+  trainingDays: 4,
+  dietaryRestrictions: ["none"],
+  targetWeight: 180,
+  unit: "lbs",
+};
+
 interface AppState {
   hasCompletedOnboarding: boolean;
   isAuthenticated: boolean;
   subscription: SubscriptionTier;
   profile: UserProfile;
+  onboardingData: OnboardingData;
   meals: MealEntry[];
   weightLog: WeightEntry[];
   gainsCards: GainsCardEntry[];
@@ -69,7 +95,8 @@ interface AppState {
 }
 
 interface AppContextType extends AppState {
-  completeOnboarding: () => Promise<void>;
+  completeOnboarding: (data?: OnboardingData) => Promise<void>;
+  resetOnboarding: () => Promise<void>;
   setAuthenticated: (value: boolean) => Promise<void>;
   setSubscription: (tier: SubscriptionTier) => Promise<void>;
   /** The tier the user just upgraded to (triggers welcome modal). Null when no modal needed. */
@@ -115,6 +142,7 @@ const defaultState: AppState = {
   isAuthenticated: false,
   subscription: "free",
   profile: defaultProfile,
+  onboardingData: defaultOnboarding,
   meals: [],
   weightLog: [],
   gainsCards: [],
@@ -173,8 +201,50 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  const completeOnboarding = useCallback(async () => {
-    await updateState({ hasCompletedOnboarding: true });
+  const completeOnboarding = useCallback(async (data?: OnboardingData) => {
+    if (data) {
+      // Compute calorie/macro goals from onboarding data
+      const weightLbs = data.unit === "kg" ? data.weight * 2.205 : data.weight;
+      const bmr = 10 * (weightLbs / 2.205) + 6.25 * ((data.heightFt * 12 + data.heightIn) * 2.54) - 5 * 25 + 5; // Mifflin-St Jeor (age est 25)
+      const activityMultiplier = 1.2 + (data.trainingDays * 0.075); // 1.2 sedentary + 0.075 per training day
+      const tdee = Math.round(bmr * activityMultiplier);
+      let calorieGoal: number;
+      let proteinMultiplier: number;
+      if (data.goal === "build_muscle") {
+        calorieGoal = tdee + 500;
+        proteinMultiplier = 1.0; // 1g per lb
+      } else if (data.goal === "lean_bulk") {
+        calorieGoal = tdee + 250;
+        proteinMultiplier = 1.0;
+      } else {
+        calorieGoal = tdee;
+        proteinMultiplier = 0.8;
+      }
+      const proteinGoal = Math.round(weightLbs * proteinMultiplier);
+      const fatGoal = Math.round((calorieGoal * 0.25) / 9);
+      const carbsGoal = Math.round((calorieGoal - proteinGoal * 4 - fatGoal * 9) / 4);
+
+      await updateState({
+        hasCompletedOnboarding: true,
+        onboardingData: data,
+        profile: {
+          ...defaultProfile,
+          currentWeight: data.weight,
+          targetWeight: data.targetWeight,
+          unit: data.unit,
+          calorieGoal,
+          proteinGoal,
+          carbsGoal,
+          fatGoal,
+        },
+      });
+    } else {
+      await updateState({ hasCompletedOnboarding: true });
+    }
+  }, [updateState]);
+
+  const resetOnboarding = useCallback(async () => {
+    await updateState({ hasCompletedOnboarding: false });
   }, [updateState]);
 
   const setAuthenticated = useCallback(async (value: boolean) => {
@@ -382,6 +452,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       value={{
         ...state,
         completeOnboarding,
+        resetOnboarding,
         setAuthenticated,
         setSubscription,
         justSubscribedTier,

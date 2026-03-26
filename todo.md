@@ -242,3 +242,25 @@
 - [x] Integrate limit check into scan flow (block after 5th scan for free users)
 - [x] Paid tiers (Essential/Pro/Elite) bypass the limit entirely
 - [x] Write tests for scan limit logic
+
+## 5-Step Onboarding Quiz
+- [x] Step 1: Height and weight input screen
+- [x] Step 2: Primary goal selection (Build Muscle, Lean Bulk, Maintenance)
+- [x] Step 3: Training frequency (times per week)
+- [x] Step 4: Dietary restrictions selection
+- [x] Step 5: Target body weight input
+- [x] Skip option on each screen
+- [x] Persist onboarding data locally (AsyncStorage)
+- [x] Gate app behind onboarding on first launch only
+- [x] Connect onboarding data to Anabolic Forecast logic
+- [x] Write tests for onboarding data flow and forecast connection
+
+## Login/Signup After Onboarding
+- [x] Login screen with Google and Apple auth options
+- [x] "Retake Quiz" link on login screen to go back to onboarding
+- [x] Show login after onboarding completion
+
+## Navigation Transitions
+- [x] Add 300ms fade transition to all Stack navigation (tabs, settings, modals)
+- [x] Add 300ms fade transition to tab switching
+- [x] Ensure fluid premium feel across all navigation
