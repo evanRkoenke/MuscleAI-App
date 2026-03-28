@@ -338,3 +338,12 @@
 - [x] Retry tracking with max-retry pruning
 - [x] Offline queue status indicator in Settings (Cloud Sync section)
 - [x] Write tests for offline queue logic (16 tests)
+
+## Fix Scan Limits Per Tier
+- [x] Essential plan: 50 scans/month (not 5/day like Free)
+- [x] Pro/Elite: unlimited scans (no counter shown)
+- [x] Free: 5 scans/day (existing behavior)
+- [x] Update scan badge text to show tier-appropriate message
+- [x] Update scan counter module to support monthly limits
+- [x] Update ScanLimitModal with tier-aware messaging (monthly vs daily)
+- [x] Update tests for tier-specific scan limits (32 tests)

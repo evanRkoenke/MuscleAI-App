@@ -20,7 +20,7 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useApp } from "@/lib/app-context";
 import { useSubscription } from "@/hooks/use-subscription";
 import { trpc } from "@/lib/trpc";
-import { getScanCount, incrementScanCount, FREE_DAILY_SCAN_LIMIT } from "@/lib/scan-counter";
+import { checkScanLimitForTier, incrementScanCount } from "@/lib/scan-counter";
 import { ScanLimitModal } from "@/components/scan-limit-modal";
 import * as Haptics from "expo-haptics";
 import { Typography } from "@/constants/typography";
@@ -107,12 +107,16 @@ export default function ScanMealScreen() {
   // Scan limit state
   const sub = useSubscription();
   const [scansUsed, setScansUsed] = useState(0);
+  const [scanBadgeText, setScanBadgeText] = useState("");
   const [showLimitModal, setShowLimitModal] = useState(false);
 
-  // Load today's scan count on mount
+  // Load scan count on mount (tier-aware)
   useEffect(() => {
-    getScanCount().then(setScansUsed);
-  }, []);
+    checkScanLimitForTier(sub.tier).then((result) => {
+      setScansUsed(result.used);
+      setScanBadgeText(result.badgeText);
+    });
+  }, [sub.tier]);
 
   const analyzeMutation = trpc.ai.analyzeMeal.useMutation();
 
@@ -124,11 +128,12 @@ export default function ScanMealScreen() {
   const pickImage = useCallback(async (useCamera: boolean) => {
     clearError();
 
-    // Check scan limit for free-plan users
+    // Check scan limit based on tier
     if (!sub.canAccessUnlimitedScans) {
-      const currentCount = await getScanCount();
-      if (currentCount >= FREE_DAILY_SCAN_LIMIT) {
-        setScansUsed(currentCount);
+      const limitResult = await checkScanLimitForTier(sub.tier);
+      setScansUsed(limitResult.used);
+      setScanBadgeText(limitResult.badgeText);
+      if (!limitResult.canScan) {
         setShowLimitModal(true);
         return;
       }
@@ -192,10 +197,12 @@ export default function ScanMealScreen() {
         scanResult.totalSugar = scanResult.totalSugar ?? scanResult.foods.reduce((s, f) => s + f.sugar, 0);
         setResult(scanResult);
 
-        // Increment scan counter for free users
+        // Increment scan counter for non-unlimited users
         if (!sub.canAccessUnlimitedScans) {
-          const newCount = await incrementScanCount();
-          setScansUsed(newCount);
+          await incrementScanCount();
+          const updated = await checkScanLimitForTier(sub.tier);
+          setScansUsed(updated.used);
+          setScanBadgeText(updated.badgeText);
         }
 
         // Check for low-confidence items
@@ -227,10 +234,12 @@ export default function ScanMealScreen() {
         setResult(mockResult);
         setPendingConfirmations(new Set());
 
-        // Increment scan counter for free users (fallback also counts)
+        // Increment scan counter for non-unlimited users (fallback also counts)
         if (!sub.canAccessUnlimitedScans) {
-          const newCount = await incrementScanCount();
-          setScansUsed(newCount);
+          await incrementScanCount();
+          const updated = await checkScanLimitForTier(sub.tier);
+          setScansUsed(updated.used);
+          setScanBadgeText(updated.badgeText);
         }
 
         if (Platform.OS !== "web") {
@@ -418,14 +427,14 @@ export default function ScanMealScreen() {
                 Take a photo or choose from gallery to analyze nutritional content
               </Text>
 
-              {/* Remaining scans indicator for free users */}
-              {!sub.canAccessUnlimitedScans && (
+              {/* Remaining scans indicator for limited-tier users */}
+              {!sub.canAccessUnlimitedScans && scanBadgeText ? (
                 <View style={styles.scanCounterBadge}>
                   <Text style={styles.scanCounterText}>
-                    {Math.max(0, FREE_DAILY_SCAN_LIMIT - scansUsed)} of {FREE_DAILY_SCAN_LIMIT} free scans remaining today
+                    {scanBadgeText}
                   </Text>
                 </View>
-              )}
+              ) : null}
             </View>
 
             <View style={styles.buttonRow}>
@@ -838,6 +847,7 @@ export default function ScanMealScreen() {
       <ScanLimitModal
         visible={showLimitModal}
         scansUsed={scansUsed}
+        tier={sub.tier}
         onUpgrade={() => {
           setShowLimitModal(false);
           router.push("/paywall" as any);

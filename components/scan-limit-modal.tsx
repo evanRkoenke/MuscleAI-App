@@ -1,9 +1,10 @@
 /**
- * Muscle AI — Daily Scan Limit Reached Modal
+ * Muscle AI — Scan Limit Reached Modal
  *
- * Shown when a free-plan user has exhausted their 5 daily AI scans.
- * Features a high-contrast CTA to upgrade to Elite for unlimited scans,
- * plus a secondary dismiss option.
+ * Shown when a user has exhausted their scan allowance:
+ *   - Free: 5 per day (resets at midnight)
+ *   - Essential: 50 per month (resets on the 1st)
+ * Features a high-contrast CTA to upgrade for unlimited scans.
  */
 
 import { useEffect, useRef } from "react";
@@ -20,14 +21,16 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import * as Haptics from "expo-haptics";
-import { FREE_DAILY_SCAN_LIMIT } from "@/lib/scan-counter";
+import { FREE_DAILY_SCAN_LIMIT, ESSENTIAL_MONTHLY_SCAN_LIMIT } from "@/lib/scan-counter";
 import { Typography } from "@/constants/typography";
+import type { SubscriptionTier } from "@/lib/subscription-features";
 
 const { width: SW } = Dimensions.get("window");
 
 interface ScanLimitModalProps {
   visible: boolean;
   scansUsed: number;
+  tier: SubscriptionTier;
   onUpgrade: () => void;
   onDismiss: () => void;
 }
@@ -35,11 +38,22 @@ interface ScanLimitModalProps {
 export function ScanLimitModal({
   visible,
   scansUsed,
+  tier,
   onUpgrade,
   onDismiss,
 }: ScanLimitModalProps) {
   const scaleAnim = useRef(new Animated.Value(0.85)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
+
+  const isEssential = tier === "essential";
+  const limit = isEssential ? ESSENTIAL_MONTHLY_SCAN_LIMIT : FREE_DAILY_SCAN_LIMIT;
+  const periodLabel = isEssential ? "this month" : "today";
+  const resetLabel = isEssential ? "Your limit resets on the 1st of next month." : "Your limit resets at midnight.";
+  const titleText = isEssential ? "Monthly Limit Reached" : "Daily Limit Reached";
+  const dismissLabel = isEssential ? "Wait Until Next Month" : "Come Back Tomorrow";
+  // Show dots only for free (5 dots), for essential show a text counter instead
+  const showDots = !isEssential;
+  const dotCount = showDots ? FREE_DAILY_SCAN_LIMIT : 0;
 
   useEffect(() => {
     if (visible) {
@@ -122,28 +136,36 @@ export function ScanLimitModal({
           </View>
 
           {/* Title */}
-          <Text style={st.title}>Daily Limit Reached</Text>
+          <Text style={st.title}>{titleText}</Text>
 
           {/* Body */}
           <Text style={st.body}>
-            You've used all {FREE_DAILY_SCAN_LIMIT} free scans for today.
-            {"\n"}Your limit resets at midnight.
+            You've used all {limit} {isEssential ? "Essential" : "free"} scans {periodLabel}.
+            {"\n"}{resetLabel}
           </Text>
 
           {/* Scan counter visual */}
-          <View style={st.counterRow}>
-            {Array.from({ length: FREE_DAILY_SCAN_LIMIT }).map((_, i) => (
-              <View
-                key={i}
-                style={[
-                  st.counterDot,
-                  i < scansUsed ? st.counterDotUsed : st.counterDotEmpty,
-                ]}
-              />
-            ))}
-          </View>
+          {showDots ? (
+            <View style={st.counterRow}>
+              {Array.from({ length: dotCount }).map((_, i) => (
+                <View
+                  key={i}
+                  style={[
+                    st.counterDot,
+                    i < scansUsed ? st.counterDotUsed : st.counterDotEmpty,
+                  ]}
+                />
+              ))}
+            </View>
+          ) : (
+            <View style={st.monthlyCounter}>
+              <Text style={st.monthlyCounterNumber}>{scansUsed}</Text>
+              <Text style={st.monthlyCounterSlash}>/</Text>
+              <Text style={st.monthlyCounterNumber}>{limit}</Text>
+            </View>
+          )}
           <Text style={st.counterLabel}>
-            {scansUsed}/{FREE_DAILY_SCAN_LIMIT} scans used today
+            {scansUsed}/{limit} scans used {periodLabel}
           </Text>
 
           {/* High-contrast upgrade CTA */}
@@ -159,7 +181,9 @@ export function ScanLimitModal({
               style={st.upgradeGrad}
             >
               <IconSymbol name="bolt.fill" size={18} color="#000000" />
-              <Text style={st.upgradeText}>Get Unlimited Scans with Elite</Text>
+              <Text style={st.upgradeText}>
+                {isEssential ? "Upgrade to Pro for Unlimited" : "Get Unlimited Scans with Elite"}
+              </Text>
             </LinearGradient>
           </TouchableOpacity>
 
@@ -169,7 +193,7 @@ export function ScanLimitModal({
             onPress={handleDismiss}
             activeOpacity={0.7}
           >
-            <Text style={st.dismissText}>Come Back Tomorrow</Text>
+            <Text style={st.dismissText}>{dismissLabel}</Text>
           </TouchableOpacity>
         </Animated.View>
       </Animated.View>
@@ -241,6 +265,25 @@ const st = StyleSheet.create({
     backgroundColor: "#333333",
     borderWidth: 1,
     borderColor: "#555555",
+  },
+  monthlyCounter: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    gap: 2,
+    marginBottom: 8,
+  },
+  monthlyCounterNumber: {
+    fontFamily: Typography.fontFamilyBold,
+    fontSize: 28,
+    fontWeight: "700",
+    color: "#FF4444",
+  },
+  monthlyCounterSlash: {
+    fontFamily: Typography.fontFamily,
+    fontSize: 20,
+    fontWeight: "400",
+    color: "#555555",
+    marginHorizontal: 2,
   },
   counterLabel: {
     fontFamily: Typography.fontFamily,
