@@ -8,14 +8,17 @@ import {
   Platform,
 } from "react-native";
 import * as Haptics from "expo-haptics";
+import { Typography } from "@/constants/typography";
 
 const DAY_NAMES = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
-const DAY_WIDTH = 48;
-const DAY_GAP = 6;
+const DAY_WIDTH = 44;
+const DAY_GAP = 8;
 
 interface WeekStripProps {
   selectedDate: string; // "YYYY-MM-DD"
   onSelectDate: (date: string) => void;
+  /** Set of "YYYY-MM-DD" strings for dates that have at least one logged meal */
+  datesWithMeals?: Set<string>;
 }
 
 function getWeekDates(): { date: string; dayName: string; dayNum: number; isToday: boolean }[] {
@@ -41,7 +44,9 @@ function getWeekDates(): { date: string; dayName: string; dayNum: number; isToda
   return days;
 }
 
-export function WeekStrip({ selectedDate, onSelectDate }: WeekStripProps) {
+export { getWeekDates };
+
+export function WeekStrip({ selectedDate, onSelectDate, datesWithMeals }: WeekStripProps) {
   const scrollRef = useRef<ScrollView>(null);
   const days = useMemo(() => getWeekDates(), []);
 
@@ -76,11 +81,13 @@ export function WeekStrip({ selectedDate, onSelectDate }: WeekStripProps) {
       >
         {days.map((day) => {
           const isSelected = day.date === selectedDate;
+          const hasMeals = datesWithMeals?.has(day.date) ?? false;
+
           return (
             <TouchableOpacity
               key={day.date}
               onPress={() => handleSelect(day.date)}
-              activeOpacity={0.7}
+              activeOpacity={0.6}
               style={[
                 styles.dayCell,
                 isSelected && styles.dayCellSelected,
@@ -102,14 +109,19 @@ export function WeekStrip({ selectedDate, onSelectDate }: WeekStripProps) {
               >
                 {day.dayNum}
               </Text>
-              {day.isToday && (
-                <View
-                  style={[
-                    styles.todayDot,
-                    isSelected && styles.todayDotSelected,
-                  ]}
-                />
-              )}
+              {/* Anabolic Dot — only shows if meals logged for this date */}
+              <View style={styles.dotContainer}>
+                {hasMeals ? (
+                  <View
+                    style={[
+                      styles.anabolicDot,
+                      isSelected && styles.anabolicDotSelected,
+                    ]}
+                  />
+                ) : (
+                  <View style={styles.dotPlaceholder} />
+                )}
+              </View>
             </TouchableOpacity>
           );
         })}
@@ -120,58 +132,74 @@ export function WeekStrip({ selectedDate, onSelectDate }: WeekStripProps) {
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 8,
+    marginBottom: 12,
   },
   monthLabel: {
+    fontFamily: Typography.fontFamily,
     fontSize: 13,
-    fontWeight: "700",
+    fontWeight: "600",
     color: "#555555",
-    letterSpacing: 0.5,
-    marginBottom: 10,
+    letterSpacing: 0.3,
+    marginBottom: 12,
   },
   scrollContent: {
     flexDirection: "row",
     gap: DAY_GAP,
+    paddingRight: 16,
   },
+  // ─── No background box — transparent cell ───
   dayCell: {
     width: DAY_WIDTH,
-    height: 68,
-    borderRadius: 14,
+    height: 72,
+    borderRadius: 22,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#111111",
-    borderWidth: 1,
-    borderColor: "#222222",
-    gap: 4,
+    backgroundColor: "transparent",
+    gap: 2,
   },
+  // ─── Selected day: white pill with black text ───
   dayCellSelected: {
     backgroundColor: "#FFFFFF",
-    borderColor: "#FFFFFF",
   },
   dayName: {
+    fontFamily: Typography.fontFamily,
     fontSize: 10,
-    fontWeight: "800",
-    letterSpacing: 0.5,
-    color: "#666666",
+    fontWeight: "600",
+    letterSpacing: 0.8,
+    color: "rgba(255, 255, 255, 0.45)",
   },
   dayNameSelected: {
     color: "#000000",
+    fontWeight: "700",
   },
   dayNum: {
-    fontSize: 20,
-    fontWeight: "900",
-    color: "#F0F0F0",
+    fontFamily: Typography.fontFamilyBold,
+    fontSize: 18,
+    fontWeight: "700",
+    color: "rgba(255, 255, 255, 0.85)",
   },
   dayNumSelected: {
     color: "#000000",
+    fontWeight: "800",
   },
-  todayDot: {
+  // ─── Anabolic Dot: 4px indicator for days with meals ───
+  dotContainer: {
+    height: 6,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 1,
+  },
+  anabolicDot: {
     width: 4,
     height: 4,
     borderRadius: 2,
-    backgroundColor: "#555555",
+    backgroundColor: "rgba(255, 255, 255, 0.5)",
   },
-  todayDotSelected: {
+  anabolicDotSelected: {
     backgroundColor: "#000000",
+  },
+  dotPlaceholder: {
+    width: 4,
+    height: 4,
   },
 });

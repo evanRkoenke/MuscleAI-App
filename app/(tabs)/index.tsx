@@ -19,7 +19,7 @@ import Svg, {
 import { LinearGradient } from "expo-linear-gradient";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { WeekStrip } from "@/components/week-strip";
+import { WeekStrip, getWeekDates } from "@/components/week-strip";
 import { useApp } from "@/lib/app-context";
 import * as Haptics from "expo-haptics";
 import { Typography } from "@/constants/typography";
@@ -68,6 +68,17 @@ export default function HomeScreen() {
 
   const meals = useMemo(() => getMealsByDate(selectedDate), [getMealsByDate, selectedDate]);
   const last = meals.length > 0 ? meals[meals.length - 1] : null;
+
+  // Compute which dates in the week have logged meals (for Anabolic Dot)
+  const datesWithMeals = useMemo(() => {
+    const weekDates = getWeekDates();
+    const set = new Set<string>();
+    for (const day of weekDates) {
+      const dayMeals = getMealsByDate(day.date);
+      if (dayMeals.length > 0) set.add(day.date);
+    }
+    return set;
+  }, [getMealsByDate]);
 
   const doScan = useCallback(() => {
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -128,7 +139,7 @@ export default function HomeScreen() {
         </View>
 
         {/* ═══ WEEKLY CALENDAR STRIP ═══ */}
-        <WeekStrip selectedDate={selectedDate} onSelectDate={setSelectedDate} />
+        <WeekStrip selectedDate={selectedDate} onSelectDate={setSelectedDate} datesWithMeals={datesWithMeals} />
 
         {/* ═══ CALORIE RING ═══ */}
         <View style={s.ringWrap}>

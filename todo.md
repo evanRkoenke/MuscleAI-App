@@ -347,3 +347,10 @@
 - [x] Update scan counter module to support monthly limits
 - [x] Update ScanLimitModal with tier-aware messaging (monthly vs daily)
 - [x] Update tests for tier-specific scan limits (32 tests)
+
+## Calendar Strip Redesign — Minimalist Premium
+- [x] Remove solid gray background boxes from date cells
+- [x] Make current day a high-contrast white pill/circle with black text
+- [x] Make past/future dates simple white text on black background
+- [x] Add 4px Anabolic Dot under dates with logged meals
+- [x] Ensure SF Pro Display font throughout calendar strip
