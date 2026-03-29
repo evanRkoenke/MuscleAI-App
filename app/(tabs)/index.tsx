@@ -34,22 +34,22 @@ const RING_R = (RING_SIZE - RING_STROKE) / 2;
 const RING_C = 2 * Math.PI * RING_R;
 
 // ─── Brand palette ───
-const ACCENT = "#FFFFFF";
-const ACCENT_DIM = "#777777";
+const ACCENT = "#CCFF00";
+const ACCENT_DIM = "#99CC00";
 const SILVER = "#C0C0C0";
 const PROT = "#E0E0E0";
 const CARB = "#B0B0B0";
 const FATR = "#FF3D3D";
-const BG = "#000000";
-const SURF = "#0A0A0A";
-const SURF2 = "#111111";
-const BDR = "#222222";
-const T1 = "#F0F0F0";
+const BG = "#121212";
+const SURF = "#1A1A1A";
+const SURF2 = "#1A1A1A";
+const BDR = "#2A2A2A";
+const T1 = "#F5F5F5";
 const T2 = "#888888";
 const T3 = "#444444";
 
 function scoreColor(s: number) {
-  return s >= 80 ? "#C0C0C0" : s >= 60 ? "#B0B0B0" : "#FF3D3D";
+  return s >= 80 ? "#CCFF00" : s >= 60 ? "#99CC00" : "#FF3D3D";
 }
 
 function todayStr() {
@@ -90,7 +90,7 @@ export default function HomeScreen() {
       {/* Full-screen dark background */}
       <View style={StyleSheet.absoluteFill}>
         <LinearGradient
-          colors={[BG, "#000000", BG]}
+          colors={[BG, "#0E0E0E", BG]}
           style={StyleSheet.absoluteFill}
         />
       </View>
@@ -151,9 +151,9 @@ export default function HomeScreen() {
           <Svg width={RING_SIZE} height={RING_SIZE}>
             <Defs>
               <SvgGradient id="rg" x1="0" y1="0" x2="1" y2="1">
-                <Stop offset="0" stopColor={"#777777"} />
+                <Stop offset="0" stopColor={"#99CC00"} />
                 <Stop offset="0.4" stopColor={ACCENT} />
-                <Stop offset="1" stopColor={SILVER} />
+                <Stop offset="1" stopColor={"#CCFF00"} />
               </SvgGradient>
             </Defs>
             {/* Track */}
@@ -303,13 +303,13 @@ export default function HomeScreen() {
       {/* ═══ FLOATING CAMERA FAB ═══ */}
       <TouchableOpacity style={s.fab} onPress={doScan} activeOpacity={0.8}>
         <View style={s.fabGlow} />
-        <LinearGradient
-          colors={["#555555", "#444444"]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={s.fabInner}
-        >
-          <IconSymbol name="camera.fill" size={26} color="#FFFFFF" />
+          <LinearGradient
+                colors={["#CCFF00", "#A8D600"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={s.fabInner}
+              >
+                <IconSymbol name="camera.fill" size={26} color="#121212" />
         </LinearGradient>
       </TouchableOpacity>
     </ScreenContainer>
@@ -563,8 +563,8 @@ const s = StyleSheet.create({
     width: 88,
     height: 88,
     borderRadius: 44,
-    backgroundColor: "#555555",
-    opacity: 0.35,
+    backgroundColor: "#CCFF00",
+    opacity: 0.25,
   },
   fabInner: {
     width: 64,
@@ -572,7 +572,7 @@ const s = StyleSheet.create({
     borderRadius: 32,
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#555555",
+    shadowColor: "#CCFF00",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.6,
     shadowRadius: 20,

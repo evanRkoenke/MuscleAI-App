@@ -20,7 +20,7 @@ import { Alert } from "react-native";
 import { Typography } from "@/constants/typography";
 
 
-const PRIMARY_WHITE = "#FFFFFF";
+const PRIMARY_WHITE = "#F5F5F5";
 const SILVER = "#C0C0C0";
 const CHART_WIDTH = 320;
 const CHART_HEIGHT = 180;
@@ -108,12 +108,12 @@ export default function TrackScreen() {
             activeOpacity={0.8}
           >
             <LinearGradient
-              colors={["#444444", "#333333"]}
+              colors={["#CCFF00", "#A8D600"]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={styles.logButtonGradient}
             >
-              <IconSymbol name="plus" size={18} color="#FFFFFF" />
+              <IconSymbol name="plus" size={18} color="#121212" />
               <Text style={styles.logButtonText}>Log Weight</Text>
             </LinearGradient>
           </TouchableOpacity>
@@ -172,8 +172,8 @@ export default function TrackScreen() {
             <Svg width={CHART_WIDTH} height={CHART_HEIGHT}>
               <Defs>
                 <SvgGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
-                  <Stop offset="0" stopColor={"#FFFFFF"} />
-                  <Stop offset="1" stopColor={"#C0C0C0"} />
+                  <Stop offset="0" stopColor={"#CCFF00"} />
+                  <Stop offset="1" stopColor={"#99CC00"} />
                 </SvgGradient>
               </Defs>
               {[0.25, 0.5, 0.75].map((ratio) => (
@@ -183,7 +183,7 @@ export default function TrackScreen() {
                   y1={CHART_PADDING + ratio * (CHART_HEIGHT - CHART_PADDING * 2)}
                   x2={CHART_WIDTH - CHART_PADDING}
                   y2={CHART_PADDING + ratio * (CHART_HEIGHT - CHART_PADDING * 2)}
-                  stroke="#222222"
+                  stroke="#2A2A2A"
                   strokeWidth={1}
                   strokeDasharray="4,4"
                 />
@@ -301,7 +301,7 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     paddingBottom: 16,
   },
-  headerTitle: { fontSize: 26, fontWeight: "700", color: "#F0F0F0" },
+  headerTitle: { fontSize: 26, fontWeight: "700", color: "#F5F5F5" },
   logButton: { borderRadius: 20, overflow: "hidden" },
   logButtonGradient: {
     flexDirection: "row",
@@ -311,17 +311,17 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 20,
   },
-  logButtonText: { color: "#FFFFFF", fontSize: 14, fontWeight: "600" },
+  logButtonText: { color: "#121212", fontSize: 14, fontWeight: "600" },
   weightCard: {
     borderRadius: 18,
     padding: 20,
     borderWidth: 1,
-    borderColor: "#222222",
-    backgroundColor: "#111111",
+    borderColor: "#2A2A2A",
+    backgroundColor: "#1A1A1A",
     alignItems: "center",
     marginBottom: 16,
   },
-  weightValue: { fontSize: 48, fontWeight: "700", color: "#F0F0F0" },
+  weightValue: { fontSize: 48, fontWeight: "700", color: "#F5F5F5" },
   weightUnit: { fontSize: 20, fontWeight: "600", color: "#666666" },
   weightLabel: { fontSize: 13, fontWeight: "400", color: "#666666", marginTop: 4 },
   weightTargetRow: {
@@ -338,7 +338,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: "#222222",
+    borderColor: "#2A2A2A",
     alignItems: "center",
   },
   timeRangeActive: {
@@ -351,23 +351,23 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     padding: 16,
     borderWidth: 1,
-    borderColor: "#222222",
-    backgroundColor: "#111111",
+    borderColor: "#2A2A2A",
+    backgroundColor: "#1A1A1A",
     alignItems: "center",
     marginBottom: 24,
   },
   chartEmpty: { alignItems: "center", paddingVertical: 30, gap: 10 },
   chartEmptyText: { fontSize: 14, color: "#666666", textAlign: "center" },
-  sectionTitle: { fontSize: 18, fontWeight: "600", color: "#F0F0F0", marginBottom: 12 },
+  sectionTitle: { fontSize: 18, fontWeight: "600", color: "#F5F5F5", marginBottom: 12 },
   entryRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#222222",
+    borderBottomColor: "#2A2A2A",
   },
   entryDate: { fontSize: 15, color: "#888888" },
-  entryWeight: { fontSize: 15, fontWeight: "400", color: "#F0F0F0" },
+  entryWeight: { fontSize: 15, fontWeight: "400", color: "#F5F5F5" },
   entryRight: { flexDirection: "row" as const, alignItems: "center" as const, gap: 12 },
   deleteButton: { padding: 6 },
   emptyText: { fontSize: 14, color: "#666666", textAlign: "center", paddingVertical: 20 },
@@ -396,15 +396,15 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 24,
     gap: 16,
-    backgroundColor: "#111111",
+    backgroundColor: "#1A1A1A",
     borderWidth: 1,
-    borderColor: "#222222",
+    borderColor: "#2A2A2A",
   },
-  modalTitle: { fontSize: 20, fontWeight: "600", textAlign: "center", color: "#F0F0F0" },
+  modalTitle: { fontSize: 20, fontWeight: "600", textAlign: "center", color: "#F5F5F5" },
   modalInputContainer: {
     borderWidth: 1,
-    borderColor: "#222222",
-    backgroundColor: "#000000",
+    borderColor: "#2A2A2A",
+    backgroundColor: "#121212",
     borderRadius: 12,
     overflow: "hidden",
   },
@@ -413,7 +413,7 @@ const styles = StyleSheet.create({
     height: 52,
     fontSize: 20,
     fontWeight: "600",
-    color: "#F0F0F0",
+    color: "#F5F5F5",
     textAlign: "center",
   },
   modalButtons: { flexDirection: "row", gap: 12 },
@@ -422,7 +422,7 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#222222",
+    borderColor: "#2A2A2A",
     justifyContent: "center",
     alignItems: "center",
   },

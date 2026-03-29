@@ -28,9 +28,9 @@ import * as Haptics from "expo-haptics";
 import { Typography } from "@/constants/typography";
 
 
-const PRIMARY_WHITE = "#FFFFFF";
+const PRIMARY_WHITE = "#F5F5F5";
 const SILVER = "#C0C0C0";
-const DARK_BG = "#000000";
+const DARK_BG = "#121212";
 
 /**
  * Paywall Screen — Clinical Luxury Design
@@ -465,7 +465,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: "700",
-    color: "#F0F0F0",
+    color: "#F5F5F5",
   },
   titleHighlight: {
     fontSize: 32,
@@ -522,8 +522,8 @@ const styles = StyleSheet.create({
     padding: 20,
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: "#222222",
-    backgroundColor: "#111111",
+    borderColor: "#2A2A2A",
+    backgroundColor: "#1A1A1A",
   },
   tierCardHighlighted: {
     borderWidth: 2,
@@ -556,7 +556,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "400",
     letterSpacing: 2.5,
-    color: "#F0F0F0",
+    color: "#F5F5F5",
   },
   priceRow: {
     flexDirection: "row",
@@ -566,7 +566,7 @@ const styles = StyleSheet.create({
   tierPrice: {
     fontSize: 36,
     fontWeight: "700",
-    color: "#F0F0F0",
+    color: "#F5F5F5",
   },
   tierPeriod: {
     fontSize: 16,
@@ -591,7 +591,7 @@ const styles = StyleSheet.create({
   featureText: {
     fontSize: 14,
     lineHeight: 20,
-    color: "#F0F0F0",
+    color: "#F5F5F5",
   },
   subscribeButton: {
     borderRadius: 26,

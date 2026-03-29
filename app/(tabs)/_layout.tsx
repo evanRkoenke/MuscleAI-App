@@ -8,9 +8,9 @@ import type { NativeStackNavigationOptions } from "@react-navigation/native-stac
 
 
 ;
-const TAB_BAR_BG = "#000000";
+const TAB_BAR_BG = "#121212";
 const TAB_INACTIVE = "#666666";
-const TAB_BORDER = "#111111";
+const TAB_BORDER = "#2A2A2A";
 
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
@@ -20,7 +20,7 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: "#FFFFFF",
+        tabBarActiveTintColor: "#CCFF00",
         tabBarInactiveTintColor: TAB_INACTIVE,
         headerShown: false,
         tabBarButton: HapticTab,

@@ -368,7 +368,7 @@ export default function OnboardingScreen() {
                 style={[
                   styles.progressDot,
                   {
-                    backgroundColor: i < step ? "#FFFFFF" : "#222222",
+                    backgroundColor: i < step ? "#CCFF00" : "#2A2A2A",
                     width: i === step - 1 ? 24 : 8,
                   },
                 ]}
@@ -404,7 +404,7 @@ export default function OnboardingScreen() {
             activeOpacity={0.8}
           >
             <LinearGradient
-              colors={["#444444", "#2A2A2A"]}
+              colors={["#CCFF00", "#A8D600"]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={styles.nextGradient}
@@ -413,7 +413,7 @@ export default function OnboardingScreen() {
                 {step === TOTAL_STEPS ? "Complete Setup" : "Continue"}
               </Text>
               {step < TOTAL_STEPS && (
-                <IconSymbol name="chevron.right" size={18} color="#FFFFFF" />
+                <IconSymbol name="chevron.right" size={18} color="#121212" />
               )}
             </LinearGradient>
           </TouchableOpacity>
@@ -470,7 +470,7 @@ const styles = StyleSheet.create({
     fontFamily: Typography.fontFamily,
     fontSize: 28,
     fontWeight: "700",
-    color: "#F0F0F0",
+    color: "#F5F5F5",
     textAlign: "center",
     lineHeight: 36,
   },
@@ -488,17 +488,19 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#222222",
+    borderColor: "#2A2A2A",
     overflow: "hidden",
     marginTop: 8,
   },
   unitButton: {
     paddingVertical: 10,
     paddingHorizontal: 28,
-    backgroundColor: "#111111",
+    backgroundColor: "#1A1A1A",
   },
   unitButtonActive: {
-    backgroundColor: "#333333",
+    backgroundColor: "#2A2A2A",
+    borderBottomWidth: 2,
+    borderBottomColor: "#CCFF00",
   },
   unitText: { fontFamily: Typography.fontFamily, fontSize: 14, fontWeight: "500", color: "#666666" },
   unitTextActive: { color: "#FFFFFF" },
@@ -524,8 +526,8 @@ const styles = StyleSheet.create({
     height: 56,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#222222",
-    backgroundColor: "#111111",
+    borderColor: "#2A2A2A",
+    backgroundColor: "#1A1A1A",
     paddingHorizontal: 16,
     gap: 8,
   },
@@ -534,7 +536,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 22,
     fontWeight: "600",
-    color: "#F0F0F0",
+    color: "#F5F5F5",
     height: "100%",
   },
   inputUnit: { fontSize: 14, fontWeight: "500", color: "#666666" },
@@ -547,17 +549,17 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#222222",
-    backgroundColor: "#111111",
+    borderColor: "#2A2A2A",
+    backgroundColor: "#1A1A1A",
     gap: 14,
   },
   goalCardActive: {
-    borderColor: "#555555",
+    borderColor: "#CCFF00",
     backgroundColor: "#1A1A1A",
   },
   goalIcon: { fontSize: 28 },
   goalTextWrap: { flex: 1 },
-  goalLabel: { fontFamily: Typography.fontFamily, fontSize: 17, fontWeight: "600", color: "#F0F0F0" },
+  goalLabel: { fontFamily: Typography.fontFamily, fontSize: 17, fontWeight: "600", color: "#F5F5F5" },
   goalLabelActive: { color: "#FFFFFF" },
   goalDesc: { fontFamily: Typography.fontFamily, fontSize: 13, color: "#888888", marginTop: 2, lineHeight: 18 },
 
@@ -574,17 +576,17 @@ const styles = StyleSheet.create({
     height: 72,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#222222",
-    backgroundColor: "#111111",
+    borderColor: "#2A2A2A",
+    backgroundColor: "#1A1A1A",
     justifyContent: "center",
     alignItems: "center",
     gap: 2,
   },
   trainingChipActive: {
-    borderColor: "#555555",
+    borderColor: "#CCFF00",
     backgroundColor: "#1A1A1A",
   },
-  trainingNumber: { fontFamily: Typography.fontFamily, fontSize: 24, fontWeight: "700", color: "#F0F0F0" },
+  trainingNumber: { fontFamily: Typography.fontFamily, fontSize: 24, fontWeight: "700", color: "#F5F5F5" },
   trainingNumberActive: { color: "#FFFFFF" },
   trainingLabel: { fontFamily: Typography.fontFamily, fontSize: 11, fontWeight: "500", color: "#666666" },
   trainingLabelActive: { color: "#FFFFFF" },
@@ -602,11 +604,11 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: "#222222",
-    backgroundColor: "#111111",
+    borderColor: "#2A2A2A",
+    backgroundColor: "#1A1A1A",
   },
   restrictionChipActive: {
-    borderColor: "#555555",
+    borderColor: "#CCFF00",
     backgroundColor: "#1A1A1A",
   },
   restrictionLabel: { fontFamily: Typography.fontFamily, fontSize: 14, fontWeight: "500", color: "#888888" },
@@ -619,8 +621,8 @@ const styles = StyleSheet.create({
     height: 72,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: "#222222",
-    backgroundColor: "#111111",
+    borderColor: "#2A2A2A",
+    backgroundColor: "#1A1A1A",
     paddingHorizontal: 24,
     gap: 12,
     marginTop: 8,
@@ -632,7 +634,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 36,
     fontWeight: "700",
-    color: "#F0F0F0",
+    color: "#F5F5F5",
     textAlign: "center",
     height: "100%",
   },
@@ -656,5 +658,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 8,
   },
-  nextText: { fontFamily: Typography.fontFamily, color: "#FFFFFF", fontSize: 17, fontWeight: "600", letterSpacing: 0.5 },
+  nextText: { fontFamily: Typography.fontFamily, color: "#121212", fontSize: 17, fontWeight: "600", letterSpacing: 0.5 },
 });

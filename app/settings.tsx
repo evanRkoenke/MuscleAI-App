@@ -27,7 +27,7 @@ import { Typography } from "@/constants/typography";
 import { ProteinWidgetSmall, ProteinWidgetMedium } from "@/components/protein-widget";
 
 
-const PRIMARY_WHITE = "#FFFFFF";
+const PRIMARY_WHITE = "#F5F5F5";
 
 const TIER_LABELS: Record<string, string> = {
   free: "Free",
@@ -196,7 +196,7 @@ export default function SettingsScreen() {
           style={styles.backButton}
           activeOpacity={0.7}
         >
-          <IconSymbol name="arrow.left" size={24} color="#F0F0F0" />
+          <IconSymbol name="arrow.left" size={24} color="#F5F5F5" />
         </TouchableOpacity>
         <Text style={styles.topBarTitle}>Settings</Text>
         <View style={styles.backButton} />
@@ -508,7 +508,7 @@ const styles = StyleSheet.create({
   topBarTitle: {
     fontSize: 18,
     fontWeight: "600",
-    color: "#F0F0F0",
+    color: "#F5F5F5",
   },
   scrollContent: {
     paddingHorizontal: 20,
@@ -526,8 +526,8 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#222222",
-    backgroundColor: "#111111",
+    borderColor: "#2A2A2A",
+    backgroundColor: "#1A1A1A",
     overflow: "hidden",
   },
   row: {
@@ -540,7 +540,7 @@ const styles = StyleSheet.create({
   rowLabel: {
     fontSize: 15,
     fontWeight: "400",
-    color: "#F0F0F0",
+    color: "#F5F5F5",
   },
   rowValue: {
     fontSize: 15,
@@ -563,7 +563,7 @@ const styles = StyleSheet.create({
   divider: {
     height: 1,
     marginLeft: 16,
-    backgroundColor: "#222222",
+    backgroundColor: "#2A2A2A",
   },
   logoutButton: {
     marginTop: 32,
@@ -598,15 +598,15 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 24,
     gap: 14,
-    backgroundColor: "#111111",
+    backgroundColor: "#1A1A1A",
     borderWidth: 1,
-    borderColor: "#222222",
+    borderColor: "#2A2A2A",
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: "600",
     textAlign: "center",
-    color: "#F0F0F0",
+    color: "#F5F5F5",
   },
   modalField: {
     gap: 6,
@@ -618,14 +618,14 @@ const styles = StyleSheet.create({
   },
   modalInput: {
     borderWidth: 1,
-    borderColor: "#222222",
-    backgroundColor: "#000000",
+    borderColor: "#2A2A2A",
+    backgroundColor: "#121212",
     borderRadius: 10,
     paddingHorizontal: 14,
     height: 44,
     fontSize: 16,
     fontWeight: "600",
-    color: "#F0F0F0",
+    color: "#F5F5F5",
   },
   modalButtons: {
     flexDirection: "row",
@@ -637,7 +637,7 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#222222",
+    borderColor: "#2A2A2A",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -662,8 +662,8 @@ const styles = StyleSheet.create({
   widgetPreviewContainer: {
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#222222",
-    backgroundColor: "#111111",
+    borderColor: "#2A2A2A",
+    backgroundColor: "#1A1A1A",
     padding: 16,
     alignItems: "center",
     gap: 12,

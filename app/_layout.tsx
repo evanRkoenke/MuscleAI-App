@@ -9,7 +9,7 @@ import { Platform } from "react-native";
 import * as SystemUI from "expo-system-ui";
 
 // Set root view background to dark immediately on app load
-SystemUI.setBackgroundColorAsync("#000000");
+SystemUI.setBackgroundColorAsync("#121212");
 import "@/lib/_core/nativewind-pressable";
 import { ThemeProvider } from "@/lib/theme-provider";
 import {
@@ -90,7 +90,7 @@ export default function RootLayout() {
             <Stack
               screenOptions={{
                 headerShown: false,
-                contentStyle: { backgroundColor: "#000000" },
+                contentStyle: { backgroundColor: "#121212" },
                 animation: "fade",
                 animationDuration: 300,
               }}

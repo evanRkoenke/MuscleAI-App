@@ -113,7 +113,7 @@ export function WelcomeModal({ visible, tier, onDismiss }: WelcomeModalProps) {
         >
           {/* Subtle gradient background */}
           <LinearGradient
-            colors={["#0A0A0A", "#111111", "#0A0A0A"]}
+            colors={["#1A1A1A", "#1A1A1A", "#1A1A1A"]}
             style={StyleSheet.absoluteFill}
           />
 
@@ -233,9 +233,9 @@ const st = StyleSheet.create({
     borderRadius: 24,
     padding: 32,
     alignItems: "center",
-    backgroundColor: "#0A0A0A",
+    backgroundColor: "#1A1A1A",
     borderWidth: 1,
-    borderColor: "#222222",
+    borderColor: "#2A2A2A",
     overflow: "hidden",
   },
   glowBorder: {
@@ -268,7 +268,7 @@ const st = StyleSheet.create({
     fontFamily: Typography.fontFamilyBold,
     fontSize: 26,
     fontWeight: "700",
-    color: "#F0F0F0",
+    color: "#F5F5F5",
     textAlign: "center",
     letterSpacing: -0.5,
     marginBottom: 10,

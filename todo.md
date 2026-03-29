@@ -354,3 +354,18 @@
 - [x] Make past/future dates simple white text on black background
 - [x] Add 4px Anabolic Dot under dates with logged meals
 - [x] Ensure SF Pro Display font throughout calendar strip
+
+## Final UI Polish
+- [x] Set background to Deep Charcoal (#121212) in theme.config.js
+- [x] Set primary text to Off-White (#F5F5F5) in theme.config.js
+- [x] Set Neon Green (#CCFF00) as sole accent color (primary)
+- [x] Apply Neon Green to Anabolic Score display
+- [x] Apply Neon Green to Scan button (Camera button + FAB)
+- [x] Apply Neon Green to Forecast chart lines and dots
+- [x] Apply Neon Green to calorie ring gradient, Log Weight button, track chart
+- [x] Apply Neon Green to onboarding progress dots, CTA button, active chip borders
+- [x] Update all hardcoded background/text colors across 12+ screens
+- [x] Update PRIMARY_WHITE to #F5F5F5 across auth, paywall, support, settings, profile, track
+- [x] Verify calendar strip: no gray boxes, floating white text, white pill for active day, Neon Green dot
+- [x] Verify 300ms fade transitions on all Stack screens and tab animation
+- [x] Tab bar active tint set to Neon Green (#CCFF00)

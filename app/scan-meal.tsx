@@ -27,7 +27,7 @@ import { Typography } from "@/constants/typography";
 import { AICoachInsight } from "@/components/ai-coach-insight";
 
 
-const PRIMARY_WHITE = "#FFFFFF";
+const PRIMARY_WHITE = "#F5F5F5";
 const SILVER = "#C0C0C0";
 const PROTEIN_LIGHT = "#E0E0E0";
 const CARBS_SILVER = "#B0B0B0";
@@ -444,12 +444,12 @@ export default function ScanMealScreen() {
                 activeOpacity={0.8}
               >
                 <LinearGradient
-                  colors={["#444444", "#333333"]}
+                  colors={["#CCFF00", "#A8D600"]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={styles.cameraButtonGradient}
                 >
-                  <IconSymbol name="camera.fill" size={22} color="#FFFFFF" />
+                  <IconSymbol name="camera.fill" size={22} color="#121212" />
                   <Text style={styles.cameraButtonText}>Camera</Text>
                 </LinearGradient>
               </TouchableOpacity>
@@ -859,8 +859,8 @@ export default function ScanMealScreen() {
 }
 
 function getScoreColor(score: number): string {
-  if (score >= 80) return "#C0C0C0";
-  if (score >= 60) return "#B0B0B0";
+  if (score >= 80) return "#CCFF00";
+  if (score >= 60) return "#99CC00";
   return "#FF3D3D";
 }
 
@@ -899,8 +899,8 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 2,
     borderStyle: "dashed",
-    borderColor: "#222222",
-    backgroundColor: "#111111",
+    borderColor: "#2A2A2A",
+    backgroundColor: "#1A1A1A",
     padding: 40,
     alignItems: "center",
     gap: 12,
@@ -925,7 +925,7 @@ const styles = StyleSheet.create({
     gap: 8,
     height: 54,
   },
-  cameraButtonText: { color: "#FFFFFF", fontSize: 16, fontWeight: "600" },
+  cameraButtonText: { color: "#121212", fontSize: 16, fontWeight: "600" },
   galleryButton: {
     flex: 1,
     flexDirection: "row",
@@ -935,8 +935,8 @@ const styles = StyleSheet.create({
     height: 54,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#222222",
-    backgroundColor: "#111111",
+    borderColor: "#2A2A2A",
+    backgroundColor: "#1A1A1A",
   },
   galleryButtonText: { color: "#FFFFFF", fontSize: 16, fontWeight: "600" },
 
@@ -965,7 +965,7 @@ const styles = StyleSheet.create({
     padding: 22,
     borderRadius: 20,
     borderWidth: 2,
-    backgroundColor: "#111111",
+    backgroundColor: "#1A1A1A",
     overflow: "hidden",
   },
   scoreValue: { fontSize: 56, fontWeight: "700" },
@@ -977,9 +977,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 12,
     alignItems: "center",
-    backgroundColor: "#111111",
+    backgroundColor: "#1A1A1A",
     borderWidth: 1,
-    borderColor: "#222222",
+    borderColor: "#2A2A2A",
   },
   totalValue: { fontSize: 18, fontWeight: "600", color: "#F0F0F0" },
   totalLabel: { fontSize: 10, fontWeight: "400", marginTop: 4, color: "#666666" },
@@ -1018,8 +1018,8 @@ const styles = StyleSheet.create({
   foodList: {
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#222222",
-    backgroundColor: "#111111",
+    borderColor: "#2A2A2A",
+    backgroundColor: "#1A1A1A",
     overflow: "hidden",
   },
   foodListHeader: {
@@ -1043,7 +1043,7 @@ const styles = StyleSheet.create({
   // Food item
   foodItem: {
     borderTopWidth: 1,
-    borderTopColor: "#222222",
+    borderTopColor: "#2A2A2A",
   },
   foodItemRow: {
     flexDirection: "row",
@@ -1054,7 +1054,7 @@ const styles = StyleSheet.create({
   },
   foodInfo: { flex: 1, gap: 2, marginRight: 8 },
   foodNameRow: { flexDirection: "row", alignItems: "center", gap: 6 },
-  foodName: { fontSize: 15, fontWeight: "400", color: "#F0F0F0", flexShrink: 1 },
+  foodName: { fontSize: 15, fontWeight: "400", color: "#F5F5F5", flexShrink: 1 },
   lowConfBadge: {
     paddingHorizontal: 6,
     paddingVertical: 2,
@@ -1086,9 +1086,9 @@ const styles = StyleSheet.create({
     height: 28,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: "#222222",
-    backgroundColor: "#000000",
-    color: "#F0F0F0",
+    borderColor: "#2A2A2A",
+    backgroundColor: "#121212",
+    color: "#F5F5F5",
     fontSize: 13,
     fontWeight: "400",
     textAlign: "center",
@@ -1150,7 +1150,7 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   modalContent: {
-    backgroundColor: "#111111",
+    backgroundColor: "#1A1A1A",
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     padding: 20,
@@ -1171,9 +1171,9 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: "#222222",
-    backgroundColor: "#000000",
-    color: "#F0F0F0",
+    borderColor: "#2A2A2A",
+    backgroundColor: "#121212",
+    color: "#F5F5F5",
     fontSize: 15,
     fontWeight: "600",
     paddingHorizontal: 14,
@@ -1212,12 +1212,12 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#222222",
-    backgroundColor: "#111111",
+    borderColor: "#2A2A2A",
+    backgroundColor: "#1A1A1A",
   },
   categoryChipActive: {
     borderColor: "#555555",
-    backgroundColor: "#222222",
+    backgroundColor: "#2A2A2A",
   },
   categoryIcon: { fontSize: 14 },
   categoryLabel: {

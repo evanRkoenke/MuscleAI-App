@@ -169,7 +169,7 @@ const styles = StyleSheet.create({
     color: "rgba(255, 255, 255, 0.45)",
   },
   dayNameSelected: {
-    color: "#000000",
+    color: "#121212",
     fontWeight: "700",
   },
   dayNum: {
@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
     color: "rgba(255, 255, 255, 0.85)",
   },
   dayNumSelected: {
-    color: "#000000",
+    color: "#121212",
     fontWeight: "800",
   },
   // ─── Anabolic Dot: 4px indicator for days with meals ───
@@ -193,10 +193,10 @@ const styles = StyleSheet.create({
     width: 4,
     height: 4,
     borderRadius: 2,
-    backgroundColor: "rgba(255, 255, 255, 0.5)",
+    backgroundColor: "#CCFF00",
   },
   anabolicDotSelected: {
-    backgroundColor: "#000000",
+    backgroundColor: "#121212",
   },
   dotPlaceholder: {
     width: 4,

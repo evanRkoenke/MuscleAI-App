@@ -234,7 +234,7 @@ export default function FastFoodProScreen() {
             style={st.backButton}
             activeOpacity={0.7}
           >
-            <IconSymbol name="arrow.left" size={24} color="#F0F0F0" />
+            <IconSymbol name="arrow.left" size={24} color="#F5F5F5" />
           </TouchableOpacity>
           <Text style={st.topBarTitle}>{selectedRestaurant.name}</Text>
           <View style={st.backButton} />
@@ -265,7 +265,7 @@ export default function FastFoodProScreen() {
           style={st.backButton}
           activeOpacity={0.7}
         >
-          <IconSymbol name="arrow.left" size={24} color="#F0F0F0" />
+          <IconSymbol name="arrow.left" size={24} color="#F5F5F5" />
         </TouchableOpacity>
         <Text style={st.topBarTitle}>Fast Food Pro</Text>
         <View style={st.backButton} />
@@ -328,19 +328,19 @@ const st = StyleSheet.create({
     paddingVertical: 12,
   },
   backButton: { width: 40, height: 40, justifyContent: "center", alignItems: "center" },
-  topBarTitle: { fontFamily: Typography.fontFamily, fontSize: 18, fontWeight: "600", color: "#F0F0F0" },
+  topBarTitle: { fontFamily: Typography.fontFamily, fontSize: 18, fontWeight: "600", color: "#F5F5F5" },
   headerSection: {
     marginHorizontal: 16,
     padding: 20,
     borderRadius: 16,
     borderWidth: 1,
     borderColor: "#1A1A1A",
-    backgroundColor: "#0A0A0A",
+    backgroundColor: "#1A1A1A",
     alignItems: "center",
     gap: 8,
     overflow: "hidden",
   },
-  headerTitle: { fontFamily: Typography.fontFamilyBold, fontSize: 20, fontWeight: "700", color: "#F0F0F0", textAlign: "center" },
+  headerTitle: { fontFamily: Typography.fontFamilyBold, fontSize: 20, fontWeight: "700", color: "#F5F5F5", textAlign: "center" },
   headerSubtitle: { fontFamily: Typography.fontFamily, fontSize: 13, color: "#666666", textAlign: "center", lineHeight: 18 },
   searchContainer: {
     flexDirection: "row",
@@ -353,18 +353,18 @@ const st = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: "#1A1A1A",
-    backgroundColor: "#0A0A0A",
+    backgroundColor: "#1A1A1A",
     gap: 10,
   },
   searchInput: {
     flex: 1,
     fontFamily: Typography.fontFamily,
     fontSize: 15,
-    color: "#F0F0F0",
+    color: "#F5F5F5",
     height: "100%",
   },
   listContent: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 100 },
-  separator: { height: 1, backgroundColor: "#111111", marginVertical: 2 },
+  separator: { height: 1, backgroundColor: "#1A1A1A", marginVertical: 2 },
   chainCard: {
     flexDirection: "row",
     alignItems: "center",
@@ -372,7 +372,7 @@ const st = StyleSheet.create({
     gap: 12,
   },
   chainInfo: { flex: 1, gap: 2 },
-  chainName: { fontFamily: Typography.fontFamily, fontSize: 16, fontWeight: "600", color: "#F0F0F0" },
+  chainName: { fontFamily: Typography.fontFamily, fontSize: 16, fontWeight: "600", color: "#F5F5F5" },
   chainCategory: { fontFamily: Typography.fontFamily, fontSize: 13, color: "#666666" },
   chainRight: { alignItems: "center" },
   chainTopScore: { fontFamily: Typography.fontFamilyBold, fontSize: 18, fontWeight: "700" },
@@ -381,7 +381,7 @@ const st = StyleSheet.create({
   detailSubtitle: { fontFamily: Typography.fontFamily, fontSize: 13, color: "#666666" },
   menuItem: { paddingVertical: 14, gap: 8 },
   menuItemHeader: { flexDirection: "row", alignItems: "flex-start", gap: 12 },
-  menuItemName: { fontFamily: Typography.fontFamily, fontSize: 16, fontWeight: "600", color: "#F0F0F0" },
+  menuItemName: { fontFamily: Typography.fontFamily, fontSize: 16, fontWeight: "600", color: "#F5F5F5" },
   menuItemMacros: { fontFamily: Typography.fontFamily, fontSize: 13, color: "#888888", marginTop: 2 },
   proteinBadge: {
     borderWidth: 1,

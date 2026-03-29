@@ -38,13 +38,13 @@ const PT = 20;
 const PB = 32;
 
 // Brand palette
-const ACCENT = "#FFFFFF";
+const ACCENT = "#CCFF00";
 const SILVER = "#C0C0C0";
-const BG = "#000000";
-const SURF = "#0A0A0A";
-const SURF2 = "#111111";
-const BDR = "#222222";
-const T1 = "#F0F0F0";
+const BG = "#121212";
+const SURF = "#1A1A1A";
+const SURF2 = "#1A1A1A";
+const BDR = "#2A2A2A";
+const T1 = "#F5F5F5";
 const T2 = "#888888";
 const T3 = "#444444";
 
@@ -185,7 +185,7 @@ export default function ForecastScreen() {
   return (
     <ScreenContainer containerClassName="bg-transparent">
       <View style={StyleSheet.absoluteFill}>
-        <LinearGradient colors={[BG, "#000000", BG]} style={StyleSheet.absoluteFill} />
+        <LinearGradient colors={[BG, "#0E0E0E", BG]} style={StyleSheet.absoluteFill} />
       </View>
 
       <ScrollView
@@ -280,7 +280,7 @@ export default function ForecastScreen() {
               <Polyline
                 points={chartPoints}
                 fill="none"
-                stroke="#FFFFFF"
+                stroke="#CCFF00"
                 strokeWidth={2.5}
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -295,7 +295,7 @@ export default function ForecastScreen() {
                     cx={d.x}
                     cy={d.y}
                     r={4}
-                    fill="#FFFFFF"
+                    fill="#CCFF00"
                     stroke={BG}
                     strokeWidth={2}
                   />
@@ -577,7 +577,7 @@ const st = StyleSheet.create({
     elevation: 8,
   },
   unlockTxt: {
-    color: "#FFFFFF",
+    color: "#F5F5F5",
     fontSize: 18,
     fontWeight: "600",
     letterSpacing: 4,
