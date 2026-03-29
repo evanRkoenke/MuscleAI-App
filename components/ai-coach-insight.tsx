@@ -146,7 +146,7 @@ const st = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1,
     borderColor: "#1A1A1A",
-    backgroundColor: "#1A1A1A",
+    backgroundColor: "#0A0A0A",
     padding: 16,
     overflow: "hidden",
   },

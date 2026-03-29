@@ -24,7 +24,7 @@ import * as Haptics from "expo-haptics";
 import { Typography } from "@/constants/typography";
 
 
-const PRIMARY_WHITE = "#F5F5F5";
+const PRIMARY_WHITE = "#FFFFFF";
 
 type AuthMode = "login" | "signup" | "forgot";
 
@@ -405,7 +405,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     textAlign: "center",
     marginBottom: 4,
-    color: "#F5F5F5",
+    color: "#F0F0F0",
   },
   forgotDesc: {
     fontSize: 14,
@@ -418,8 +418,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "#2A2A2A",
-    backgroundColor: "#1A1A1A",
+    borderColor: "#222222",
+    backgroundColor: "#111111",
     borderRadius: 14,
     paddingHorizontal: 16,
     height: 54,
@@ -429,7 +429,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     height: "100%",
-    color: "#F5F5F5",
+    color: "#F0F0F0",
   },
   errorBox: {
     flexDirection: "row",
@@ -509,7 +509,7 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: "#2A2A2A",
+    backgroundColor: "#222222",
   },
   dividerText: {
     fontSize: 13,
@@ -523,19 +523,19 @@ const styles = StyleSheet.create({
     height: 54,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#2A2A2A",
-    backgroundColor: "#1A1A1A",
+    borderColor: "#222222",
+    backgroundColor: "#111111",
     gap: 10,
   },
   socialIcon: {
     fontSize: 20,
     fontWeight: "600",
-    color: "#F5F5F5",
+    color: "#F0F0F0",
   },
   socialButtonText: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#F5F5F5",
+    color: "#F0F0F0",
   },
   toggleButton: {
     alignItems: "center",

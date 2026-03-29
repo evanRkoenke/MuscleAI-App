@@ -28,12 +28,12 @@ import * as Haptics from "expo-haptics";
 import { Typography } from "@/constants/typography";
 
 
-const PRIMARY_WHITE = "#F5F5F5";
+const PRIMARY_WHITE = "#FFFFFF";
 const SILVER = "#C0C0C0";
 const PROTEIN_LIGHT = "#E0E0E0";
-const SURFACE = "#1A1A1A";
-const BORDER = "#2A2A2A";
-const TEXT_PRIMARY = "#F5F5F5";
+const SURFACE = "#111111";
+const BORDER = "#222222";
+const TEXT_PRIMARY = "#F0F0F0";
 const TEXT_SECONDARY = "#888888";
 const TEXT_TERTIARY = "#666666";
 const SCREEN_W = Dimensions.get("window").width;
@@ -789,7 +789,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 2,
-    borderColor: "#121212",
+    borderColor: "#000000",
   },
   tierBadge: {
     marginTop: -12,
@@ -797,7 +797,7 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     borderRadius: 10,
     borderWidth: 1.5,
-    backgroundColor: "#121212",
+    backgroundColor: "#000000",
   },
   tierBadgeText: {
     fontSize: 10,
@@ -1099,7 +1099,7 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   modalContent: {
-    backgroundColor: "#121212",
+    backgroundColor: "#000000",
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingHorizontal: 24,

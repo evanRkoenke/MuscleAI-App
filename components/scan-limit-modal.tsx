@@ -126,7 +126,7 @@ export function ScanLimitModal({
           ]}
         >
           <LinearGradient
-            colors={["#1A1A1A", "#1A1A1A", "#1A1A1A"]}
+            colors={["#0A0A0A", "#111111", "#0A0A0A"]}
             style={StyleSheet.absoluteFill}
           />
 
@@ -180,7 +180,7 @@ export function ScanLimitModal({
               end={{ x: 1, y: 0 }}
               style={st.upgradeGrad}
             >
-              <IconSymbol name="bolt.fill" size={18} color="#121212" />
+              <IconSymbol name="bolt.fill" size={18} color="#000000" />
               <Text style={st.upgradeText}>
                 {isEssential ? "Upgrade to Pro for Unlimited" : "Get Unlimited Scans with Elite"}
               </Text>
@@ -215,7 +215,7 @@ const st = StyleSheet.create({
     borderRadius: 24,
     padding: 32,
     alignItems: "center",
-    backgroundColor: "#1A1A1A",
+    backgroundColor: "#0A0A0A",
     borderWidth: 1,
     borderColor: "#333333",
     overflow: "hidden",
@@ -233,7 +233,7 @@ const st = StyleSheet.create({
     fontFamily: Typography.fontFamilyBold,
     fontSize: 24,
     fontWeight: "700",
-    color: "#F5F5F5",
+    color: "#F0F0F0",
     textAlign: "center",
     letterSpacing: -0.5,
     marginBottom: 10,
@@ -309,7 +309,7 @@ const st = StyleSheet.create({
   },
   upgradeText: {
     fontFamily: Typography.fontFamilyBold,
-    color: "#121212",
+    color: "#000000",
     fontSize: 16,
     fontWeight: "700",
     letterSpacing: 0.5,

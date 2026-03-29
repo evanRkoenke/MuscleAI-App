@@ -265,7 +265,7 @@ export default function MealsScreen() {
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
             <View style={styles.emptyState}>
-              <IconSymbol name="star.fill" size={48} color="#2A2A2A" />
+              <IconSymbol name="star.fill" size={48} color="#222222" />
               <Text style={styles.emptyTitle}>No Favorites Yet</Text>
               <Text style={styles.emptySubtext}>
                 Tap the star icon on any meal to save it as a favorite
@@ -280,7 +280,7 @@ export default function MealsScreen() {
 
 const styles = StyleSheet.create({
   header: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 8 },
-  headerTitle: { fontSize: 26, fontWeight: "700", color: "#F5F5F5" },
+  headerTitle: { fontSize: 26, fontWeight: "700", color: "#F0F0F0" },
   headerDate: { fontSize: 14, marginTop: 4, color: "#666666" },
 
   weekStripWrap: { paddingHorizontal: 20, marginBottom: 4 },
@@ -291,9 +291,9 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     marginBottom: 12,
     borderRadius: 12,
-    backgroundColor: "#1A1A1A",
+    backgroundColor: "#111111",
     borderWidth: 1,
-    borderColor: "#2A2A2A",
+    borderColor: "#222222",
     padding: 3,
   },
   tab: {
@@ -316,14 +316,14 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: "#2A2A2A",
-    backgroundColor: "#1A1A1A",
+    borderColor: "#222222",
+    backgroundColor: "#111111",
     marginBottom: 12,
   },
   summaryItem: { flex: 1, alignItems: "center" },
-  summaryValue: { fontSize: 22, fontWeight: "700", color: "#F5F5F5" },
+  summaryValue: { fontSize: 22, fontWeight: "700", color: "#F0F0F0" },
   summaryLabel: { fontSize: 12, marginTop: 4, fontWeight: "400", color: "#666666" },
-  summaryDivider: { width: 1, height: "100%", backgroundColor: "#2A2A2A" },
+  summaryDivider: { width: 1, height: "100%", backgroundColor: "#222222" },
 
   // Sugar banner
   sugarBanner: {
@@ -348,12 +348,12 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: "#2A2A2A",
-    backgroundColor: "#1A1A1A",
+    borderColor: "#222222",
+    backgroundColor: "#111111",
   },
   sectionHeader: { flexDirection: "row", alignItems: "center", padding: 14, gap: 8 },
   sectionIcon: { fontSize: 18 },
-  sectionTitle: { fontSize: 16, fontWeight: "600", flex: 1, color: "#F5F5F5" },
+  sectionTitle: { fontSize: 16, fontWeight: "600", flex: 1, color: "#F0F0F0" },
   sectionCalories: { fontSize: 14, fontWeight: "400", color: "#666666" },
 
   // Meal item
@@ -364,11 +364,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
     borderTopWidth: 1,
-    borderTopColor: "#2A2A2A",
+    borderTopColor: "#222222",
   },
   mealInfo: { flex: 1, gap: 2, marginRight: 8 },
   mealNameRow: { flexDirection: "row", alignItems: "center", gap: 6 },
-  mealName: { fontSize: 15, fontWeight: "400", color: "#F5F5F5", flexShrink: 1 },
+  mealName: { fontSize: 15, fontWeight: "400", color: "#F0F0F0", flexShrink: 1 },
   mealMacros: { fontSize: 12, color: "#888888" },
   mealActions: { flexDirection: "row", alignItems: "center", gap: 4 },
   actionButton: {
@@ -379,7 +379,7 @@ const styles = StyleSheet.create({
     borderRadius: 18,
   },
   mealCalContainer: { alignItems: "flex-end", marginLeft: 4 },
-  mealCalories: { fontSize: 18, fontWeight: "600", color: "#F5F5F5" },
+  mealCalories: { fontSize: 18, fontWeight: "600", color: "#F0F0F0" },
   mealCalLabel: { fontSize: 11, color: "#666666" },
 
   // Add meal
@@ -390,7 +390,7 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingVertical: 14,
     borderTopWidth: 1,
-    borderTopColor: "#2A2A2A",
+    borderTopColor: "#222222",
   },
   addMealText: { fontSize: 14, fontWeight: "600", color: "#FFFFFF" },
 
@@ -400,6 +400,6 @@ const styles = StyleSheet.create({
     paddingVertical: 60,
     gap: 12,
   },
-  emptyTitle: { fontSize: 18, fontWeight: "600", color: "#F5F5F5" },
+  emptyTitle: { fontSize: 18, fontWeight: "600", color: "#F0F0F0" },
   emptySubtext: { fontSize: 14, color: "#666666", textAlign: "center", maxWidth: 260 },
 });

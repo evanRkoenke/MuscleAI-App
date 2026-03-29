@@ -18,7 +18,7 @@ import * as Haptics from "expo-haptics";
 import { Typography } from "@/constants/typography";
 
 
-const PRIMARY_WHITE = "#F5F5F5";
+const PRIMARY_WHITE = "#FFFFFF";
 
 interface ChatMessage {
   id: string;
@@ -166,7 +166,7 @@ export default function SupportScreen() {
       <Text
         style={[
           styles.messageText,
-          { color: item.role === "user" ? "#FFFFFF" : "#F5F5F5" },
+          { color: item.role === "user" ? "#FFFFFF" : "#F0F0F0" },
         ]}
       >
         {item.content}
@@ -187,7 +187,7 @@ export default function SupportScreen() {
             style={styles.backButton}
             activeOpacity={0.7}
           >
-            <IconSymbol name="arrow.left" size={24} color="#F5F5F5" />
+            <IconSymbol name="arrow.left" size={24} color="#F0F0F0" />
           </TouchableOpacity>
           <View style={styles.headerCenter}>
             <Text style={styles.headerTitle}>Muscle Support</Text>
@@ -250,7 +250,7 @@ export default function SupportScreen() {
           <TouchableOpacity
             style={[
               styles.sendButton,
-              { backgroundColor: input.trim() ? "#444444" : "#2A2A2A" },
+              { backgroundColor: input.trim() ? "#444444" : "#222222" },
             ]}
             onPress={() => sendMessage(input)}
             disabled={!input.trim() || loading}
@@ -272,11 +272,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#2A2A2A",
+    borderBottomColor: "#222222",
   },
   backButton: { width: 40, height: 40, justifyContent: "center", alignItems: "center" },
   headerCenter: { flex: 1, alignItems: "center" },
-  headerTitle: { fontSize: 17, fontWeight: "600", color: "#F5F5F5" },
+  headerTitle: { fontSize: 17, fontWeight: "600", color: "#F0F0F0" },
   onlineRow: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 2 },
   onlineDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: "#C0C0C0" },
   headerSubtitle: { fontSize: 12, fontWeight: "400", color: "#C0C0C0" },
@@ -290,9 +290,9 @@ const styles = StyleSheet.create({
   assistantBubble: {
     alignSelf: "flex-start",
     borderBottomLeftRadius: 4,
-    backgroundColor: "#1A1A1A",
+    backgroundColor: "#111111",
     borderWidth: 1,
-    borderColor: "#2A2A2A",
+    borderColor: "#222222",
   },
   escalationBubble: {
     borderColor: "#B0B0B0",
@@ -341,8 +341,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderTopWidth: 1,
-    borderTopColor: "#2A2A2A",
-    backgroundColor: "#121212",
+    borderTopColor: "#222222",
+    backgroundColor: "#000000",
     gap: 8,
   },
   input: {
@@ -352,10 +352,10 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     fontSize: 15,
     maxHeight: 100,
-    color: "#F5F5F5",
-    backgroundColor: "#1A1A1A",
+    color: "#F0F0F0",
+    backgroundColor: "#111111",
     borderWidth: 1,
-    borderColor: "#2A2A2A",
+    borderColor: "#222222",
   },
   sendButton: {
     width: 40,

@@ -99,7 +99,7 @@ export default function GainsCardScreen() {
           style={st.backButton}
           activeOpacity={0.7}
         >
-          <IconSymbol name="xmark" size={24} color="#F5F5F5" />
+          <IconSymbol name="xmark" size={24} color="#F0F0F0" />
         </TouchableOpacity>
         <Text style={st.topBarTitle}>Gains Card</Text>
         <View style={st.backButton} />
@@ -258,7 +258,7 @@ const st = StyleSheet.create({
     paddingVertical: 12,
   },
   backButton: { width: 40, height: 40, justifyContent: "center", alignItems: "center" },
-  topBarTitle: { fontFamily: Typography.fontFamily, fontSize: 18, fontWeight: "600", color: "#F5F5F5" },
+  topBarTitle: { fontFamily: Typography.fontFamily, fontSize: 18, fontWeight: "600", color: "#F0F0F0" },
   cardContainer: { flex: 1, justifyContent: "center", alignItems: "center", paddingHorizontal: 24 },
   gainsCard: {
     width: "100%",
@@ -267,7 +267,7 @@ const st = StyleSheet.create({
     padding: 24,
     borderWidth: 1.5,
     borderColor: "rgba(255,255,255,0.12)",
-    backgroundColor: "#121212",
+    backgroundColor: "#000000",
     gap: 20,
     overflow: "hidden",
   },
@@ -282,18 +282,18 @@ const st = StyleSheet.create({
   cardBadge: { fontFamily: Typography.fontFamily, fontSize: 11, fontWeight: "400", color: "#888888", letterSpacing: 1 },
   cardWeightSection: { alignItems: "center", gap: 4 },
   cardWeightLabel: { fontFamily: Typography.fontFamily, fontSize: 11, fontWeight: "400", color: "#666666", letterSpacing: 2 },
-  cardWeightValue: { fontFamily: Typography.fontFamilyBold, fontSize: 48, fontWeight: "700", color: "#F5F5F5" },
+  cardWeightValue: { fontFamily: Typography.fontFamilyBold, fontSize: 48, fontWeight: "700", color: "#F0F0F0" },
   cardWeightUnit: { fontSize: 20, fontWeight: "600", color: "#666666" },
   cardWeightChange: { fontFamily: Typography.fontFamily, fontSize: 14, fontWeight: "400" },
   cardStatsGrid: { flexDirection: "row", justifyContent: "space-around" },
   cardStatItem: { alignItems: "center", gap: 4 },
-  cardStatValue: { fontFamily: Typography.fontFamilyBold, fontSize: 22, fontWeight: "700", color: "#F5F5F5" },
+  cardStatValue: { fontFamily: Typography.fontFamilyBold, fontSize: 22, fontWeight: "700", color: "#F0F0F0" },
   cardStatLabel: { fontFamily: Typography.fontFamily, fontSize: 9, fontWeight: "400", color: "#666666", letterSpacing: 1.5 },
   cardMacroBars: { gap: 10 },
   macroBarContainer: { gap: 4 },
   macroBarHeader: { flexDirection: "row", justifyContent: "space-between" },
   macroBarLabel: { fontFamily: Typography.fontFamily, fontSize: 12, fontWeight: "400", color: "#666666" },
-  macroBarValue: { fontFamily: Typography.fontFamily, fontSize: 12, fontWeight: "400", color: "#F5F5F5" },
+  macroBarValue: { fontFamily: Typography.fontFamily, fontSize: 12, fontWeight: "400", color: "#F0F0F0" },
   macroBarTrack: { height: 6, borderRadius: 3, overflow: "hidden" },
   macroBarFill: { height: "100%", borderRadius: 3 },
   cardFooter: { flexDirection: "row", justifyContent: "space-between" },
@@ -316,10 +316,10 @@ const st = StyleSheet.create({
     height: 44,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#2A2A2A",
-    backgroundColor: "#1A1A1A",
+    borderColor: "#222222",
+    backgroundColor: "#111111",
     justifyContent: "center",
     alignItems: "center",
   },
-  shareSmallText: { fontFamily: Typography.fontFamily, fontSize: 14, fontWeight: "600", color: "#F5F5F5" },
+  shareSmallText: { fontFamily: Typography.fontFamily, fontSize: 14, fontWeight: "600", color: "#F0F0F0" },
 });
