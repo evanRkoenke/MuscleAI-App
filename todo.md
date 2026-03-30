@@ -354,3 +354,9 @@
 - [x] Make past/future dates simple white text on black background
 - [x] Add 4px Anabolic Dot under dates with logged meals
 - [x] Ensure SF Pro Display font throughout calendar strip
+
+## Fix Free User Auth → Paywall Gate (Updated)
+- [x] OAuth callback routes through paywall instead of directly to /(tabs)
+- [x] Free users CAN continue for free (5 scans/day, local storage only)
+- [x] Cloud sync strictly gated to paid subscribers only
+- [x] Free users see subscription options but can skip with "Continue with Free"

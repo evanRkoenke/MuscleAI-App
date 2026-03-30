@@ -85,6 +85,7 @@ const defaultOnboarding: OnboardingData = {
 interface AppState {
   hasCompletedOnboarding: boolean;
   isAuthenticated: boolean;
+  hasSeenPaywall: boolean;
   subscription: SubscriptionTier;
   profile: UserProfile;
   onboardingData: OnboardingData;
@@ -98,6 +99,7 @@ interface AppContextType extends AppState {
   completeOnboarding: (data?: OnboardingData) => Promise<void>;
   resetOnboarding: () => Promise<void>;
   setAuthenticated: (value: boolean) => Promise<void>;
+  markPaywallSeen: () => Promise<void>;
   setSubscription: (tier: SubscriptionTier) => Promise<void>;
   /** The tier the user just upgraded to (triggers welcome modal). Null when no modal needed. */
   justSubscribedTier: SubscriptionTier | null;
@@ -151,6 +153,7 @@ const defaultProfile: UserProfile = {
 const defaultState: AppState = {
   hasCompletedOnboarding: false,
   isAuthenticated: false,
+  hasSeenPaywall: false,
   subscription: "free",
   profile: defaultProfile,
   onboardingData: defaultOnboarding,
@@ -264,12 +267,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     await updateState({ isAuthenticated: value });
   }, [updateState]);
 
+  const markPaywallSeen = useCallback(async () => {
+    await updateState({ hasSeenPaywall: true });
+  }, [updateState]);
+
   const setSubscription = useCallback(async (tier: SubscriptionTier) => {
     // Track the upgrade for the welcome modal (only for paid tiers)
     if (tier !== "free") {
       setJustSubscribedTier(tier);
     }
-    await updateState({ subscription: tier });
+    // Subscribing implicitly means they've seen the paywall
+    await updateState({ subscription: tier, hasSeenPaywall: true });
   }, [updateState]);
 
   const dismissWelcomeModal = useCallback(() => {
@@ -606,6 +614,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         completeOnboarding,
         resetOnboarding,
         setAuthenticated,
+        markPaywallSeen,
         setSubscription,
         justSubscribedTier,
         dismissWelcomeModal,

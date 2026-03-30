@@ -3,12 +3,14 @@ import * as Api from "@/lib/_core/api";
 import * as Auth from "@/lib/_core/auth";
 import * as Linking from "expo-linking";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { ActivityIndicator, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useApp } from "@/lib/app-context";
 
 export default function OAuthCallback() {
   const router = useRouter();
+  const { hasSeenPaywall, setAuthenticated: setAppAuthenticated } = useApp();
   const params = useLocalSearchParams<{
     code?: string;
     state?: string;
@@ -18,8 +20,21 @@ export default function OAuthCallback() {
   }>();
   const [status, setStatus] = useState<"processing" | "success" | "error">("processing");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const hasHandled = useRef(false);
+
+  /**
+   * Determine where to redirect after successful auth.
+   * If the user hasn't seen the paywall yet, send them there first.
+   * The paywall has "Continue with Free" so they can still proceed without paying.
+   */
+  const getPostAuthDestination = (): string => {
+    return hasSeenPaywall ? "/(tabs)" : "/paywall";
+  };
 
   useEffect(() => {
+    if (hasHandled.current) return;
+    hasHandled.current = true;
+
     const handleCallback = async () => {
       console.log("[OAuth] Callback handler triggered");
       console.log("[OAuth] Params received:", {
@@ -38,7 +53,6 @@ export default function OAuthCallback() {
           // Decode and store user info if available
           if (params.user) {
             try {
-              // Use atob for base64 decoding (works in both web and React Native)
               const userJson =
                 typeof atob !== "undefined"
                   ? atob(params.user)
@@ -59,10 +73,13 @@ export default function OAuthCallback() {
             }
           }
 
+          // Mark as authenticated in app context
+          await setAppAuthenticated(true);
           setStatus("success");
-          console.log("[OAuth] Web authentication successful, redirecting to home...");
+          const destination = getPostAuthDestination();
+          console.log(`[OAuth] Web authentication successful, redirecting to ${destination}...`);
           setTimeout(() => {
-            router.replace("/(tabs)");
+            router.replace(destination as any);
           }, 1000);
           return;
         }
@@ -70,10 +87,8 @@ export default function OAuthCallback() {
         // Get URL from params or Linking
         let url: string | null = null;
 
-        // Try to get from local search params first (works with expo-router)
         if (params.code || params.state || params.error) {
           console.log("[OAuth] Found params in route params");
-          // Extract from params
           const urlParams = new URLSearchParams();
           if (params.code) urlParams.set("code", params.code);
           if (params.state) urlParams.set("state", params.state);
@@ -82,7 +97,6 @@ export default function OAuthCallback() {
           console.log("[OAuth] Constructed URL from params:", url);
         } else {
           console.log("[OAuth] No params found, checking Linking.getInitialURL()...");
-          // Fallback: try to get from Linking
           const initialUrl = await Linking.getInitialURL();
           console.log("[OAuth] Linking.getInitialURL():", initialUrl);
           if (initialUrl) {
@@ -105,14 +119,12 @@ export default function OAuthCallback() {
         let state: string | null = null;
         let sessionToken: string | null = null;
 
-        // Try to get from params first
         if (params.code && params.state) {
           console.log("[OAuth] Using code and state from route params");
           code = params.code;
           state = params.state;
         } else if (url) {
           console.log("[OAuth] Parsing code and state from URL:", url);
-          // Parse from URL
           try {
             const urlObj = new URL(url);
             code = urlObj.searchParams.get("code");
@@ -125,7 +137,6 @@ export default function OAuthCallback() {
             });
           } catch (e) {
             console.log("[OAuth] Failed to parse as full URL, trying regex:", e);
-            // Try parsing as relative URL with query params
             const match = url.match(/[?&](code|state|sessionToken)=([^&]+)/g);
             if (match) {
               match.forEach((param) => {
@@ -154,12 +165,12 @@ export default function OAuthCallback() {
           console.log("[OAuth] Session token found in URL, storing...");
           await Auth.setSessionToken(sessionToken);
           console.log("[OAuth] Session token stored successfully");
-          // User info is already in the OAuth callback response
-          // No need to fetch from API
+          await setAppAuthenticated(true);
           setStatus("success");
-          console.log("[OAuth] Redirecting to home...");
+          const dest = getPostAuthDestination();
+          console.log(`[OAuth] Redirecting to ${dest}...`);
           setTimeout(() => {
-            router.replace("/(tabs)");
+            router.replace(dest as any);
           }, 1000);
           return;
         }
@@ -188,11 +199,9 @@ export default function OAuthCallback() {
 
         if (result.sessionToken) {
           console.log("[OAuth] Session token received, storing...");
-          // Store session token
           await Auth.setSessionToken(result.sessionToken);
           console.log("[OAuth] Session token stored successfully");
 
-          // Store user info if available
           if (result.user) {
             console.log("[OAuth] User data received:", result.user);
             const userInfo: Auth.User = {
@@ -209,13 +218,15 @@ export default function OAuthCallback() {
             console.log("[OAuth] No user data in result");
           }
 
+          // Mark as authenticated in app context
+          await setAppAuthenticated(true);
           setStatus("success");
-          console.log("[OAuth] Authentication successful, redirecting to home...");
+          const dest = getPostAuthDestination();
+          console.log(`[OAuth] Authentication successful, redirecting to ${dest}...`);
 
-          // Redirect to home after a short delay
           setTimeout(() => {
             console.log("[OAuth] Executing redirect...");
-            router.replace("/(tabs)");
+            router.replace(dest as any);
           }, 1000);
         } else {
           console.error("[OAuth] No session token in result:", result);

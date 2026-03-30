@@ -58,7 +58,7 @@ if (Platform.OS !== "web") {
 
 export default function PaywallScreen() {
   const router = useRouter();
-  const { setSubscription } = useApp();
+  const { setSubscription, markPaywallSeen } = useApp();
   const [subscribing, setSubscribing] = useState<string | null>(null);
   const [iapReady, setIapReady] = useState(false);
   const [iapProducts, setIapProducts] = useState<any[]>([]);
@@ -276,7 +276,9 @@ export default function PaywallScreen() {
     }
   };
 
-  const handleSkip = () => {
+  const handleSkip = async () => {
+    // Mark that the user has seen the paywall so they won't be redirected back
+    await markPaywallSeen();
     router.replace("/(tabs)");
   };
 
