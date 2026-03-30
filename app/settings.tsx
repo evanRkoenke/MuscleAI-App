@@ -106,7 +106,7 @@ export default function SettingsScreen() {
 
     if (!sub.isPaid) {
       // Free users go to paywall to subscribe via native IAP
-      (router as any).push("/paywall");
+      (router as any).push("/paywall?from=settings");
       return;
     }
 
@@ -253,7 +253,7 @@ export default function SettingsScreen() {
                 style={styles.row}
                 onPress={() => {
                   if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  router.push("/paywall");
+                  router.push("/paywall?from=settings" as any);
                 }}
                 activeOpacity={0.7}
               >

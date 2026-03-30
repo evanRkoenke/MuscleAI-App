@@ -1,16 +1,17 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { calculateStreak, getMealDates } from "../lib/streak";
 
-// Helper to make today's date string
+// Helper to make today's date string (UTC to avoid DST issues)
 function todayStr(): string {
-  return new Date().toISOString().split("T")[0];
+  const d = new Date();
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
 }
 
-// Helper to make a date string N days ago
+// Helper to make a date string N days ago (UTC to avoid DST issues)
 function daysAgo(n: number): string {
   const d = new Date();
-  d.setDate(d.getDate() - n);
-  return d.toISOString().split("T")[0];
+  d.setUTCDate(d.getUTCDate() - n);
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
 }
 
 describe("Streak Tracking", () => {

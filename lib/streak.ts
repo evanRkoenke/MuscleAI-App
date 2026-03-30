@@ -55,14 +55,16 @@ export function calculateStreak(mealDates: string[]): StreakInfo {
   // Deduplicate and sort ascending
   const uniqueDates = [...new Set(mealDates)].sort();
 
-  // Convert to day numbers for easy consecutive check
+  // Convert to day numbers for easy consecutive check (UTC to avoid DST issues)
   const toDayNum = (d: string) => {
     const [y, m, day] = d.split("-").map(Number);
-    return Math.floor(new Date(y, m - 1, day).getTime() / 86400000);
+    return Math.floor(Date.UTC(y, m - 1, day) / 86400000);
   };
 
   const dayNums = uniqueDates.map(toDayNum);
-  const todayNum = toDayNum(new Date().toISOString().split("T")[0]);
+  const now = new Date();
+  const todayStr = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}-${String(now.getUTCDate()).padStart(2, "0")}`;
+  const todayNum = toDayNum(todayStr);
 
   // Calculate longest streak
   let longestStreak = 1;

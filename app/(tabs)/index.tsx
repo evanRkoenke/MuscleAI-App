@@ -244,7 +244,7 @@ export default function HomeScreen() {
             style={s.upsellBanner}
             onPress={() => {
               if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              (router as any).push("/paywall");
+              (router as any).push("/paywall?from=home");
             }}
             activeOpacity={0.7}
           >

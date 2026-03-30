@@ -179,7 +179,7 @@ export default function ForecastScreen() {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
-    (router as any).push("/paywall");
+    (router as any).push("/paywall?from=forecast");
   };
 
   return (

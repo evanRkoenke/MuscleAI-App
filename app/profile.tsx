@@ -207,7 +207,7 @@ export default function ProfileScreen() {
         "No Active Subscription",
         "Subscribe to a plan first, then you can manage your payment method here.",
         [
-          { text: "Subscribe", onPress: () => (router as any).push("/paywall") },
+          { text: "Subscribe", onPress: () => (router as any).push("/paywall?from=profile") },
           { text: "Cancel", style: "cancel" },
         ]
       );
@@ -435,7 +435,7 @@ export default function ProfileScreen() {
                   "Premium Feature",
                   "Subscribe to a paid plan to manage your payment method.",
                   [
-                    { text: "Upgrade", onPress: () => (router as any).push("/paywall") },
+                    { text: "Upgrade", onPress: () => (router as any).push("/paywall?from=profile") },
                     { text: "Cancel", style: "cancel" },
                   ]
                 );
@@ -623,7 +623,7 @@ export default function ProfileScreen() {
                       "Premium Feature",
                       "Upgrade to a paid plan to edit your email address.",
                       [
-                        { text: "Upgrade", onPress: () => { setEditModalVisible(false); (router as any).push("/paywall"); } },
+                        { text: "Upgrade", onPress: () => { setEditModalVisible(false); (router as any).push("/paywall?from=profile"); } },
                         { text: "Cancel", style: "cancel" },
                       ]
                     );
@@ -680,7 +680,7 @@ export default function ProfileScreen() {
                     "Premium Feature",
                     "Subscribe to a paid plan to manage your payment method.",
                     [
-                      { text: "Upgrade", onPress: () => { setEditModalVisible(false); (router as any).push("/paywall"); } },
+                      { text: "Upgrade", onPress: () => { setEditModalVisible(false); (router as any).push("/paywall?from=profile"); } },
                       { text: "Cancel", style: "cancel" },
                     ]
                   );

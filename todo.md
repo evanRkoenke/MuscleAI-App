@@ -404,3 +404,7 @@
 - [x] Display streak card with fire emoji counter and badge row on dashboard
 - [x] Badges show earned/unearned states (opacity-based)
 - [x] Write 13 streak tests (all passing)
+
+## Paywall Back Arrow
+- [x] Add back arrow button to paywall screen header (shows when navigated from settings, profile, home, forecast)
+- [x] Updated all paywall navigation calls to pass from= param

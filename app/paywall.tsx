@@ -10,7 +10,7 @@ import {
   ActivityIndicator,
   Image,
 } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -58,6 +58,8 @@ if (Platform.OS !== "web") {
 
 export default function PaywallScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ from?: string }>();
+  const canGoBack = !!params.from;
   const { setSubscription, markPaywallSeen, isAuthenticated } = useApp();
   const [subscribing, setSubscribing] = useState<string | null>(null);
   const [iapReady, setIapReady] = useState(false);
@@ -300,6 +302,17 @@ export default function PaywallScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
+        {/* ─── Back Arrow (when navigated from settings/profile) ─── */}
+        {canGoBack && (
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+            activeOpacity={0.7}
+          >
+            <IconSymbol name="arrow.left" size={22} color="#FFFFFF" />
+          </TouchableOpacity>
+        )}
+
         {/* ─── Header ─── */}
         <View style={styles.header}>
           <Image
@@ -464,6 +477,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 40,
+  },
+  backButton: {
+    alignSelf: "flex-start",
+    padding: 8,
+    marginBottom: 4,
   },
   header: {
     alignItems: "center",
