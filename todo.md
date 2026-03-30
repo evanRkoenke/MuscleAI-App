@@ -369,3 +369,19 @@
 - [x] Paywall: "Continue with Free" → skip auth entirely, go to tabs (local only, 5 scans/day)
 - [x] AuthGate updated to support new flow: onboarding → auth → paywall → auth → tabs OR free → tabs
 - [x] Update tests for new auth flow
+
+## Full Debug Audit
+- [x] TypeScript compilation check (0 errors)
+- [x] Full test suite passes (316 passed, 1 skipped)
+- [x] Dev server health check (running, healthy)
+- [x] Console errors and runtime warnings reviewed
+- [x] Auth flow files audited (auth.tsx, paywall.tsx, auth-gate.tsx, oauth/callback.tsx)
+- [x] App context and state management audited
+- [x] Tab layouts and navigation audited
+- [x] Feature files audited (scan counter, meals, onboarding, cloud sync, settings)
+- [x] All discovered issues fixed:
+  - [x] CRITICAL: Fixed cloud sync tRPC calls — created vanillaTrpc client for imperative (non-hook) calls
+  - [x] Fixed restoreSubscriptionFromCloud, syncToCloud, syncFromCloud to use vanillaTrpc
+  - [x] Fixed paywall restore purchases to use vanillaTrpc
+  - [x] Fixed stray semicolon in tab layout
+  - [x] Fixed double semicolon in scan-meal.tsx

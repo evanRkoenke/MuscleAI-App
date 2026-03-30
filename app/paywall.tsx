@@ -232,9 +232,10 @@ export default function PaywallScreen() {
 
     try {
       // Try server-side restore first (checks DB for active subscription linked to account)
-      const { trpc: trpcClient } = await import("@/lib/trpc");
-      const result = await (trpcClient as any).iap.restorePurchases.mutate({
-        platform: Platform.OS === "ios" ? "ios" : Platform.OS === "android" ? "android" : "web",
+      const { vanillaTrpc } = await import("@/lib/trpc");
+      const platform = Platform.OS === "ios" ? "ios" as const : "android" as const;
+      const result = await vanillaTrpc.iap.restorePurchases.mutate({
+        platform,
       });
 
       if (result.success && result.tier && result.tier !== "free") {

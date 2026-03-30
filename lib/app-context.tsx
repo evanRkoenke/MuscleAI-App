@@ -497,9 +497,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     try {
       // Dynamic import to avoid circular deps
       const { prepareDataForPush, setLastSyncTime, setSyncStatus } = await import("./cloud-sync");
-      const { trpc } = await import("./trpc");
+      const { vanillaTrpc } = await import("./trpc");
       const pushData = prepareDataForPush(state);
-      await (trpc as any).sync.pushData.mutate(pushData);
+      await vanillaTrpc.sync.pushData.mutate(pushData);
       await setLastSyncTime();
       await setSyncStatus("success");
       const now = new Date().toISOString();
@@ -525,8 +525,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setSyncStatusState("syncing");
     try {
       const { mergeCloudData, setLastSyncTime, setSyncStatus } = await import("./cloud-sync");
-      const { trpc } = await import("./trpc");
-      const cloudData = await (trpc as any).sync.pullData.query();
+      const { vanillaTrpc } = await import("./trpc");
+      const cloudData = await vanillaTrpc.sync.pullData.query();
 
       // Merge cloud data into local state
       const mergedMeals = mergeCloudData(state.meals, cloudData.meals || []);
@@ -570,8 +570,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const restoreSubscriptionFromCloud = useCallback(async () => {
     try {
-      const { trpc } = await import("./trpc");
-      const result = await (trpc as any).sync.getSubscription.query();
+      const { vanillaTrpc } = await import("./trpc");
+      const result = await vanillaTrpc.sync.getSubscription.query();
       if (result.tier && result.tier !== "free" && result.tier !== state.subscription) {
         await updateState({ subscription: result.tier });
       }

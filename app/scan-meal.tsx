@@ -87,7 +87,7 @@ export default function ScanMealScreen() {
   const initialCategory = (params.category && ["breakfast", "lunch", "dinner", "snack"].includes(params.category))
     ? params.category as MealCategory
     : getDefaultCategory();
-  const [selectedCategory, setSelectedCategory] = useState<MealCategory>(initialCategory);;
+  const [selectedCategory, setSelectedCategory] = useState<MealCategory>(initialCategory);
 
   // Edit/Add state
   const [editingIndex, setEditingIndex] = useState<number | null>(null);

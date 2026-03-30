@@ -7,7 +7,6 @@ import { Typography } from "@/constants/typography";
 import type { NativeStackNavigationOptions } from "@react-navigation/native-stack";
 
 
-;
 const TAB_BAR_BG = "#000000";
 const TAB_INACTIVE = "#666666";
 const TAB_BORDER = "#111111";
