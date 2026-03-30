@@ -385,3 +385,22 @@
   - [x] Fixed paywall restore purchases to use vanillaTrpc
   - [x] Fixed stray semicolon in tab layout
   - [x] Fixed double semicolon in scan-meal.tsx
+
+## Upgrade Plan Button in Settings
+- [x] Add "Upgrade Plan" button in subscription section for Essential/Pro users
+- [x] Button navigates to paywall to upgrade to higher tier
+- [x] Only show for Essential and Pro users (not free or Elite)
+
+## Save Your Progress Upsell Banner
+- [x] Add upsell banner on home screen for free users
+- [x] Banner encourages subscribing to save progress across devices
+- [x] Tapping banner navigates to paywall
+- [x] Banner hidden for paid subscribers
+
+## Streak Tracking with Badges
+- [x] Create streak calculation module (lib/streak.ts)
+- [x] Calculate current streak and longest streak from meal dates
+- [x] Add milestone badges: 7-day "Week Warrior", 30-day "Monthly Machine", 100-day "Century Club"
+- [x] Display streak card with fire emoji counter and badge row on dashboard
+- [x] Badges show earned/unearned states (opacity-based)
+- [x] Write 13 streak tests (all passing)

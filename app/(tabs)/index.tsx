@@ -21,6 +21,8 @@ import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { WeekStrip, getWeekDates } from "@/components/week-strip";
 import { useApp } from "@/lib/app-context";
+import { useSubscription } from "@/hooks/use-subscription";
+import { calculateStreak, getMealDates } from "@/lib/streak";
 import * as Haptics from "expo-haptics";
 import { Typography } from "@/constants/typography";
 
@@ -58,7 +60,8 @@ function todayStr() {
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { profile, getCaloriesByDate, getMacrosByDate, getMealsByDate, selectedDate, setSelectedDate } = useApp();
+  const { profile, meals: allMeals, getCaloriesByDate, getMacrosByDate, getMealsByDate, selectedDate, setSelectedDate } = useApp();
+  const sub = useSubscription();
 
   const cal = useMemo(() => getCaloriesByDate(selectedDate), [getCaloriesByDate, selectedDate]);
   const mac = useMemo(() => getMacrosByDate(selectedDate), [getMacrosByDate, selectedDate]);
@@ -234,6 +237,59 @@ export default function HomeScreen() {
             <Text style={s.qTxt}>Forecast</Text>
           </TouchableOpacity>
         </View>
+
+        {/* ═══ SAVE PROGRESS UPSELL (free users only) ═══ */}
+        {!sub.isPaid && (
+          <TouchableOpacity
+            style={s.upsellBanner}
+            onPress={() => {
+              if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              (router as any).push("/paywall");
+            }}
+            activeOpacity={0.7}
+          >
+            <View style={s.upsellLeft}>
+              <IconSymbol name="icloud.fill" size={20} color="#FFFFFF" />
+            </View>
+            <View style={s.upsellContent}>
+              <Text style={s.upsellTitle}>Save Your Progress</Text>
+              <Text style={s.upsellSub}>Subscribe to sync across all your devices</Text>
+            </View>
+            <IconSymbol name="chevron.right" size={14} color={T3} />
+          </TouchableOpacity>
+        )}
+
+        {/* ═══ STREAK TRACKER ═══ */}
+        {(() => {
+          const streakInfo = calculateStreak(getMealDates(allMeals));
+          if (streakInfo.currentStreak === 0 && streakInfo.longestStreak === 0) return null;
+          return (
+            <View style={s.streakCard}>
+              <View style={s.streakTop}>
+                <View style={s.streakCountWrap}>
+                  <Text style={s.streakFire}>🔥</Text>
+                  <Text style={s.streakCount}>{streakInfo.currentStreak}</Text>
+                  <Text style={s.streakLabel}>DAY STREAK</Text>
+                </View>
+                {streakInfo.longestStreak > streakInfo.currentStreak && (
+                  <Text style={s.streakBest}>Best: {streakInfo.longestStreak} days</Text>
+                )}
+              </View>
+              <View style={s.badgeRow}>
+                {streakInfo.badges.map((badge) => (
+                  <View
+                    key={badge.days}
+                    style={[s.badge, badge.earned && s.badgeEarned]}
+                  >
+                    <Text style={s.badgeIcon}>{badge.icon}</Text>
+                    <Text style={[s.badgeDays, badge.earned && s.badgeDaysEarned]}>{badge.days}d</Text>
+                    <Text style={[s.badgeLabel, badge.earned && s.badgeLabelEarned]}>{badge.label}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          );
+        })()}
 
         {/* ═══ PROTEIN PRIORITY ═══ */}
         <View style={s.ppCard}>
@@ -546,6 +602,120 @@ const s = StyleSheet.create({
   supInfo: { flex: 1 },
   supTitle: { fontSize: 16, fontWeight: "600", color: T1 },
   supSub: { fontSize: 13, marginTop: 2, color: T2 },
+
+  /* Streak Card */
+  streakCard: {
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: BDR,
+    backgroundColor: SURF2,
+    padding: 16,
+    marginBottom: 12,
+  },
+  streakTop: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 14,
+  },
+  streakCountWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  streakFire: {
+    fontSize: 22,
+  },
+  streakCount: {
+    fontSize: 28,
+    fontWeight: "700",
+    color: T1,
+  },
+  streakLabel: {
+    fontSize: 11,
+    fontWeight: "600",
+    letterSpacing: 1.5,
+    color: T2,
+    marginLeft: 2,
+  },
+  streakBest: {
+    fontSize: 12,
+    color: T3,
+  },
+  badgeRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 8,
+  },
+  badge: {
+    flex: 1,
+    alignItems: "center",
+    paddingVertical: 10,
+    borderRadius: 10,
+    backgroundColor: "#0A0A0A",
+    borderWidth: 1,
+    borderColor: "#1A1A1A",
+    opacity: 0.4,
+  },
+  badgeEarned: {
+    opacity: 1,
+    borderColor: "#333333",
+    backgroundColor: "#111111",
+  },
+  badgeIcon: {
+    fontSize: 18,
+    marginBottom: 4,
+  },
+  badgeDays: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: T3,
+  },
+  badgeDaysEarned: {
+    color: T1,
+  },
+  badgeLabel: {
+    fontSize: 9,
+    fontWeight: "500",
+    color: T3,
+    marginTop: 2,
+    textAlign: "center",
+  },
+  badgeLabelEarned: {
+    color: T2,
+  },
+
+  /* Upsell Banner */
+  upsellBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: "#333333",
+    backgroundColor: SURF2,
+    gap: 12,
+    marginBottom: 12,
+  },
+  upsellLeft: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: "#1A1A1A",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  upsellContent: { flex: 1 },
+  upsellTitle: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: T1,
+  },
+  upsellSub: {
+    fontSize: 12,
+    marginTop: 2,
+    color: T2,
+  },
 
   /* FAB */
   fab: {

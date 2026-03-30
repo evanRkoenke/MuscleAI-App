@@ -245,6 +245,27 @@ export default function SettingsScreen() {
               <IconSymbol name="chevron.right" size={18} color="#666666" />
             )}
           </TouchableOpacity>
+          {/* Upgrade Plan — show for Essential and Pro users (not Elite, they're already at top tier) */}
+          {(subscription === "essential" || subscription === "pro") && (
+            <>
+              <View style={styles.divider} />
+              <TouchableOpacity
+                style={styles.row}
+                onPress={() => {
+                  if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  router.push("/paywall");
+                }}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.rowLabel, { color: "#FFFFFF" }]}>Upgrade Plan</Text>
+                <View style={styles.upgradeBadge}>
+                  <Text style={styles.upgradeBadgeText}>
+                    {subscription === "essential" ? "PRO / ELITE" : "ELITE"}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            </>
+          )}
           {sub.isPaid && (
             <>
               <View style={styles.divider} />
@@ -255,19 +276,6 @@ export default function SettingsScreen() {
               >
                 <Text style={[styles.rowLabel, { color: "#FF3D3D" }]}>Cancel Subscription</Text>
                 <IconSymbol name="chevron.right" size={18} color="#FF3D3D" />
-              </TouchableOpacity>
-            </>
-          )}
-          {!sub.isPaid && (
-            <>
-              <View style={styles.divider} />
-              <TouchableOpacity
-                style={styles.row}
-                onPress={() => router.push("/paywall")}
-                activeOpacity={0.7}
-              >
-                <Text style={[styles.rowLabel, { color: "#FFFFFF" }]}>Upgrade Plan</Text>
-                <IconSymbol name="chevron.right" size={18} color={"#FFFFFF"} />
               </TouchableOpacity>
             </>
           )}
@@ -685,5 +693,19 @@ const styles = StyleSheet.create({
     color: "#444444",
     textAlign: "center",
     lineHeight: 16,
+  },
+  upgradeBadge: {
+    backgroundColor: "#222222",
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderWidth: 1,
+    borderColor: "#333333",
+  },
+  upgradeBadgeText: {
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.5,
+    color: "#FFFFFF",
   },
 });
