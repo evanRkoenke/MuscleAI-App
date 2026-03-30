@@ -360,3 +360,12 @@
 - [x] Free users CAN continue for free (5 scans/day, local storage only)
 - [x] Cloud sync strictly gated to paid subscribers only
 - [x] Free users see subscription options but can skip with "Continue with Free"
+
+## Rework Auth Flow (New Requirements)
+- [x] First launch → onboarding quiz immediately (no change needed)
+- [x] After onboarding → show auth/login screen
+- [x] Auth screen: tapping Google/Apple/SignUp redirects free users to paywall first (not OAuth)
+- [x] Paywall: subscribing → redirect back to auth to complete login with Google/Apple/account
+- [x] Paywall: "Continue with Free" → skip auth entirely, go to tabs (local only, 5 scans/day)
+- [x] AuthGate updated to support new flow: onboarding → auth → paywall → auth → tabs OR free → tabs
+- [x] Update tests for new auth flow

@@ -9,25 +9,32 @@ import {
   Platform,
   ScrollView,
   ActivityIndicator,
-  Alert,
-  Modal,
 } from "react-native";
 import { Image } from "expo-image";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
 import { useApp } from "@/lib/app-context";
 import * as Haptics from "expo-haptics";
-
-import { Typography } from "@/constants/typography";
-
+import { startOAuthLogin } from "@/constants/oauth";
 
 const PRIMARY_WHITE = "#FFFFFF";
 
 type AuthMode = "login" | "signup" | "forgot";
 
+/**
+ * Auth Screen
+ *
+ * Two modes of operation:
+ * 1. **Pre-paywall** (default): User just finished onboarding, subscription is "free".
+ *    Tapping Google/Apple/Sign Up redirects to /paywall first.
+ *    They must subscribe before they can actually log in.
+ *
+ * 2. **Post-paywall** (returnFromPaywall=true): User subscribed on the paywall
+ *    and was sent back here. Now the login buttons actually perform OAuth/auth.
+ */
 export default function AuthScreen() {
   const [mode, setMode] = useState<AuthMode>("login");
   const [email, setEmail] = useState("");
@@ -37,8 +44,12 @@ export default function AuthScreen() {
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const router = useRouter();
+  const params = useLocalSearchParams<{ returnFromPaywall?: string }>();
   const colors = useColors();
-  const { setAuthenticated, updateProfile, resetOnboarding } = useApp();
+  const { subscription, setAuthenticated, updateProfile, resetOnboarding, markPaywallSeen } = useApp();
+
+  // If user has a paid subscription OR was explicitly sent back from paywall, allow login
+  const canLogin = subscription !== "free" || params.returnFromPaywall === "true";
 
   const clearMessages = useCallback(() => {
     setError("");
@@ -47,11 +58,28 @@ export default function AuthScreen() {
 
   const validateEmail = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
 
+  /**
+   * When a free user taps a login/signup button, redirect to paywall.
+   * They need to subscribe first to unlock account creation / cloud sync.
+   */
+  const redirectToPaywall = () => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    router.push("/paywall");
+  };
+
   const handleAuth = async () => {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
     clearMessages();
+
+    // If free user, redirect to paywall
+    if (!canLogin) {
+      redirectToPaywall();
+      return;
+    }
 
     if (!email.trim()) {
       setError("Please enter your email address.");
@@ -72,18 +100,17 @@ export default function AuthScreen() {
 
     setLoading(true);
     try {
-      // In production, this connects to Supabase Auth
-      // For now, simulates auth with local persistence via AsyncStorage
       await new Promise((resolve) => setTimeout(resolve, 800));
       await updateProfile({
         email: email.trim(),
         name: name.trim() || email.split("@")[0],
       });
       await setAuthenticated(true);
+      await markPaywallSeen();
       if (Platform.OS !== "web") {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
-      router.replace("/paywall");
+      router.replace("/(tabs)");
     } catch (e) {
       setError("Authentication failed. Please check your credentials and try again.");
       if (Platform.OS !== "web") {
@@ -111,7 +138,6 @@ export default function AuthScreen() {
 
     setLoading(true);
     try {
-      // In production: await supabase.auth.resetPasswordForEmail(email)
       await new Promise((resolve) => setTimeout(resolve, 1000));
       setSuccessMessage(
         "Password reset link sent! Check your inbox at " + email.trim() + " and follow the instructions."
@@ -131,28 +157,38 @@ export default function AuthScreen() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
     clearMessages();
+
+    // If free user, redirect to paywall first
+    if (!canLogin) {
+      redirectToPaywall();
+      return;
+    }
+
     setLoading(true);
     try {
-      // In production: Supabase OAuth with Google/Apple
-      await new Promise((resolve) => setTimeout(resolve, 800));
-      const displayName = provider === "google" ? "Google User" : "Apple User";
-      await updateProfile({
-        email: `user@${provider}.com`,
-        name: displayName,
-      });
-      await setAuthenticated(true);
-      if (Platform.OS !== "web") {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      }
-      router.replace("/paywall");
+      // Start real OAuth flow for paid users
+      // startOAuthLogin redirects to the OAuth portal which handles provider selection
+      await startOAuthLogin();
+      // OAuth will redirect to /oauth/callback which handles the rest
     } catch (e) {
       setError(`${provider} sign-in failed. Please try again or use email.`);
       if (Platform.OS !== "web") {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       }
-    } finally {
       setLoading(false);
     }
+  };
+
+  /**
+   * "Continue with Free" — skip login entirely, go straight to tabs.
+   * Free users get 5 scans/day with local-only storage.
+   */
+  const handleContinueFree = async () => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    await markPaywallSeen();
+    router.replace("/(tabs)");
   };
 
   const switchMode = (newMode: AuthMode) => {
@@ -189,6 +225,15 @@ export default function AuthScreen() {
             <Text style={styles.formTitle}>
               {isForgot ? "Reset Password" : isLogin ? "Welcome Back" : "Create Account"}
             </Text>
+
+            {/* Subtitle for free users explaining they need to subscribe */}
+            {!canLogin && !isForgot && (
+              <Text style={styles.upsellText}>
+                Sign in to save your progress across devices.{"\n"}
+                A subscription is required for cloud sync.
+              </Text>
+            )}
+
             {isForgot && (
               <Text style={styles.forgotDesc}>
                 Enter your email and we'll send you a secure link to reset your password.
@@ -344,6 +389,16 @@ export default function AuthScreen() {
                   </Text>
                 </TouchableOpacity>
 
+                {/* Continue with Free — skip login entirely */}
+                <TouchableOpacity
+                  style={styles.continueButton}
+                  onPress={handleContinueFree}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.continueText}>Continue with Free</Text>
+                  <Text style={styles.continueSubtext}>5 scans/day · Local storage only</Text>
+                </TouchableOpacity>
+
                 {/* Retake Quiz link */}
                 <TouchableOpacity
                   style={styles.retakeButton}
@@ -406,6 +461,13 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 4,
     color: "#F0F0F0",
+  },
+  upsellText: {
+    fontSize: 14,
+    textAlign: "center",
+    lineHeight: 20,
+    color: "#888888",
+    marginBottom: 4,
   },
   forgotDesc: {
     fontSize: 14,
@@ -548,6 +610,25 @@ const styles = StyleSheet.create({
   toggleHighlight: {
     color: "#FFFFFF",
     fontWeight: "400",
+  },
+  continueButton: {
+    alignItems: "center",
+    marginTop: 12,
+    paddingVertical: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#222222",
+    borderStyle: "dashed",
+  },
+  continueText: {
+    fontSize: 15,
+    fontWeight: "500",
+    color: "#888888",
+  },
+  continueSubtext: {
+    fontSize: 12,
+    color: "#555555",
+    marginTop: 2,
   },
   retakeButton: {
     flexDirection: "row",

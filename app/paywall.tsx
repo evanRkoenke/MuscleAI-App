@@ -58,7 +58,7 @@ if (Platform.OS !== "web") {
 
 export default function PaywallScreen() {
   const router = useRouter();
-  const { setSubscription, markPaywallSeen } = useApp();
+  const { setSubscription, markPaywallSeen, isAuthenticated } = useApp();
   const [subscribing, setSubscribing] = useState<string | null>(null);
   const [iapReady, setIapReady] = useState(false);
   const [iapProducts, setIapProducts] = useState<any[]>([]);
@@ -99,9 +99,13 @@ export default function PaywallScreen() {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         }
 
-        // Navigate to tabs — the global WelcomeModal will show automatically
-        // because setSubscription sets justSubscribedTier in AppContext
-        router.replace("/(tabs)");
+        // After subscribing, if not yet authenticated, send back to auth to complete login
+        // If already authenticated (returning user upgrading), go to tabs
+        if (isAuthenticated) {
+          router.replace("/(tabs)");
+        } else {
+          router.replace("/auth?returnFromPaywall=true" as any);
+        }
       } catch (error) {
         console.error("[IAP] Post-purchase error:", error);
         setPurchaseError("Purchase completed but setup failed. Please restart the app.");
@@ -170,8 +174,11 @@ export default function PaywallScreen() {
                 onPress: async () => {
                   await purchaseViaStripe(plan.productId);
                   await setSubscription(plan.id as any);
-                  // Navigate to tabs — global WelcomeModal handles the celebration
-                  router.replace("/(tabs)");
+                  if (isAuthenticated) {
+                    router.replace("/(tabs)");
+                  } else {
+                    router.replace("/auth?returnFromPaywall=true" as any);
+                  }
                 },
               },
               {
@@ -189,11 +196,14 @@ export default function PaywallScreen() {
         await purchaseViaStripe(plan.productId);
 
         // Set subscription locally (in production, confirmed via webhook)
-        // setSubscription triggers justSubscribedTier → global WelcomeModal
         await setSubscription(plan.id as any);
 
-        // Navigate to tabs — the WelcomeModal will appear automatically
-        router.replace("/(tabs)");
+        // After subscribing, if not yet authenticated, send back to auth to complete login
+        if (isAuthenticated) {
+          router.replace("/(tabs)");
+        } else {
+          router.replace("/auth?returnFromPaywall=true" as any);
+        }
       }
     } catch (error: any) {
       console.error("[Paywall] Subscribe error:", error);
@@ -277,7 +287,8 @@ export default function PaywallScreen() {
   };
 
   const handleSkip = async () => {
-    // Mark that the user has seen the paywall so they won't be redirected back
+    // "Continue with Free" — skip login entirely, go straight to tabs
+    // Free users get 5 scans/day with local-only storage, no account needed
     await markPaywallSeen();
     router.replace("/(tabs)");
   };

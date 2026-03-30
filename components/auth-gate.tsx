@@ -5,16 +5,21 @@ import { useApp } from "@/lib/app-context";
 /**
  * AuthGate — Redirect users based on onboarding, authentication, and paywall state.
  *
- * Flow:
+ * New Flow:
  * 1. First launch → onboarding quiz (5 steps)
  * 2. After onboarding → auth screen (login/signup)
- * 3. After auth → paywall (must see plans at least once)
- * 4. After paywall (subscribe or "Continue with Free") → main app (tabs)
+ *    - Free user taps Google/Apple/SignUp → auth screen redirects to /paywall (handled in auth.tsx)
+ *    - Free user taps "Continue with Free" → markPaywallSeen + go to tabs (handled in auth.tsx)
+ * 3. After subscribing on paywall → redirect back to /auth?returnFromPaywall=true to complete login
+ * 4. After successful login → tabs
  *
- * Free users CAN continue for free (5 scans/day, local storage only).
- * Cloud sync is strictly gated to paid subscribers.
+ * AuthGate's job is simpler now:
+ * - Not onboarded → /onboarding
+ * - Onboarded but not authenticated AND not hasSeenPaywall → /auth (they need to either login or skip)
+ * - hasSeenPaywall + not authenticated → allow tabs (free user who skipped login)
+ * - Authenticated + hasSeenPaywall → allow tabs
  *
- * This component must be rendered inside AppProvider and the router.
+ * The paywall routing is handled by the auth screen itself (not AuthGate).
  */
 export function AuthGate() {
   const { hasCompletedOnboarding, isAuthenticated, hasSeenPaywall, loading } = useApp();
@@ -34,21 +39,25 @@ export function AuthGate() {
       if (!currentRoute.includes("onboarding")) {
         router.replace("/onboarding");
       }
-    } else if (!isAuthenticated) {
-      // Onboarding done but not logged in — send to auth
-      if (!currentRoute.includes("auth") && !currentRoute.includes("onboarding")) {
+    } else if (!hasSeenPaywall && !isAuthenticated) {
+      // Onboarded but hasn't gone through the auth/paywall flow yet
+      // Send to auth screen (which has "Continue with Free" and login buttons)
+      // Allow /auth and /paywall routes (user navigates between them)
+      if (
+        !currentRoute.includes("auth") &&
+        !currentRoute.includes("paywall") &&
+        !currentRoute.includes("onboarding")
+      ) {
         router.replace("/auth");
       }
-    } else if (!hasSeenPaywall) {
-      // Authenticated but hasn't seen the paywall yet — show subscription options
-      if (!currentRoute.includes("paywall")) {
-        router.replace("/paywall");
-      }
-    } else {
-      // Fully authenticated and has seen paywall — ensure they're in the main app
+    } else if (hasSeenPaywall || isAuthenticated) {
+      // User has either:
+      // - Tapped "Continue with Free" (hasSeenPaywall=true, isAuthenticated=false)
+      // - Subscribed and logged in (hasSeenPaywall=true, isAuthenticated=true)
+      // Either way, they can access the main app
       if (
         currentRoute.includes("onboarding") ||
-        currentRoute.includes("auth")
+        (currentRoute === "/auth" && !currentRoute.includes("returnFromPaywall"))
       ) {
         if (!hasRedirected.current) {
           hasRedirected.current = true;
