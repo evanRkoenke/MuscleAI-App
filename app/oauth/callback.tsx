@@ -31,6 +31,17 @@ export default function OAuthCallback() {
     return "/(tabs)";
   };
 
+  // 30-second timeout for the entire OAuth callback
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (status === "processing") {
+        setStatus("error");
+        setErrorMessage("Authentication timed out. Please try again.");
+      }
+    }, 30000);
+    return () => clearTimeout(timeout);
+  }, [status]);
+
   useEffect(() => {
     if (hasHandled.current) return;
     hasHandled.current = true;
@@ -276,6 +287,12 @@ export default function OAuthCallback() {
             </Text>
             <Text className="text-base leading-6 text-center text-foreground">
               {errorMessage}
+            </Text>
+            <Text
+              className="mt-4 text-base font-semibold text-primary"
+              onPress={() => router.replace("/auth?returnFromPaywall=true" as any)}
+            >
+              Back to Sign In
             </Text>
           </>
         )}

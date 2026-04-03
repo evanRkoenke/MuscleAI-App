@@ -450,3 +450,13 @@
 
 ## Paywall Back Arrow Position
 - [x] Lower the back arrow on paywall so it doesn't overlap status bar or other elements
+
+## Fix Create Account Infinite Spinner
+- [x] Root cause: no server-side email/password signup endpoint exists (backend is OAuth-only)
+- [x] Removed fake email/password form — kept only Google and Apple OAuth sign-in
+- [x] Added 15-second timeout on auth screen to stop spinner if OAuth doesn't respond
+- [x] Added 30-second timeout on OAuth callback to prevent infinite processing state
+- [x] Added "Back to Sign In" link on OAuth error screen
+- [x] Clear error messages for timeout, network failure, and OAuth errors
+- [x] OAuth callback already redirects to /(tabs) after successful login
+- [x] All 295 tests passing, 0 TS errors

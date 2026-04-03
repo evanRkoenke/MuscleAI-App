@@ -1,11 +1,9 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
-  KeyboardAvoidingView,
   Platform,
   ScrollView,
   ActivityIndicator,
@@ -20,42 +18,37 @@ import * as Haptics from "expo-haptics";
 import { startOAuthLogin } from "@/constants/oauth";
 
 /**
- * Auth Screen
+ * Auth Screen — Sign in with Google or Apple
  *
  * Two modes of operation:
  * 1. **Pre-paywall** (default): User just finished onboarding or is returning.
- *    Tapping Google/Apple/Sign Up/Sign In redirects to /paywall first.
+ *    Tapping Google/Apple redirects to /paywall first.
  *    They must pay before they can actually log in.
  *
  * 2. **Post-paywall** (returnFromPaywall=true): User paid on the paywall
- *    and was sent back here. Now the login buttons actually perform OAuth/auth.
+ *    and was sent back here. Now the login buttons actually perform OAuth.
  *
  * There is NO free plan. All users must subscribe to use the app.
+ * Authentication is via Manus OAuth (Google/Apple) only — no email/password.
  */
 export default function AuthScreen() {
-  const [mode, setMode] = useState<"login" | "signup" | "forgot">("login");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [loadingProvider, setLoadingProvider] = useState<string | null>(null);
   const [error, setError] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
   const router = useRouter();
   const params = useLocalSearchParams<{ returnFromPaywall?: string }>();
-  const { subscription, setAuthenticated, updateProfile, resetOnboarding, markPaywallSeen } = useApp();
+  const { subscription, resetOnboarding } = useApp();
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // If user has a paid subscription OR was explicitly sent back from paywall, allow login
   const canLogin = subscription !== "none" || params.returnFromPaywall === "true";
 
-  const clearMessages = useCallback(() => {
+  const clearError = useCallback(() => {
     setError("");
-    setSuccessMessage("");
   }, []);
 
-  const validateEmail = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
-
   /**
-   * When an unpaid user taps a login/signup button, redirect to paywall.
+   * When an unpaid user taps a login button, redirect to paywall.
    * They need to subscribe first.
    */
   const redirectToPaywall = () => {
@@ -65,94 +58,11 @@ export default function AuthScreen() {
     router.push("/paywall?from=auth");
   };
 
-  const handleAuth = async () => {
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-    clearMessages();
-
-    // If unpaid user, redirect to paywall
-    if (!canLogin) {
-      redirectToPaywall();
-      return;
-    }
-
-    if (!email.trim()) {
-      setError("Please enter your email address.");
-      return;
-    }
-    if (!validateEmail(email.trim())) {
-      setError("Please enter a valid email address.");
-      return;
-    }
-    if (!password || password.length < 6) {
-      setError("Password must be at least 6 characters.");
-      return;
-    }
-    if (mode === "signup" && !name.trim()) {
-      setError("Please enter your full name.");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 800));
-      await updateProfile({
-        email: email.trim(),
-        name: name.trim() || email.split("@")[0],
-      });
-      await setAuthenticated(true);
-      await markPaywallSeen();
-      if (Platform.OS !== "web") {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      }
-      router.replace("/(tabs)");
-    } catch (e) {
-      setError("Authentication failed. Please check your credentials and try again.");
-      if (Platform.OS !== "web") {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleForgotPassword = async () => {
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-    clearMessages();
-
-    if (!email.trim()) {
-      setError("Please enter your email address to reset your password.");
-      return;
-    }
-    if (!validateEmail(email.trim())) {
-      setError("Please enter a valid email address.");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setSuccessMessage(
-        "Password reset link sent! Check your inbox at " + email.trim() + " and follow the instructions."
-      );
-      if (Platform.OS !== "web") {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      }
-    } catch (e) {
-      setError("Unable to send reset email. Please try again later.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleSocialAuth = async (provider: string) => {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-    clearMessages();
+    clearError();
 
     // If unpaid user, redirect to paywall first
     if (!canLogin) {
@@ -161,241 +71,140 @@ export default function AuthScreen() {
     }
 
     setLoading(true);
+    setLoadingProvider(provider);
+
+    // Set a 15-second timeout to stop the spinner if OAuth doesn't complete
+    timeoutRef.current = setTimeout(() => {
+      setLoading(false);
+      setLoadingProvider(null);
+      setError(
+        `${provider} sign-in is taking too long. Please check your internet connection and try again.`
+      );
+      if (Platform.OS !== "web") {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      }
+    }, 15000);
+
     try {
       await startOAuthLogin();
+      // On native, the app will be backgrounded while the OAuth browser opens.
+      // The callback will handle the rest via deep link.
+      // On web, the page redirects, so we won't reach here.
     } catch (e) {
-      setError(`${provider} sign-in failed. Please try again or use email.`);
+      // Clear the timeout since we got an immediate error
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+      setError(`${provider} sign-in failed. Please try again.`);
       if (Platform.OS !== "web") {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       }
       setLoading(false);
+      setLoadingProvider(null);
     }
   };
 
-  const switchMode = (newMode: "login" | "signup" | "forgot") => {
-    setMode(newMode);
-    clearMessages();
-  };
-
-  const isLogin = mode === "login";
-  const isForgot = mode === "forgot";
-
   return (
     <ScreenContainer edges={["top", "bottom", "left", "right"]}>
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
       >
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-        >
-          {/* Brand Header */}
-          <View style={styles.header}>
-            <Image
-              source={require("../assets/images/logo-cropped.png")}
-              style={styles.logoImage}
-              contentFit="contain"
-            />
-            <Text style={styles.logo}>MUSCLE AI</Text>
-            <Text style={styles.tagline}>Hypertrophy-Optimized Nutrition</Text>
-          </View>
+        {/* Brand Header */}
+        <View style={styles.header}>
+          <Image
+            source={require("../assets/images/logo-cropped.png")}
+            style={styles.logoImage}
+            contentFit="contain"
+          />
+          <Text style={styles.logo}>MUSCLE AI</Text>
+          <Text style={styles.tagline}>Hypertrophy-Optimized Nutrition</Text>
+        </View>
 
-          <View style={styles.form}>
-            {/* Title */}
-            <Text style={styles.formTitle}>
-              {isForgot ? "Reset Password" : isLogin ? "Welcome Back" : "Create Account"}
+        <View style={styles.form}>
+          {/* Title */}
+          <Text style={styles.formTitle}>Sign In</Text>
+
+          {/* Subtitle for unpaid users explaining they need to subscribe */}
+          {!canLogin && (
+            <Text style={styles.subtitleText}>
+              Subscribe to unlock AI-powered nutrition tracking{"\n"}
+              and save your progress across devices.
             </Text>
+          )}
 
-            {/* Subtitle for unpaid users explaining they need to subscribe */}
-            {!canLogin && !isForgot && (
-              <Text style={styles.upsellText}>
-                Subscribe to unlock AI-powered nutrition tracking{"\n"}
-                and save your progress across devices.
-              </Text>
-            )}
+          {canLogin && (
+            <Text style={styles.subtitleText}>
+              Sign in to access your dashboard{"\n"}
+              and start tracking your nutrition.
+            </Text>
+          )}
 
-            {isForgot && (
-              <Text style={styles.forgotDesc}>
-                Enter your email and we'll send you a secure link to reset your password.
-              </Text>
-            )}
-
-            {/* Name field (signup only) */}
-            {mode === "signup" && (
-              <View style={styles.inputContainer}>
-                <IconSymbol name="person.fill" size={20} color="#666666" />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Full Name"
-                  placeholderTextColor="#666666"
-                  value={name}
-                  onChangeText={setName}
-                  autoCapitalize="words"
-                />
-              </View>
-            )}
-
-            {/* Email */}
-            <View style={styles.inputContainer}>
-              <IconSymbol name="paperplane.fill" size={20} color="#666666" />
-              <TextInput
-                style={styles.input}
-                placeholder="Email"
-                placeholderTextColor="#666666"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                returnKeyType={isForgot ? "done" : "next"}
-              />
+          {/* Error message */}
+          {error ? (
+            <View style={styles.errorBox}>
+              <IconSymbol name="xmark.circle.fill" size={18} color="#FF3D3D" />
+              <Text style={styles.errorText}>{error}</Text>
             </View>
+          ) : null}
 
-            {/* Password (not in forgot mode) */}
-            {!isForgot && (
-              <View style={styles.inputContainer}>
-                <IconSymbol name="lock.fill" size={20} color="#666666" />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Password"
-                  placeholderTextColor="#666666"
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry
-                  returnKeyType="done"
-                />
-              </View>
-            )}
-
-            {/* Error message */}
-            {error ? (
-              <View style={styles.errorBox}>
-                <IconSymbol name="xmark.circle.fill" size={18} color="#FF3D3D" />
-                <Text style={styles.errorText}>{error}</Text>
-              </View>
-            ) : null}
-
-            {/* Success message */}
-            {successMessage ? (
-              <View style={styles.successBox}>
-                <IconSymbol name="checkmark.circle.fill" size={18} color="#C0C0C0" />
-                <Text style={styles.successText}>{successMessage}</Text>
-              </View>
-            ) : null}
-
-            {/* Forgot Password link (login mode only) */}
-            {isLogin && (
-              <TouchableOpacity
-                style={styles.forgotButton}
-                onPress={() => switchMode("forgot")}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.forgotLinkText}>Forgot Password?</Text>
-              </TouchableOpacity>
-            )}
-
-            {/* Primary CTA */}
-            <TouchableOpacity
-              style={styles.authButton}
-              onPress={isForgot ? handleForgotPassword : handleAuth}
-              activeOpacity={0.8}
-              disabled={loading}
-            >
-              <LinearGradient
-                colors={["#444444", "#2A2A2A"]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.authButtonGradient}
-              >
-                {loading ? (
-                  <ActivityIndicator color="#FFFFFF" />
-                ) : (
-                  <Text style={styles.authButtonText}>
-                    {isForgot ? "Send Reset Link" : isLogin ? "Sign In" : "Create Account"}
-                  </Text>
-                )}
-              </LinearGradient>
-            </TouchableOpacity>
-
-            {/* Back to login from forgot */}
-            {isForgot && (
-              <TouchableOpacity
-                style={styles.backButton}
-                onPress={() => switchMode("login")}
-                activeOpacity={0.7}
-              >
-                <IconSymbol name="chevron.left.forwardslash.chevron.right" size={16} color={"#FFFFFF"} />
-                <Text style={styles.backText}>Back to Sign In</Text>
-              </TouchableOpacity>
-            )}
-
-            {/* Social auth (not in forgot mode) */}
-            {!isForgot && (
+          {/* Continue with Google */}
+          <TouchableOpacity
+            style={[styles.socialButton, loadingProvider === "Google" && styles.socialButtonActive]}
+            onPress={() => handleSocialAuth("Google")}
+            activeOpacity={0.7}
+            disabled={loading}
+          >
+            {loadingProvider === "Google" ? (
+              <ActivityIndicator color="#FFFFFF" size="small" />
+            ) : (
               <>
-                <View style={styles.divider}>
-                  <View style={styles.dividerLine} />
-                  <Text style={styles.dividerText}>OR</Text>
-                  <View style={styles.dividerLine} />
-                </View>
-
-                <TouchableOpacity
-                  style={styles.socialButton}
-                  onPress={() => handleSocialAuth("google")}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.socialIcon}>G</Text>
-                  <Text style={styles.socialButtonText}>Continue with Google</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.socialButton}
-                  onPress={() => handleSocialAuth("apple")}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.socialIcon}>{"\uF8FF"}</Text>
-                  <Text style={styles.socialButtonText}>Continue with Apple</Text>
-                </TouchableOpacity>
-
-                {/* Toggle login/signup */}
-                <TouchableOpacity
-                  style={styles.toggleButton}
-                  onPress={() => switchMode(isLogin ? "signup" : "login")}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.toggleText}>
-                    {isLogin ? "Don't have an account? " : "Already have an account? "}
-                    <Text style={styles.toggleHighlight}>
-                      {isLogin ? "Sign Up" : "Sign In"}
-                    </Text>
-                  </Text>
-                </TouchableOpacity>
-
-                {/* Retake Quiz link */}
-                <TouchableOpacity
-                  style={styles.retakeButton}
-                  onPress={async () => {
-                    if (Platform.OS !== "web") {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    }
-                    await resetOnboarding();
-                    router.replace("/onboarding");
-                  }}
-                  activeOpacity={0.7}
-                >
-                  <IconSymbol name="arrow.left" size={14} color="#666666" />
-                  <Text style={styles.retakeText}>Retake Onboarding Quiz</Text>
-                </TouchableOpacity>
+                <Text style={styles.socialIcon}>G</Text>
+                <Text style={styles.socialButtonText}>Continue with Google</Text>
               </>
             )}
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+          </TouchableOpacity>
+
+          {/* Continue with Apple */}
+          <TouchableOpacity
+            style={[styles.socialButton, loadingProvider === "Apple" && styles.socialButtonActive]}
+            onPress={() => handleSocialAuth("Apple")}
+            activeOpacity={0.7}
+            disabled={loading}
+          >
+            {loadingProvider === "Apple" ? (
+              <ActivityIndicator color="#FFFFFF" size="small" />
+            ) : (
+              <>
+                <Text style={styles.socialIcon}>{"\uF8FF"}</Text>
+                <Text style={styles.socialButtonText}>Continue with Apple</Text>
+              </>
+            )}
+          </TouchableOpacity>
+
+          {/* Retake Quiz link */}
+          <TouchableOpacity
+            style={styles.retakeButton}
+            onPress={async () => {
+              if (Platform.OS !== "web") {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              }
+              await resetOnboarding();
+              router.replace("/onboarding");
+            }}
+            activeOpacity={0.7}
+          >
+            <IconSymbol name="arrow.left" size={14} color="#666666" />
+            <Text style={styles.retakeText}>Retake Onboarding Quiz</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
     </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1 },
   scrollContent: {
     flexGrow: 1,
     justifyContent: "center",
@@ -404,7 +213,7 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: "center",
-    marginBottom: 32,
+    marginBottom: 40,
   },
   logoImage: {
     width: 100,
@@ -424,7 +233,7 @@ const styles = StyleSheet.create({
     color: "#888888",
   },
   form: {
-    gap: 14,
+    gap: 16,
   },
   formTitle: {
     fontSize: 26,
@@ -433,36 +242,12 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     color: "#F0F0F0",
   },
-  upsellText: {
+  subtitleText: {
     fontSize: 14,
     textAlign: "center",
     lineHeight: 20,
     color: "#888888",
-    marginBottom: 4,
-  },
-  forgotDesc: {
-    fontSize: 14,
-    textAlign: "center",
-    lineHeight: 20,
-    color: "#888888",
-    marginBottom: 4,
-  },
-  inputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#222222",
-    backgroundColor: "#111111",
-    borderRadius: 14,
-    paddingHorizontal: 16,
-    height: 54,
-    gap: 12,
-  },
-  input: {
-    flex: 1,
-    fontSize: 16,
-    height: "100%",
-    color: "#F0F0F0",
+    marginBottom: 8,
   },
   errorBox: {
     flexDirection: "row",
@@ -480,85 +265,20 @@ const styles = StyleSheet.create({
     color: "#FF3D3D",
     lineHeight: 20,
   },
-  successBox: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    backgroundColor: "rgba(0,230,118,0.08)",
-    borderRadius: 12,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: "rgba(0,230,118,0.2)",
-  },
-  successText: {
-    flex: 1,
-    fontSize: 14,
-    color: "#C0C0C0",
-    lineHeight: 20,
-  },
-  forgotButton: {
-    alignSelf: "flex-end",
-  },
-  forgotLinkText: {
-    fontSize: 14,
-    fontWeight: "400",
-    color: "#FFFFFF",
-  },
-  authButton: {
-    marginTop: 4,
-    borderRadius: 27,
-    overflow: "hidden",
-  },
-  authButtonGradient: {
-    height: 54,
-    borderRadius: 27,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  authButtonText: {
-    color: "#FFFFFF",
-    fontSize: 17,
-    fontWeight: "600",
-    letterSpacing: 0.5,
-  },
-  backButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    marginTop: 4,
-  },
-  backText: {
-    fontSize: 15,
-    fontWeight: "400",
-    color: "#FFFFFF",
-  },
-  divider: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginVertical: 4,
-    gap: 12,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: "#222222",
-  },
-  dividerText: {
-    fontSize: 13,
-    fontWeight: "400",
-    color: "#666666",
-  },
   socialButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    height: 54,
+    height: 56,
     borderRadius: 14,
     borderWidth: 1,
     borderColor: "#222222",
     backgroundColor: "#111111",
     gap: 10,
+  },
+  socialButtonActive: {
+    borderColor: "#333333",
+    backgroundColor: "#1A1A1A",
   },
   socialIcon: {
     fontSize: 20,
@@ -570,24 +290,12 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#F0F0F0",
   },
-  toggleButton: {
-    alignItems: "center",
-    marginTop: 8,
-  },
-  toggleText: {
-    fontSize: 15,
-    color: "#888888",
-  },
-  toggleHighlight: {
-    color: "#FFFFFF",
-    fontWeight: "400",
-  },
   retakeButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 6,
-    marginTop: 12,
+    marginTop: 16,
     paddingVertical: 8,
   },
   retakeText: {
