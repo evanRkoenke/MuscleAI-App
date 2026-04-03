@@ -6,9 +6,9 @@ import { useApp } from "@/lib/app-context";
  *
  * Flow:
  * 1. Waits for app state to finish loading
- * 2. Checks if user is authenticated and has a paid subscription
- * 3. Pulls cloud data first (to get latest from other devices)
- * 4. Then pushes local data to cloud (to sync any local-only changes)
+ * 2. Checks if user is authenticated
+ * 3. Restores subscription tier from server (in case it changed)
+ * 4. If user has a paid subscription, pulls then pushes cloud data
  * 5. Runs once per app launch (not on every re-render)
  *
  * Must be rendered inside AppProvider.
@@ -23,6 +23,9 @@ export function AutoSync() {
     restoreSubscriptionFromCloud,
   } = useApp();
   const hasRun = useRef(false);
+  // Track subscription in a ref so the async function always reads the latest value
+  const subscriptionRef = useRef(subscription);
+  subscriptionRef.current = subscription;
 
   useEffect(() => {
     if (loading || hasRun.current) return;
@@ -38,10 +41,13 @@ export function AutoSync() {
         console.warn("[AutoSync] Failed to restore subscription:", e);
       }
 
-      // Re-check subscription after restore (need to read from context)
-      // Since restoreSubscriptionFromCloud updates state, we use the current
-      // subscription value. If user was free and now paid, next launch will sync.
-      if (subscription === "none") {
+      // Wait a tick for the state update from restoreSubscriptionFromCloud to propagate
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Read the latest subscription from the ref (not the stale closure value)
+      const currentSubscription = subscriptionRef.current;
+
+      if (currentSubscription === "none") {
         console.log("[AutoSync] No subscription — skipping cloud sync");
         return;
       }

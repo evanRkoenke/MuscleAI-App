@@ -25,6 +25,13 @@ export function AuthGate() {
   const segments = useSegments();
   const hasRedirected = useRef(false);
 
+  // Reset the redirect guard when user logs out so re-login can redirect to tabs
+  useEffect(() => {
+    if (!isAuthenticated) {
+      hasRedirected.current = false;
+    }
+  }, [isAuthenticated]);
+
   useEffect(() => {
     if (loading) return;
 

@@ -494,3 +494,16 @@
 - [x] Ensure app.config.ts still works alongside app.json for dynamic env vars
 - [x] Push to GitHub so Expo Launch can read the static manifest
 - [x] 296 tests passing, 0 TypeScript errors
+
+## Final OAuth Login Audit for Paid Users (Google + Apple)
+- [x] Audit auth screen: Google and Apple login buttons trigger OAuth correctly
+- [x] Audit OAuth redirect_uri construction for native builds
+- [x] Audit server mobile-callback endpoint: code exchange, session creation, deep link redirect
+- [x] Audit client OAuth callback screen: session token storage, user info persistence
+- [x] Audit AuthGate: authenticated paid users reach dashboard without loops
+- [x] Audit subscription restoration from cloud after login
+- [x] Fix AutoSync stale closure bug — subscription ref now reads latest value after restore
+- [x] Fix session verification to allow empty name (Apple users may hide name)
+- [x] Fix AuthGate hasRedirected ref — resets on logout so re-login redirects to tabs
+- [x] Fix any issues found and push to GitHub
+- [x] 296 tests passing, 0 TypeScript errors
