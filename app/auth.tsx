@@ -10,26 +10,29 @@ import {
 } from "react-native";
 import { Image } from "expo-image";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { LinearGradient } from "expo-linear-gradient";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useApp } from "@/lib/app-context";
 import * as Haptics from "expo-haptics";
+import {
+  signInWithApple,
+  signInWithGoogle,
+  isAppleSignInAvailable,
+  isGoogleSignInAvailable,
+} from "@/lib/native-auth";
 import { startOAuthLogin } from "@/constants/oauth";
 
 /**
  * Auth Screen — Sign in with Google or Apple
  *
- * Two modes of operation:
- * 1. **Pre-paywall** (default): User just finished onboarding or is returning.
- *    Tapping Google/Apple redirects to /paywall first.
- *    They must pay before they can actually log in.
+ * Uses native sign-in on iOS/Android:
+ * - Apple: Native iOS "Sign in with Apple" sheet (expo-apple-authentication)
+ * - Google: Native Google Sign-In popup (@react-native-google-signin/google-signin)
  *
- * 2. **Post-paywall** (returnFromPaywall=true): User paid on the paywall
- *    and was sent back here. Now the login buttons actually perform OAuth.
+ * Falls back to Manus OAuth on web.
  *
- * There is NO free plan. All users must subscribe to use the app.
- * Authentication is via Manus OAuth (Google/Apple) only — no email/password.
+ * After successful sign-in, the identity token is sent to our server
+ * for verification, session creation, and user sync.
  */
 export default function AuthScreen() {
   const [loading, setLoading] = useState(false);
@@ -37,55 +40,104 @@ export default function AuthScreen() {
   const [error, setError] = useState("");
   const router = useRouter();
   const params = useLocalSearchParams<{ returnFromPaywall?: string }>();
-  const { subscription, resetOnboarding } = useApp();
+  const { subscription, resetOnboarding, setAuthenticated, markPaywallSeen } = useApp();
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // Always allow login — OAuth is the entry point to the app.
-  // Subscription gates features inside the app, not the login itself.
-  const hasSeenPaywall = params.returnFromPaywall === "true";
 
   const clearError = useCallback(() => {
     setError("");
   }, []);
 
-  const handleSocialAuth = async (provider: string) => {
+  const handleNativeAuth = async (provider: "Google" | "Apple") => {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
     clearError();
-
     setLoading(true);
     setLoadingProvider(provider);
 
-    // Set a 15-second timeout to stop the spinner if OAuth doesn't complete
-    timeoutRef.current = setTimeout(() => {
-      setLoading(false);
-      setLoadingProvider(null);
-      setError(
-        `${provider} sign-in is taking too long. Please check your internet connection and try again.`
-      );
-      if (Platform.OS !== "web") {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      }
-    }, 15000);
-
     try {
-      await startOAuthLogin();
-      // On native, the app will be backgrounded while the OAuth browser opens.
-      // The callback will handle the rest via deep link.
-      // On web, the page redirects, so we won't reach here.
-    } catch (e) {
-      // Clear the timeout since we got an immediate error
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-        timeoutRef.current = null;
+      let result;
+
+      if (provider === "Apple") {
+        result = await signInWithApple();
+      } else {
+        result = await signInWithGoogle();
       }
+
+      if (result.success) {
+        // Authentication succeeded — mark as authenticated and navigate to tabs
+        if (Platform.OS !== "web") {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        }
+        setAuthenticated(true);
+        markPaywallSeen();
+        router.replace("/(tabs)");
+      } else if (result.error === "Sign-in was cancelled") {
+        // User cancelled — just reset the loading state
+        setLoading(false);
+        setLoadingProvider(null);
+      } else {
+        // Sign-in failed with an error
+        setError(result.error || `${provider} sign-in failed. Please try again.`);
+        if (Platform.OS !== "web") {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        }
+        setLoading(false);
+        setLoadingProvider(null);
+      }
+    } catch (e: any) {
       setError(`${provider} sign-in failed. Please try again.`);
       if (Platform.OS !== "web") {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       }
       setLoading(false);
       setLoadingProvider(null);
+    }
+  };
+
+  const handleWebAuth = async (provider: string) => {
+    // Web fallback: use Manus OAuth portal
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    clearError();
+    setLoading(true);
+    setLoadingProvider(provider);
+
+    timeoutRef.current = setTimeout(() => {
+      setLoading(false);
+      setLoadingProvider(null);
+      setError(
+        `${provider} sign-in is taking too long. Please check your internet connection and try again.`
+      );
+    }, 15000);
+
+    try {
+      await startOAuthLogin();
+    } catch (e) {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+      setError(`${provider} sign-in failed. Please try again.`);
+      setLoading(false);
+      setLoadingProvider(null);
+    }
+  };
+
+  const handleGoogleAuth = () => {
+    if (Platform.OS === "web" || !isGoogleSignInAvailable()) {
+      handleWebAuth("Google");
+    } else {
+      handleNativeAuth("Google");
+    }
+  };
+
+  const handleAppleAuth = () => {
+    if (Platform.OS === "web" || !isAppleSignInAvailable()) {
+      handleWebAuth("Apple");
+    } else {
+      handleNativeAuth("Apple");
     }
   };
 
@@ -127,7 +179,7 @@ export default function AuthScreen() {
           {/* Continue with Google */}
           <TouchableOpacity
             style={[styles.socialButton, loadingProvider === "Google" && styles.socialButtonActive]}
-            onPress={() => handleSocialAuth("Google")}
+            onPress={handleGoogleAuth}
             activeOpacity={0.7}
             disabled={loading}
           >
@@ -141,22 +193,24 @@ export default function AuthScreen() {
             )}
           </TouchableOpacity>
 
-          {/* Continue with Apple */}
-          <TouchableOpacity
-            style={[styles.socialButton, loadingProvider === "Apple" && styles.socialButtonActive]}
-            onPress={() => handleSocialAuth("Apple")}
-            activeOpacity={0.7}
-            disabled={loading}
-          >
-            {loadingProvider === "Apple" ? (
-              <ActivityIndicator color="#FFFFFF" size="small" />
-            ) : (
-              <>
-                <Text style={styles.socialIcon}>{"\uF8FF"}</Text>
-                <Text style={styles.socialButtonText}>Continue with Apple</Text>
-              </>
-            )}
-          </TouchableOpacity>
+          {/* Continue with Apple — only show on iOS */}
+          {(Platform.OS === "ios" || Platform.OS === "web") && (
+            <TouchableOpacity
+              style={[styles.socialButton, loadingProvider === "Apple" && styles.socialButtonActive]}
+              onPress={handleAppleAuth}
+              activeOpacity={0.7}
+              disabled={loading}
+            >
+              {loadingProvider === "Apple" ? (
+                <ActivityIndicator color="#FFFFFF" size="small" />
+              ) : (
+                <>
+                  <Text style={styles.socialIcon}>{"\uF8FF"}</Text>
+                  <Text style={styles.socialButtonText}>Continue with Apple</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          )}
 
           {/* Retake Quiz link */}
           <TouchableOpacity

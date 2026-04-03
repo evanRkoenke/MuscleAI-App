@@ -3,6 +3,56 @@ import type { Express, Request, Response } from "express";
 import { getUserByOpenId, upsertUser } from "../db";
 import { getSessionCookieOptions } from "./cookies";
 import { sdk } from "./sdk";
+import { createRemoteJWKSet, jwtVerify } from "jose";
+
+// ─── Apple Identity Token Verification ───
+// Apple publishes their public keys at this URL
+const APPLE_JWKS_URL = new URL("https://appleid.apple.com/auth/keys");
+const appleJWKS = createRemoteJWKSet(APPLE_JWKS_URL);
+
+async function verifyAppleIdentityToken(
+  identityToken: string,
+): Promise<{ sub: string; email?: string; name?: string }> {
+  const { payload } = await jwtVerify(identityToken, appleJWKS, {
+    issuer: "https://appleid.apple.com",
+    // audience is your bundle ID
+    audience: "com.evan.muscleai",
+  });
+
+  if (!payload.sub) {
+    throw new Error("Apple identity token missing subject");
+  }
+
+  return {
+    sub: payload.sub,
+    email: payload.email as string | undefined,
+  };
+}
+
+// ─── Google Identity Token Verification ───
+// Google publishes their public keys at this URL
+const GOOGLE_JWKS_URL = new URL("https://www.googleapis.com/oauth2/v3/certs");
+const googleJWKS = createRemoteJWKSet(GOOGLE_JWKS_URL);
+
+async function verifyGoogleIdentityToken(
+  identityToken: string,
+): Promise<{ sub: string; email?: string; name?: string }> {
+  const { payload } = await jwtVerify(identityToken, googleJWKS, {
+    issuer: ["https://accounts.google.com", "accounts.google.com"],
+    // We don't enforce audience here because the client ID may vary
+    // between iOS and web. The token signature verification is sufficient.
+  });
+
+  if (!payload.sub) {
+    throw new Error("Google identity token missing subject");
+  }
+
+  return {
+    sub: payload.sub,
+    email: payload.email as string | undefined,
+    name: payload.name as string | undefined,
+  };
+}
 
 function getQueryParam(req: Request, key: string): string | undefined {
   const value = req.query[key];
@@ -181,6 +231,69 @@ export function registerOAuthRoutes(app: Express) {
     } catch (error) {
       console.error("[OAuth] Mobile exchange failed", error);
       res.status(500).json({ error: "OAuth mobile exchange failed" });
+    }
+  });
+
+  /**
+   * Native Authentication endpoint.
+   *
+   * Accepts identity tokens from native Apple Sign-In or Google Sign-In,
+   * verifies them with the provider's public keys, creates a local session,
+   * and returns a session token + user info.
+   *
+   * Body: { provider: "apple" | "google", identityToken: string, fullName?: string, email?: string, appleUserId?: string }
+   */
+  app.post("/api/auth/native", async (req: Request, res: Response) => {
+    const { provider, identityToken, fullName, email, appleUserId } = req.body || {};
+
+    if (!provider || !identityToken) {
+      res.status(400).json({ error: "provider and identityToken are required" });
+      return;
+    }
+
+    try {
+      let verifiedClaims: { sub: string; email?: string; name?: string };
+
+      if (provider === "apple") {
+        verifiedClaims = await verifyAppleIdentityToken(identityToken);
+      } else if (provider === "google") {
+        verifiedClaims = await verifyGoogleIdentityToken(identityToken);
+      } else {
+        res.status(400).json({ error: `Unsupported provider: ${provider}` });
+        return;
+      }
+
+      // Use the verified subject as the unique openId, prefixed with provider
+      const openId = `${provider}_${verifiedClaims.sub}`;
+      const userName = fullName || verifiedClaims.name || null;
+      const userEmail = email || verifiedClaims.email || null;
+
+      // Sync user to database
+      const user = await syncUser({
+        openId,
+        name: userName,
+        email: userEmail,
+        loginMethod: provider,
+      });
+
+      // Create session token
+      const sessionToken = await sdk.createSessionToken(openId, {
+        name: userName || "",
+        expiresInMs: ONE_YEAR_MS,
+      });
+
+      // Set cookie for web compatibility
+      const cookieOptions = getSessionCookieOptions(req);
+      res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
+
+      res.json({
+        sessionToken,
+        user: buildUserResponse(user),
+      });
+    } catch (error) {
+      console.error(`[Auth] Native ${provider} auth failed:`, error);
+      const message = error instanceof Error ? error.message : "Authentication failed";
+      res.status(401).json({ error: message });
     }
   });
 

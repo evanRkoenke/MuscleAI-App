@@ -29,6 +29,7 @@ const config: ExpoConfig = {
   ios: {
     supportsTablet: true,
     bundleIdentifier: env.iosBundleId,
+    usesAppleSignIn: true,
     backgroundColor: "#000000",
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
@@ -70,6 +71,13 @@ const config: ExpoConfig = {
   plugins: [
     "expo-system-ui",
     "expo-router",
+    "expo-apple-authentication",
+    [
+      "@react-native-google-signin/google-signin",
+      {
+        iosUrlScheme: "com.googleusercontent.apps.1065961245057-gr4tn43ag02jigrjv5vmlohff8iaii6v",
+      },
+    ],
     [
       "expo-audio",
       {

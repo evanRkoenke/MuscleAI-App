@@ -27,6 +27,7 @@ import { GlobalWelcome } from "@/components/global-welcome";
 import { AuthGate } from "@/components/auth-gate";
 import { AutoSync } from "@/components/auto-sync";
 import { NetworkSyncManager } from "@/components/network-sync-manager";
+import { configureGoogleSignIn } from "@/lib/native-auth";
 
 const DEFAULT_WEB_INSETS: EdgeInsets = { top: 0, right: 0, bottom: 0, left: 0 };
 const DEFAULT_WEB_FRAME: Rect = { x: 0, y: 0, width: 0, height: 0 };
@@ -44,6 +45,13 @@ export default function RootLayout() {
 
   useEffect(() => {
     initManusRuntime();
+    // Configure Google Sign-In on app startup (native only)
+    if (Platform.OS !== "web") {
+      const googleWebClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
+      if (googleWebClientId) {
+        configureGoogleSignIn(googleWebClientId);
+      }
+    }
   }, []);
 
   const handleSafeAreaUpdate = useCallback((metrics: Metrics) => {

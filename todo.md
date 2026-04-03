@@ -507,3 +507,17 @@
 - [x] Fix AuthGate hasRedirected ref — resets on logout so re-login redirects to tabs
 - [x] Fix any issues found and push to GitHub
 - [x] 296 tests passing, 0 TypeScript errors
+
+## Replace Manus OAuth with Native Google + Apple Sign-In
+- [x] Install expo-apple-authentication and @react-native-google-signin/google-signin
+- [x] Configure app.json and app.config.ts with Apple Sign-In capability and Google Sign-In plugin
+- [x] Create native auth service (lib/native-auth.ts) for Apple and Google sign-in
+- [x] Add server endpoint /api/auth/native to verify native identity tokens (Apple JWKS + Google JWKS)
+- [x] Update auth screen to use native sign-in buttons (native on iOS/Android, Manus OAuth fallback on web)
+- [x] Set Google OAuth Web Client ID and iOS URL scheme in app config
+- [x] Wire up Google Sign-In configuration on app startup in _layout.tsx
+- [x] Apple Sign-In shows native iOS sheet, Google Sign-In shows native popup
+- [x] Server verifies identity tokens via Apple/Google JWKS public keys
+- [x] Session management, cloud sync, and subscription restoration maintained
+- [x] 297 tests passing, 0 TypeScript errors
+- [x] Push to GitHub
