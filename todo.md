@@ -545,4 +545,4 @@
 - [x] Update support.tsx billing FAQ to reflect native IAP
 - [x] Update tests: replaced Stripe link tests with native IAP product ID tests
 - [x] 298 tests passing, 0 TypeScript errors
-- [ ] Push to GitHub
+- [x] Push to GitHub
