@@ -62,16 +62,22 @@ const encodeState = (value: string) => {
 
 /**
  * Get the redirect URI for OAuth callback.
- * - Web: uses API server callback endpoint
- * - Native: uses deep link scheme
+ *
+ * - Web: uses API server callback endpoint (HTTPS)
+ * - Native (Expo Go + standalone): uses API server mobile-callback endpoint (HTTPS)
+ *   The server then redirects back to the app via deep link after exchanging the code.
+ *
+ * This ensures the redirect_uri is always HTTPS, which is required by the
+ * Manus OAuth portal (it rejects exp:// and other non-http schemes).
  */
 export const getRedirectUri = () => {
   if (ReactNative.Platform.OS === "web") {
     return `${getApiBaseUrl()}/api/oauth/callback`;
   } else {
-    return Linking.createURL("/oauth/callback", {
-      scheme: env.deepLinkScheme,
-    });
+    // Use the HTTPS server endpoint as redirect_uri for native.
+    // The server will exchange the code and redirect back to the app via deep link.
+    const apiBase = getApiBaseUrl();
+    return `${apiBase}/api/oauth/mobile-callback`;
   }
 };
 
@@ -92,11 +98,12 @@ export const getLoginUrl = () => {
  * Start OAuth login flow.
  *
  * On native platforms (iOS/Android), open the system browser directly so
- * the OAuth callback returns via deep link to the app.
+ * the OAuth callback returns via the server's HTTPS endpoint, which then
+ * redirects back to the app via deep link.
  *
  * On web, this simply redirects to the login URL.
  *
- * @returns Always null, the callback is handled via deep link.
+ * @returns Always null, the callback is handled via deep link or redirect.
  */
 export async function startOAuthLogin(): Promise<string | null> {
   const loginUrl = getLoginUrl();
@@ -112,7 +119,6 @@ export async function startOAuthLogin(): Promise<string | null> {
   const supported = await Linking.canOpenURL(loginUrl);
   if (!supported) {
     console.warn("[OAuth] Cannot open login URL: URL scheme not supported");
-    // 可考虑抛出错误或返回错误状态，让调用方处理
     return null;
   }
 
@@ -120,7 +126,6 @@ export async function startOAuthLogin(): Promise<string | null> {
     await Linking.openURL(loginUrl);
   } catch (error) {
     console.error("[OAuth] Failed to open login URL:", error);
-    // 可考虑抛出错误让调用方处理
   }
 
   // The OAuth callback will reopen the app via deep link.

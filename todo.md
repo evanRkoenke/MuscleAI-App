@@ -469,3 +469,12 @@
 - [x] Removed paywall gate from auth screen login buttons — users can OAuth directly
 - [x] Updated auth-paywall-gate tests for new flow (20 tests, all passing)
 - [x] 296 tests passing, 0 TypeScript errors
+
+## Fix OAuth redirect_uri Scheme Error
+- [x] OAuth fails with "redirect_uri scheme 'exp' not allowed" on Expo Go
+- [x] Update OAuth redirect_uri to use HTTPS server callback instead of exp:// deep link
+- [x] Added /api/oauth/mobile-callback server endpoint that exchanges code and redirects via deep link
+- [x] Updated getRedirectUri() to use HTTPS API endpoint for native (Expo Go + standalone)
+- [x] Server exchanges OAuth code, creates session, then redirects to muscleai://oauth/callback with sessionToken
+- [x] Ensure OAuth works on both Expo Go and production builds
+- [x] 296 tests passing, 0 TypeScript errors

@@ -96,6 +96,60 @@ export function registerOAuthRoutes(app: Express) {
     }
   });
 
+  /**
+   * Mobile OAuth callback — used by native apps (Expo Go + standalone builds).
+   *
+   * Flow:
+   * 1. Native app opens OAuth portal with redirect_uri pointing to this HTTPS endpoint
+   * 2. OAuth portal redirects here with code+state after user authenticates
+   * 3. This endpoint exchanges code for token, creates session, syncs user
+   * 4. Redirects to the app via deep link: muscleai://oauth/callback?sessionToken=xxx&user=xxx
+   *
+   * The deep link scheme is read from the state parameter (which encodes the original
+   * redirect_uri that includes the scheme info) or falls back to "muscleai".
+   */
+  app.get("/api/oauth/mobile-callback", async (req: Request, res: Response) => {
+    const code = getQueryParam(req, "code");
+    const state = getQueryParam(req, "state");
+    // The deep link scheme to redirect back to the app
+    const scheme = getQueryParam(req, "scheme") || "muscleai";
+
+    if (!code || !state) {
+      // Redirect to app with error
+      const errorUrl = `${scheme}://oauth/callback?error=${encodeURIComponent("Missing code or state parameter")}`;
+      res.redirect(302, errorUrl);
+      return;
+    }
+
+    try {
+      const tokenResponse = await sdk.exchangeCodeForToken(code, state);
+      const userInfo = await sdk.getUserInfo(tokenResponse.accessToken);
+      const user = await syncUser(userInfo);
+
+      const sessionToken = await sdk.createSessionToken(userInfo.openId!, {
+        name: userInfo.name || "",
+        expiresInMs: ONE_YEAR_MS,
+      });
+
+      const cookieOptions = getSessionCookieOptions(req);
+      res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
+
+      // Build user data as base64-encoded JSON for the deep link
+      const userResponse = buildUserResponse(user);
+      const userBase64 = Buffer.from(JSON.stringify(userResponse)).toString("base64");
+
+      // Redirect to the app via deep link with session token and user data
+      const deepLinkUrl = `${scheme}://oauth/callback?sessionToken=${encodeURIComponent(sessionToken)}&user=${encodeURIComponent(userBase64)}`;
+      console.log("[OAuth] Mobile callback: redirecting to deep link:", deepLinkUrl.substring(0, 100) + "...");
+      res.redirect(302, deepLinkUrl);
+    } catch (error) {
+      console.error("[OAuth] Mobile callback failed", error);
+      const errorMessage = error instanceof Error ? error.message : "OAuth mobile callback failed";
+      const errorUrl = `${scheme}://oauth/callback?error=${encodeURIComponent(errorMessage)}`;
+      res.redirect(302, errorUrl);
+    }
+  });
+
   app.get("/api/oauth/mobile", async (req: Request, res: Response) => {
     const code = getQueryParam(req, "code");
     const state = getQueryParam(req, "state");
