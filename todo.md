@@ -523,8 +523,11 @@
 - [ ] Push to GitHub
 
 ## Expo Store Launch — Production Config Values
-- [ ] Update bundleIdentifier to com.evankoenke.muscleaiorcalorietracker in app.config.ts and app.json
-- [ ] Add appleTeamId RS439TZ92G to app.config.ts and app.json
-- [ ] Add projectId 18396eeb-c055-4675-932a-b23ba5ca5dd7 to app.config.ts and app.json
-- [ ] Add ITSAppUsesNonExemptEncryption: false to app.config.ts and app.json
-- [ ] Push to GitHub for Expo Launch re-run
+- [x] Update bundleIdentifier to com.evankoenke.muscleaiorcalorietracker in app.config.ts and app.json
+- [x] Add appleTeamId RS439TZ92G to app.config.ts and app.json
+- [x] Add projectId 18396eeb-c055-4675-932a-b23ba5ca5dd7 to app.config.ts and app.json
+- [x] ITSAppUsesNonExemptEncryption: false already set in infoPlist
+- [x] Added owner: evankoenke to app.config.ts and app.json
+- [x] Updated eas.json submit appleTeamId to RS439TZ92G
+- [x] Push to GitHub for Expo Launch re-run
+- [x] 297 tests passing, 0 TypeScript errors
