@@ -15,28 +15,25 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { useColors } from "@/hooks/use-colors";
 import { useApp } from "@/lib/app-context";
 import * as Haptics from "expo-haptics";
 import { startOAuthLogin } from "@/constants/oauth";
-
-const PRIMARY_WHITE = "#FFFFFF";
-
-type AuthMode = "login" | "signup" | "forgot";
 
 /**
  * Auth Screen
  *
  * Two modes of operation:
- * 1. **Pre-paywall** (default): User just finished onboarding, subscription is "none".
- *    Tapping Google/Apple/Sign Up redirects to /paywall first.
- *    They must subscribe before they can actually log in.
+ * 1. **Pre-paywall** (default): User just finished onboarding or is returning.
+ *    Tapping Google/Apple/Sign Up/Sign In redirects to /paywall first.
+ *    They must pay before they can actually log in.
  *
- * 2. **Post-paywall** (returnFromPaywall=true): User subscribed on the paywall
+ * 2. **Post-paywall** (returnFromPaywall=true): User paid on the paywall
  *    and was sent back here. Now the login buttons actually perform OAuth/auth.
+ *
+ * There is NO free plan. All users must subscribe to use the app.
  */
 export default function AuthScreen() {
-  const [mode, setMode] = useState<AuthMode>("login");
+  const [mode, setMode] = useState<"login" | "signup" | "forgot">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -45,7 +42,6 @@ export default function AuthScreen() {
   const [successMessage, setSuccessMessage] = useState("");
   const router = useRouter();
   const params = useLocalSearchParams<{ returnFromPaywall?: string }>();
-  const colors = useColors();
   const { subscription, setAuthenticated, updateProfile, resetOnboarding, markPaywallSeen } = useApp();
 
   // If user has a paid subscription OR was explicitly sent back from paywall, allow login
@@ -59,14 +55,14 @@ export default function AuthScreen() {
   const validateEmail = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
 
   /**
-   * When a free user taps a login/signup button, redirect to paywall.
-   * They need to subscribe first to unlock account creation / cloud sync.
+   * When an unpaid user taps a login/signup button, redirect to paywall.
+   * They need to subscribe first.
    */
   const redirectToPaywall = () => {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-    router.push("/paywall");
+    router.push("/paywall?from=auth");
   };
 
   const handleAuth = async () => {
@@ -75,7 +71,7 @@ export default function AuthScreen() {
     }
     clearMessages();
 
-    // If free user, redirect to paywall
+    // If unpaid user, redirect to paywall
     if (!canLogin) {
       redirectToPaywall();
       return;
@@ -158,7 +154,7 @@ export default function AuthScreen() {
     }
     clearMessages();
 
-    // If free user, redirect to paywall first
+    // If unpaid user, redirect to paywall first
     if (!canLogin) {
       redirectToPaywall();
       return;
@@ -166,10 +162,7 @@ export default function AuthScreen() {
 
     setLoading(true);
     try {
-      // Start real OAuth flow for paid users
-      // startOAuthLogin redirects to the OAuth portal which handles provider selection
       await startOAuthLogin();
-      // OAuth will redirect to /oauth/callback which handles the rest
     } catch (e) {
       setError(`${provider} sign-in failed. Please try again or use email.`);
       if (Platform.OS !== "web") {
@@ -179,19 +172,7 @@ export default function AuthScreen() {
     }
   };
 
-  /**
-   * "Continue with Free" — skip login entirely, go straight to tabs.
-   * Free users get 5 scans/day with local-only storage.
-   */
-  const handleContinueFree = async () => {
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-    await markPaywallSeen();
-    router.replace("/(tabs)");
-  };
-
-  const switchMode = (newMode: AuthMode) => {
+  const switchMode = (newMode: "login" | "signup" | "forgot") => {
     setMode(newMode);
     clearMessages();
   };
@@ -226,11 +207,11 @@ export default function AuthScreen() {
               {isForgot ? "Reset Password" : isLogin ? "Welcome Back" : "Create Account"}
             </Text>
 
-            {/* Subtitle for free users explaining they need to subscribe */}
+            {/* Subtitle for unpaid users explaining they need to subscribe */}
             {!canLogin && !isForgot && (
               <Text style={styles.upsellText}>
-                Sign in to save your progress across devices.{"\n"}
-                A subscription is required for cloud sync.
+                Subscribe to unlock AI-powered nutrition tracking{"\n"}
+                and save your progress across devices.
               </Text>
             )}
 
@@ -387,16 +368,6 @@ export default function AuthScreen() {
                       {isLogin ? "Sign Up" : "Sign In"}
                     </Text>
                   </Text>
-                </TouchableOpacity>
-
-                {/* Continue with Free — skip login entirely */}
-                <TouchableOpacity
-                  style={styles.continueButton}
-                  onPress={handleContinueFree}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.continueText}>Continue with Free</Text>
-                  <Text style={styles.continueSubtext}>5 scans/day · Local storage only</Text>
                 </TouchableOpacity>
 
                 {/* Retake Quiz link */}
@@ -610,25 +581,6 @@ const styles = StyleSheet.create({
   toggleHighlight: {
     color: "#FFFFFF",
     fontWeight: "400",
-  },
-  continueButton: {
-    alignItems: "center",
-    marginTop: 12,
-    paddingVertical: 12,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "#222222",
-    borderStyle: "dashed",
-  },
-  continueText: {
-    fontSize: 15,
-    fontWeight: "500",
-    color: "#888888",
-  },
-  continueSubtext: {
-    fontSize: 12,
-    color: "#555555",
-    marginTop: 2,
   },
   retakeButton: {
     flexDirection: "row",

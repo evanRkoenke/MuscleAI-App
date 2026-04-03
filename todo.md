@@ -433,3 +433,17 @@
 - [x] Update subscription-features, iap-service, scan-counter for no trial tier
 - [x] Update all screens referencing "trial" tier
 - [x] Update tests for no-trial model (295 passed, 0 TS errors)
+
+## Rework App Flow — No Free Plan
+- [x] First launch: onboarding quiz → login page → paywall (on login/signup attempt)
+- [x] Returning users: go directly to login page (skip onboarding)
+- [x] Option to retake onboarding quiz from login page
+- [x] Paywall triggered when user tries to login/create account without paying
+- [x] Back arrow always visible on paywall, navigates to previous page
+- [x] Remove free plan entirely (no 5 scans/day, no Continue with Free)
+- [x] Remove upsell banner from home screen (no free users exist)
+- [x] Scan-limit-modal updated (all subscribers have unlimited)
+- [x] AuthGate rewritten for new flow
+- [x] Auth screen rewritten for new flow
+- [x] Paywall updated with always-visible back arrow
+- [x] All 295 tests passing, 0 TS errors

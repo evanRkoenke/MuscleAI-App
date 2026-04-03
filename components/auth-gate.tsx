@@ -6,24 +6,24 @@ import { hasFullAccess } from "@/lib/subscription-features";
 /**
  * AuthGate — Redirect users based on onboarding, subscription, and authentication state.
  *
- * Two-Plan Flow (no trial, immediate charge):
+ * Flow (no free plan):
  * 1. First launch → onboarding quiz
- * 2. After onboarding → paywall (must pay to access the app)
- * 3. After payment → auth screen (login with Google/Apple to save progress)
- * 4. After login → tabs (full access)
+ * 2. After onboarding (first or returning) → login page
+ * 3. On login page, user taps Google/Apple/Sign Up → redirected to paywall (handled by auth.tsx)
+ * 4. After payment on paywall → redirected back to auth to complete login
+ * 5. After login → tabs (full access)
+ *
+ * Returning users (already onboarded):
+ * - If not paid → login page (they can retake quiz from there)
+ * - If paid + authenticated → tabs directly
+ * - If paid but not authenticated → auth page to login
  *
  * Gate logic:
- * - The dashboard is locked until the user has a confirmed payment (monthly or annual).
- * - If subscription lapses, redirect back to paywall and lock data until a plan is chosen.
- *
- * Routes:
- * - Not onboarded → /onboarding
- * - Onboarded but no subscription (none) → /paywall
- * - Has subscription but not authenticated → /auth (to save progress)
- * - Authenticated + active subscription → tabs
+ * - Dashboard is locked until user has a confirmed payment (monthly or annual) AND is authenticated.
+ * - If subscription lapses, redirect back to auth page (which will redirect to paywall on login attempt).
  */
 export function AuthGate() {
-  const { hasCompletedOnboarding, isAuthenticated, subscription, hasSeenPaywall, loading } = useApp();
+  const { hasCompletedOnboarding, isAuthenticated, subscription, loading } = useApp();
   const router = useRouter();
   const segments = useSegments();
   const hasRedirected = useRef(false);
@@ -36,25 +36,25 @@ export function AuthGate() {
     // Don't redirect if on oauth callback
     if (currentRoute.includes("oauth")) return;
 
-    const hasAccess = hasFullAccess(subscription);
+    const hasPaid = hasFullAccess(subscription);
 
     if (!hasCompletedOnboarding) {
-      // Step 1: User hasn't completed onboarding — send to quiz
+      // Step 1: First-time user — send to onboarding quiz
       if (!currentRoute.includes("onboarding")) {
         router.replace("/onboarding");
       }
-    } else if (!hasAccess) {
-      // Step 2: No active subscription — must go to paywall
-      // Dashboard is locked until payment is confirmed
+    } else if (!hasPaid) {
+      // Step 2: Onboarded but hasn't paid — send to login page
+      // (auth.tsx handles redirecting to paywall when they try to login/signup)
       if (
+        !currentRoute.includes("auth") &&
         !currentRoute.includes("paywall") &&
         !currentRoute.includes("onboarding")
       ) {
-        router.replace("/paywall");
+        router.replace("/auth");
       }
-    } else if (!isAuthenticated && !hasSeenPaywall) {
-      // Step 3: Has subscription but hasn't completed auth flow yet
-      // Send to auth to create account / login for cloud sync
+    } else if (hasPaid && !isAuthenticated) {
+      // Step 3: Has paid but not logged in yet — send to auth to complete login
       if (
         !currentRoute.includes("auth") &&
         !currentRoute.includes("paywall") &&
@@ -62,12 +62,13 @@ export function AuthGate() {
       ) {
         router.replace("/auth?returnFromPaywall=true" as any);
       }
-    } else if (hasAccess && (isAuthenticated || hasSeenPaywall)) {
+    } else if (hasPaid && isAuthenticated) {
       // Step 4: Fully set up — allow tabs
-      // Redirect away from onboarding/auth if they somehow land there
+      // Redirect away from onboarding/auth/paywall if they somehow land there
       if (
         currentRoute.includes("onboarding") ||
-        (currentRoute === "/auth" && !currentRoute.includes("returnFromPaywall"))
+        currentRoute === "/auth" ||
+        currentRoute === "/paywall"
       ) {
         if (!hasRedirected.current) {
           hasRedirected.current = true;
@@ -75,7 +76,7 @@ export function AuthGate() {
         }
       }
     }
-  }, [hasCompletedOnboarding, isAuthenticated, subscription, hasSeenPaywall, loading, segments]);
+  }, [hasCompletedOnboarding, isAuthenticated, subscription, loading, segments]);
 
   return null;
 }

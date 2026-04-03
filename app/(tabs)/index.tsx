@@ -238,27 +238,6 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* ═══ SAVE PROGRESS UPSELL (free users only) ═══ */}
-        {!sub.isPaid && (
-          <TouchableOpacity
-            style={s.upsellBanner}
-            onPress={() => {
-              if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              (router as any).push("/paywall?from=home");
-            }}
-            activeOpacity={0.7}
-          >
-            <View style={s.upsellLeft}>
-              <IconSymbol name="icloud.fill" size={20} color="#FFFFFF" />
-            </View>
-            <View style={s.upsellContent}>
-              <Text style={s.upsellTitle}>Save Your Progress</Text>
-              <Text style={s.upsellSub}>Subscribe to sync across all your devices</Text>
-            </View>
-            <IconSymbol name="chevron.right" size={14} color={T3} />
-          </TouchableOpacity>
-        )}
-
         {/* ═══ STREAK TRACKER ═══ */}
         {(() => {
           const streakInfo = calculateStreak(getMealDates(allMeals));
@@ -682,38 +661,6 @@ const s = StyleSheet.create({
     textAlign: "center",
   },
   badgeLabelEarned: {
-    color: T2,
-  },
-
-  /* Upsell Banner */
-  upsellBanner: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderRadius: 14,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: "#333333",
-    backgroundColor: SURF2,
-    gap: 12,
-    marginBottom: 12,
-  },
-  upsellLeft: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    backgroundColor: "#1A1A1A",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  upsellContent: { flex: 1 },
-  upsellTitle: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: T1,
-  },
-  upsellSub: {
-    fontSize: 12,
-    marginTop: 2,
     color: T2,
   },
 

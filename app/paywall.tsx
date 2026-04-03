@@ -32,7 +32,7 @@ import * as Haptics from "expo-haptics";
 export default function PaywallScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ from?: string }>();
-  const canGoBack = !!params.from && ["settings", "profile", "home", "forecast"].includes(params.from);
+  // Always show back arrow — user can always go back to previous page
   const { setSubscription, markPaywallSeen, isAuthenticated } = useApp();
   const [subscribing, setSubscribing] = useState<string | null>(null);
   const [purchaseError, setPurchaseError] = useState<string | null>(null);
@@ -134,16 +134,14 @@ export default function PaywallScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* ─── Back Arrow (when navigated from settings/profile) ─── */}
-        {canGoBack && (
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => router.back()}
-            activeOpacity={0.7}
-          >
-            <IconSymbol name="arrow.left" size={22} color="#FFFFFF" />
-          </TouchableOpacity>
-        )}
+        {/* ─── Back Arrow (always visible) ─── */}
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+          activeOpacity={0.7}
+        >
+          <IconSymbol name="arrow.left" size={22} color="#FFFFFF" />
+        </TouchableOpacity>
 
         {/* ─── Header ─── */}
         <View style={styles.header}>
