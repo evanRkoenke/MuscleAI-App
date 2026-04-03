@@ -52,7 +52,7 @@ const STRIPE_CHECKOUT_LINKS: Record<string, string> = {
 
 // Production Stripe Customer Portal URL
 // This would be created dynamically via: POST /v1/billing_portal/sessions
-const STRIPE_CUSTOMER_PORTAL = "https://billing.stripe.com/p/login/test_muscleai";
+const STRIPE_CUSTOMER_PORTAL = "https://billing.stripe.com/p/login/aEU4gG9bK5kQbCw288";
 
 export default function SettingsScreen() {
   const colors = useColors();

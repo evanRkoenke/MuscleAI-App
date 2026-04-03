@@ -336,7 +336,7 @@ describe("Muscle AI - Core Logic", () => {
   // Test Stripe Customer Portal URL construction
   describe("Stripe Customer Portal", () => {
     it("should construct valid portal URL", () => {
-      const baseUrl = "https://billing.stripe.com/p/login/test";
+      const baseUrl = "https://billing.stripe.com/p/login/aEU4gG9bK5kQbCw288";
       expect(baseUrl).toMatch(/^https:\/\/billing\.stripe\.com\//);
     });
 

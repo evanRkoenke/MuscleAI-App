@@ -247,7 +247,7 @@ export default function ProfileScreen() {
         [
           {
             text: "Open Billing Portal",
-            onPress: () => Linking.openURL("https://billing.stripe.com/p/login/test"),
+            onPress: () => Linking.openURL("https://billing.stripe.com/p/login/aEU4gG9bK5kQbCw288"),
           },
           { text: "Cancel", style: "cancel" },
         ]
