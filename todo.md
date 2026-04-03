@@ -488,3 +488,9 @@
 - [x] Audit server endpoints for production readiness — removed localhost:8081 fallback
 - [x] Push final production-ready code to GitHub
 - [x] 296 tests passing, 0 TypeScript errors
+
+## Fix Expo Launch — Static app.json Required
+- [x] Create static app.json with all production manifest settings
+- [x] Ensure app.config.ts still works alongside app.json for dynamic env vars
+- [x] Push to GitHub so Expo Launch can read the static manifest
+- [x] 296 tests passing, 0 TypeScript errors
