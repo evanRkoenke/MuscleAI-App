@@ -447,3 +447,6 @@
 - [x] Auth screen rewritten for new flow
 - [x] Paywall updated with always-visible back arrow
 - [x] All 295 tests passing, 0 TS errors
+
+## Paywall Back Arrow Position
+- [x] Lower the back arrow on paywall so it doesn't overlap status bar or other elements

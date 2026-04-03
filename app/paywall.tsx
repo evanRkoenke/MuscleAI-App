@@ -290,7 +290,8 @@ const styles = StyleSheet.create({
   backButton: {
     alignSelf: "flex-start",
     padding: 8,
-    marginBottom: 4,
+    marginTop: 8,
+    marginBottom: 8,
   },
   header: {
     alignItems: "center",
