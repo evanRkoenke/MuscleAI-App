@@ -1,17 +1,30 @@
 /**
  * Muscle AI — Server-side IAP Receipt Validation
  *
- * Validates Apple StoreKit 2 transaction receipts and updates subscription status.
- * Now persists subscription tier to the database for cross-device sync.
+ * Validates Apple StoreKit 2 / Google Play transaction receipts and updates subscription status.
+ * Persists subscription tier to the database for cross-device sync.
+ *
+ * Two-plan model:
+ *   - Monthly Essential ($9.99/mo) → DB tier "essential"
+ *   - Elite Annual ($59.99/yr) → DB tier "elite"
+ *
+ * The DB schema uses ["free", "essential", "pro", "elite"] enum values.
+ * Client-side uses "none" | "monthly" | "annual" — mapping happens at the API boundary.
  */
 
 import { z } from "zod";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import * as db from "./db";
 
-// Map product IDs to tiers
+// Map product IDs to DB tier values
 function productIdToTier(productId: string): "free" | "essential" | "pro" | "elite" {
   switch (productId) {
+    // New product IDs (matching new bundle ID)
+    case "com.evankoenke.muscleaiorcalorietracker.monthly":
+      return "essential";
+    case "com.evankoenke.muscleaiorcalorietracker.annual":
+      return "elite";
+    // Legacy product IDs (for existing subscribers)
     case "com.muscleai.essential.monthly":
       return "essential";
     case "com.muscleai.pro.monthly":
@@ -25,8 +38,8 @@ function productIdToTier(productId: string): "free" | "essential" | "pro" | "eli
 
 export const iapRouter = router({
   /**
-   * Validate an Apple StoreKit 2 receipt / transaction.
-   * Now uses protectedProcedure to identify the user and persist subscription to DB.
+   * Validate an Apple StoreKit 2 / Google Play receipt / transaction.
+   * Uses protectedProcedure to identify the user and persist subscription to DB.
    */
   validateReceipt: protectedProcedure
     .input(

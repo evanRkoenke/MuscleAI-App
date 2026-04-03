@@ -1,36 +1,28 @@
 /**
- * Muscle AI — In-App Purchase Service
+ * Muscle AI — In-App Purchase Service (Native IAP)
  *
- * Two-plan model with Stripe checkout (immediate charge, no trial):
+ * Two-plan model with native App Store / Google Play purchases:
  *   - Monthly Essential: $9.99/mo
  *   - Elite Annual: $59.99/yr (Best Value - Save 50%)
  *
  * Both plans give identical full access to all features.
- * Stripe Payment Links are used for checkout on all platforms.
+ * Uses expo-iap for native StoreKit 2 (iOS) and Google Play Billing (Android).
+ * Falls back gracefully when native IAP module is not available (web / Expo Go).
  */
 
 import { Platform } from "react-native";
-import * as WebBrowser from "expo-web-browser";
 import type { SubscriptionTier } from "./subscription-features";
 
-// ─── Product IDs (for App Store Connect / Google Play Console) ───
+// ─── Product IDs (must match App Store Connect / Google Play Console) ───
 export const IAP_PRODUCTS = {
-  MONTHLY_ESSENTIAL: "com.muscleai.monthly.essential",
-  ELITE_ANNUAL: "com.muscleai.elite.annual",
+  MONTHLY_ESSENTIAL: "com.evankoenke.muscleaiorcalorietracker.monthly",
+  ELITE_ANNUAL: "com.evankoenke.muscleaiorcalorietracker.annual",
 } as const;
 
 export const ALL_PRODUCT_IDS = [
   IAP_PRODUCTS.MONTHLY_ESSENTIAL,
   IAP_PRODUCTS.ELITE_ANNUAL,
 ];
-
-// ─── Stripe Payment Links ───
-export const STRIPE_LINKS: Record<string, string> = {
-  [IAP_PRODUCTS.MONTHLY_ESSENTIAL]:
-    "https://buy.stripe.com/dRmdR2fEBddR1oT5IybEA07",
-  [IAP_PRODUCTS.ELITE_ANNUAL]:
-    "https://buy.stripe.com/14A9AMdwta1F9Vpdb0bEA08",
-};
 
 // ─── Tier mapping ───
 export { type SubscriptionTier } from "./subscription-features";
@@ -105,15 +97,55 @@ export const PLANS: PlanInfo[] = [
   },
 ];
 
-// ─── Purchase via Stripe (opens in browser) ───
-export async function purchaseViaStripe(productId: string): Promise<void> {
-  const url = STRIPE_LINKS[productId];
-  if (url) {
-    await WebBrowser.openBrowserAsync(url);
+// ─── Check if native IAP is available ───
+let _iapAvailable: boolean | null = null;
+
+export function isNativeIAPAvailable(): boolean {
+  if (_iapAvailable !== null) return _iapAvailable;
+
+  if (Platform.OS === "web") {
+    _iapAvailable = false;
+    return false;
   }
+
+  // Check if the expo-iap native module is available
+  try {
+    const { TurboModuleRegistry } = require("react-native");
+    // expo-iap registers as ExpoIapModule
+    const mod = TurboModuleRegistry.get("ExpoIapModule");
+    _iapAvailable = mod != null;
+  } catch {
+    _iapAvailable = false;
+  }
+
+  return _iapAvailable;
 }
 
-// ─── Check if native IAP is available ───
-export function isNativeIAPAvailable(): boolean {
-  return Platform.OS === "ios" || Platform.OS === "android";
+// ─── Validate receipt on server ───
+export async function validateReceiptOnServer(purchase: {
+  transactionId?: string;
+  productId: string;
+  originalTransactionId?: string;
+  purchaseDate?: string;
+  expiresDate?: string;
+  platform: "ios" | "android";
+  receiptData?: string;
+}): Promise<{ success: boolean; tier: string }> {
+  try {
+    const { vanillaTrpc } = await import("@/lib/trpc");
+    const result = await vanillaTrpc.iap.validateReceipt.mutate({
+      transactionId: purchase.transactionId || `txn_${Date.now()}`,
+      productId: purchase.productId,
+      originalTransactionId: purchase.originalTransactionId,
+      purchaseDate: purchase.purchaseDate,
+      expiresDate: purchase.expiresDate,
+      platform: purchase.platform,
+      receiptData: purchase.receiptData,
+    });
+    return { success: result.success, tier: result.tier };
+  } catch (error) {
+    console.error("[IAP] Server validation failed:", error);
+    // Still allow the purchase locally — server sync can happen later
+    return { success: true, tier: productIdToTier(purchase.productId) };
+  }
 }

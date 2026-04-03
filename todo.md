@@ -520,7 +520,7 @@
 - [x] Server verifies identity tokens via Apple/Google JWKS public keys
 - [x] Session management, cloud sync, and subscription restoration maintained
 - [x] 297 tests passing, 0 TypeScript errors
-- [ ] Push to GitHub
+- [x] Push to GitHub
 
 ## Expo Store Launch — Production Config Values
 - [x] Update bundleIdentifier to com.evankoenke.muscleaiorcalorietracker in app.config.ts and app.json
@@ -531,3 +531,18 @@
 - [x] Updated eas.json submit appleTeamId to RS439TZ92G
 - [x] Push to GitHub for Expo Launch re-run
 - [x] 297 tests passing, 0 TypeScript errors
+
+## Replace Stripe Payment Links with Native In-App Purchases
+- [x] Research and choose IAP library — expo-iap (StoreKit 2 + Google Play Billing)
+- [x] Install expo-iap and configure app.json/app.config.ts
+- [x] Rewrite iap-service.ts with native purchase flow (expo-iap useIAP hook)
+- [x] Rewrite paywall screen with native IAP purchase buttons (Monthly $9.99, Annual $59.99)
+- [x] Add "Restore Purchases" button using expo-iap restore flow
+- [x] Remove ALL Stripe references from paywall, settings, profile, support, and tests
+- [x] Update server/iap.ts product ID mapping for new bundle ID
+- [x] Update settings.tsx to manage subscriptions via App Store/Google Play
+- [x] Update profile.tsx payment method management to native store
+- [x] Update support.tsx billing FAQ to reflect native IAP
+- [x] Update tests: replaced Stripe link tests with native IAP product ID tests
+- [x] 298 tests passing, 0 TypeScript errors
+- [ ] Push to GitHub

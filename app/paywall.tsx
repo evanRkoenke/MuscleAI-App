@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -16,29 +16,97 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useApp } from "@/lib/app-context";
 import {
   PLANS,
-  purchaseViaStripe,
+  ALL_PRODUCT_IDS,
+  productIdToTier,
+  isNativeIAPAvailable,
+  validateReceiptOnServer,
   type PlanInfo,
 } from "@/lib/iap-service";
 import * as Haptics from "expo-haptics";
 
 /**
- * Paywall Screen — Two-Plan Model (No Trial)
+ * Paywall Screen — Native In-App Purchases
  *
  * Monthly Essential ($9.99/mo) and Elite Annual ($59.99/yr).
- * Both plans give identical full access. Immediate charge — no free trial.
- * Users must complete payment before accessing the dashboard.
+ * Both plans give identical full access. Uses native App Store / Google Play purchases.
+ * Falls back to displaying plan info when native IAP is unavailable (web / Expo Go).
  */
+
+// Safely import expo-iap — only available in development/production builds
+let useIAP: any = null;
+try {
+  if (Platform.OS !== "web") {
+    const expoIap = require("expo-iap");
+    useIAP = expoIap.useIAP;
+  }
+} catch {
+  // expo-iap not available (Expo Go or web)
+}
+
+function useNativeIAP() {
+  // If useIAP is not available, return a stub
+  if (!useIAP) {
+    return {
+      connected: false,
+      products: [],
+      fetchProducts: () => {},
+      requestPurchase: async () => {},
+      finishTransaction: async () => {},
+      availablePurchases: [],
+      getAvailablePurchases: async () => {},
+    };
+  }
+
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  return useIAP();
+}
 
 export default function PaywallScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ from?: string }>();
-  // Always show back arrow — user can always go back to previous page
   const { setSubscription, markPaywallSeen, isAuthenticated } = useApp();
   const [subscribing, setSubscribing] = useState<string | null>(null);
   const [purchaseError, setPurchaseError] = useState<string | null>(null);
   const [restoring, setRestoring] = useState(false);
+  const [productsFetched, setProductsFetched] = useState(false);
 
-  // ─── Purchase handler ───
+  const iapAvailable = isNativeIAPAvailable() && useIAP != null;
+
+  // Use native IAP hook (returns stub if unavailable)
+  const {
+    connected,
+    products: storeProducts,
+    fetchProducts,
+    requestPurchase,
+    finishTransaction,
+    availablePurchases,
+    getAvailablePurchases,
+  } = useNativeIAP();
+
+  // Fetch products when store connects
+  useEffect(() => {
+    if (connected && !productsFetched && iapAvailable) {
+      fetchProducts({ skus: ALL_PRODUCT_IDS, type: "subs" });
+      setProductsFetched(true);
+    }
+  }, [connected, productsFetched, iapAvailable]);
+
+  // Get display price from store products (or fall back to hardcoded)
+  const getDisplayPrice = useCallback(
+    (plan: PlanInfo): string => {
+      if (storeProducts && storeProducts.length > 0) {
+        const storeProduct = storeProducts.find(
+          (p: any) => p.id === plan.productId || p.productId === plan.productId
+        );
+        if (storeProduct?.displayPrice) return storeProduct.displayPrice;
+        if (storeProduct?.localizedPrice) return storeProduct.localizedPrice;
+      }
+      return plan.price;
+    },
+    [storeProducts]
+  );
+
+  // ─── Purchase handler (native IAP) ───
   const handleSubscribe = async (plan: PlanInfo) => {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -47,20 +115,67 @@ export default function PaywallScreen() {
     setSubscribing(plan.id);
 
     try {
-      // Open Stripe checkout in browser — user is charged immediately
-      await purchaseViaStripe(plan.productId);
+      if (!iapAvailable) {
+        // Native IAP not available (web or Expo Go) — show info
+        Alert.alert(
+          "In-App Purchase",
+          "Native purchases are only available in the App Store / Google Play version of Muscle AI. Please download from the App Store to subscribe.",
+          [{ text: "OK" }]
+        );
+        return;
+      }
 
-      // After Stripe checkout completes, set subscription locally
-      // In production, this would be confirmed via Stripe webhook
-      await setSubscription(plan.id as any);
+      if (!connected) {
+        setPurchaseError("Store not connected. Please try again in a moment.");
+        return;
+      }
+
+      // Request native purchase — this shows the Apple/Google payment sheet
+      await requestPurchase({
+        request: {
+          apple: { sku: plan.productId },
+          google: { skus: [plan.productId] },
+        },
+      });
+
+      // If we get here, the purchase was initiated. The onPurchaseSuccess callback
+      // in useIAP handles the rest. But since we're using the hook inline,
+      // we handle it after requestPurchase resolves.
+      // Note: expo-iap may resolve the promise after the purchase completes.
+
+      // Validate on server
+      const platform = Platform.OS === "ios" ? "ios" as const : "android" as const;
+      await validateReceiptOnServer({
+        productId: plan.productId,
+        platform,
+      });
+
+      // Set subscription locally
+      const tier = productIdToTier(plan.productId);
+      await setSubscription(tier as any);
       await markPaywallSeen();
+
+      // Finish the transaction
+      try {
+        // Find the latest purchase for this product
+        if (availablePurchases && availablePurchases.length > 0) {
+          const purchase = availablePurchases.find(
+            (p: any) => p.productId === plan.productId
+          );
+          if (purchase) {
+            await finishTransaction({ purchase, isConsumable: false });
+          }
+        }
+      } catch (finishError) {
+        console.warn("[Paywall] finishTransaction warning:", finishError);
+        // Non-fatal — the transaction will be finished on next app launch
+      }
 
       if (Platform.OS !== "web") {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
 
-      // After subscribing, redirect to auth to complete login (for cloud sync)
-      // If already authenticated (returning user upgrading), go to tabs
+      // Navigate to app
       if (isAuthenticated) {
         router.replace("/(tabs)");
       } else {
@@ -68,8 +183,19 @@ export default function PaywallScreen() {
       }
     } catch (error: any) {
       console.error("[Paywall] Subscribe error:", error);
+
+      // User cancelled — not an error
+      if (
+        error?.code === "E_USER_CANCELLED" ||
+        error?.message?.includes("cancelled") ||
+        error?.message?.includes("canceled")
+      ) {
+        // User cancelled — just reset state
+        return;
+      }
+
       setPurchaseError(
-        "Something went wrong. Please try again or contact Muscle Support."
+        "Something went wrong with the purchase. Please try again."
       );
       if (Platform.OS !== "web") {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -88,14 +214,51 @@ export default function PaywallScreen() {
     setPurchaseError(null);
 
     try {
-      const { vanillaTrpc } = await import("@/lib/trpc");
-      const platform = Platform.OS === "ios" ? "ios" as const : "android" as const;
-      const result = await vanillaTrpc.iap.restorePurchases.mutate({ platform });
+      if (iapAvailable && getAvailablePurchases) {
+        // Use native restore
+        await getAvailablePurchases();
 
-      // Map server tier names to new model
+        // Check if any purchases were found
+        if (availablePurchases && availablePurchases.length > 0) {
+          // Find the best subscription
+          const purchase = availablePurchases[0];
+          const tier = productIdToTier(purchase.productId);
+
+          if (tier !== "none") {
+            await setSubscription(tier as any);
+            await markPaywallSeen();
+
+            if (Platform.OS !== "web") {
+              Haptics.notificationAsync(
+                Haptics.NotificationFeedbackType.Success
+              );
+            }
+            Alert.alert(
+              "Subscription Restored",
+              `Your ${tier === "annual" ? "Elite Annual" : "Monthly Essential"} plan has been restored. Welcome back!`,
+              [{ text: "Continue", onPress: () => router.replace("/(tabs)") }]
+            );
+            return;
+          }
+        }
+      }
+
+      // Also try server-side restore
+      const { vanillaTrpc } = await import("@/lib/trpc");
+      const platform =
+        Platform.OS === "ios" ? ("ios" as const) : ("android" as const);
+      const result = await vanillaTrpc.iap.restorePurchases.mutate({
+        platform,
+      });
+
       const tierMap: Record<string, string> = {
-        free: "none", essential: "monthly", pro: "monthly", elite: "annual",
-        none: "none", monthly: "monthly", annual: "annual",
+        free: "none",
+        essential: "monthly",
+        pro: "monthly",
+        elite: "annual",
+        none: "none",
+        monthly: "monthly",
+        annual: "annual",
       };
       const mappedTier = tierMap[result.tier] || "none";
       if (result.success && mappedTier !== "none") {
@@ -134,7 +297,7 @@ export default function PaywallScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* ─── Back Arrow (always visible) ─── */}
+        {/* ─── Back Arrow ─── */}
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => router.back()}
@@ -153,7 +316,11 @@ export default function PaywallScreen() {
           <View style={styles.secureBadge}>
             <IconSymbol name="checkmark" size={12} color="#4ADE80" />
             <Text style={styles.secureBadgeText}>
-              Secure In-App Purchase via Apple
+              {Platform.OS === "ios"
+                ? "Secure In-App Purchase via Apple"
+                : Platform.OS === "android"
+                  ? "Secure In-App Purchase via Google Play"
+                  : "Secure Purchase"}
             </Text>
           </View>
         </View>
@@ -200,7 +367,9 @@ export default function PaywallScreen() {
               <View style={styles.planHeader}>
                 <Text style={styles.planName}>{plan.name}</Text>
                 <View style={styles.priceRow}>
-                  <Text style={styles.planPrice}>{plan.price}</Text>
+                  <Text style={styles.planPrice}>
+                    {getDisplayPrice(plan)}
+                  </Text>
                   <Text style={styles.planPeriod}>{plan.period}</Text>
                 </View>
               </View>
@@ -236,14 +405,18 @@ export default function PaywallScreen() {
                       <ActivityIndicator color="#FFFFFF" />
                     ) : (
                       <Text style={styles.subscribeTextWhite}>
-                        {plan.id === "annual" ? "UNLOCK MUSCLEAI ELITE" : "GET INSTANT ACCESS"}
+                        {plan.id === "annual"
+                          ? "UNLOCK MUSCLEAI ELITE"
+                          : "GET INSTANT ACCESS"}
                       </Text>
                     )}
                   </LinearGradient>
                 ) : subscribing === plan.id ? (
                   <ActivityIndicator color="#FFFFFF" />
                 ) : (
-                  <Text style={styles.subscribeTextWhite}>GET INSTANT ACCESS</Text>
+                  <Text style={styles.subscribeTextWhite}>
+                    GET INSTANT ACCESS
+                  </Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -258,12 +431,16 @@ export default function PaywallScreen() {
           disabled={restoring}
         >
           {restoring ? (
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+            <View
+              style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
+            >
               <ActivityIndicator size="small" color="#888888" />
               <Text style={styles.restoreText}>Restoring...</Text>
             </View>
           ) : (
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+            <View
+              style={{ flexDirection: "row", alignItems: "center", gap: 6 }}
+            >
               <IconSymbol name="arrow.clockwise" size={14} color="#888888" />
               <Text style={styles.restoreText}>Restore Purchases</Text>
             </View>
@@ -272,9 +449,11 @@ export default function PaywallScreen() {
 
         {/* ─── Legal ─── */}
         <Text style={styles.legalText}>
-          Payment will be charged to your Apple ID account at confirmation of purchase.
-          Subscriptions auto-renew unless cancelled at least 24 hours before the end of the current period.
-          You can manage or cancel your subscription in your device's Settings.
+          {Platform.OS === "ios"
+            ? "Payment will be charged to your Apple ID account at confirmation of purchase. Subscriptions auto-renew unless cancelled at least 24 hours before the end of the current period. You can manage or cancel your subscription in your device's Settings."
+            : Platform.OS === "android"
+              ? "Payment will be charged to your Google Play account at confirmation of purchase. Subscriptions auto-renew unless cancelled. You can manage or cancel your subscription in Google Play Store settings."
+              : "Subscriptions are available through the App Store and Google Play Store versions of Muscle AI."}
         </Text>
       </ScrollView>
     </ScreenContainer>

@@ -201,22 +201,21 @@ describe("Muscle AI - Core Logic", () => {
     });
   });
 
-  // Test Stripe Payment Links
-  describe("Stripe Payment Links", () => {
-    const STRIPE_LINKS = {
-      elite: "https://buy.stripe.com/28E00c3VTa1FffJc6WbEA05",
-      pro: "https://buy.stripe.com/8x214gdwt3Dh6Jd1sibEA04",
-      essential: "https://buy.stripe.com/14A5kwbol0r55F92wmbEA06",
+  // Test Native IAP Product IDs
+  describe("Native IAP Product IDs", () => {
+    const PRODUCT_IDS = {
+      monthly: "com.evankoenke.muscleaiorcalorietracker.monthly",
+      annual: "com.evankoenke.muscleaiorcalorietracker.annual",
     };
 
-    it("should have valid Stripe URLs", () => {
-      Object.values(STRIPE_LINKS).forEach((url) => {
-        expect(url).toMatch(/^https:\/\/buy\.stripe\.com\//);
+    it("should have valid product ID format", () => {
+      Object.values(PRODUCT_IDS).forEach((id) => {
+        expect(id).toMatch(/^com\.evankoenke\.muscleaiorcalorietracker\./)
       });
     });
 
-    it("should have all three tiers", () => {
-      expect(Object.keys(STRIPE_LINKS)).toEqual(["elite", "pro", "essential"]);
+    it("should have both subscription tiers", () => {
+      expect(Object.keys(PRODUCT_IDS)).toEqual(["monthly", "annual"]);
     });
   });
 
@@ -333,23 +332,27 @@ describe("Muscle AI - Core Logic", () => {
     });
   });
 
-  // Test Stripe Customer Portal URL construction
-  describe("Stripe Customer Portal", () => {
-    it("should construct valid portal URL", () => {
-      const baseUrl = "https://billing.stripe.com/p/login/aEU4gG9bK5kQbCw288";
-      expect(baseUrl).toMatch(/^https:\/\/billing\.stripe\.com\//);
+  // Test Native Subscription Management URLs
+  describe("Subscription Management", () => {
+    it("should have valid iOS subscription management URL", () => {
+      const iosUrl = "https://apps.apple.com/account/subscriptions";
+      expect(iosUrl).toMatch(/^https:\/\/apps\.apple\.com\//);
     });
 
-    it("should map subscription to correct Stripe link", () => {
-      const links: Record<string, string> = {
-        elite: "https://buy.stripe.com/28E00c3VTa1FffJc6WbEA05",
-        pro: "https://buy.stripe.com/8x214gdwt3Dh6Jd1sibEA04",
-        essential: "https://buy.stripe.com/14A5kwbol0r55F92wmbEA06",
-      };
+    it("should have valid Android subscription management URL", () => {
+      const androidUrl = "https://play.google.com/store/account/subscriptions";
+      expect(androidUrl).toMatch(/^https:\/\/play\.google\.com\//);
+    });
 
-      expect(links["elite"]).toContain("bEA05");
-      expect(links["pro"]).toContain("bEA04");
-      expect(links["essential"]).toContain("bEA06");
+    it("should map product IDs to correct tiers", () => {
+      const productIdToTier = (id: string) => {
+        if (id.endsWith(".monthly")) return "essential";
+        if (id.endsWith(".annual")) return "elite";
+        return "free";
+      };
+      expect(productIdToTier("com.evankoenke.muscleaiorcalorietracker.monthly")).toBe("essential");
+      expect(productIdToTier("com.evankoenke.muscleaiorcalorietracker.annual")).toBe("elite");
+      expect(productIdToTier("unknown")).toBe("free");
     });
   });
 });

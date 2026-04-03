@@ -79,6 +79,7 @@ const config: ExpoConfig = {
     "expo-system-ui",
     "expo-router",
     "expo-apple-authentication",
+    "expo-iap",
     [
       "@react-native-google-signin/google-signin",
       {

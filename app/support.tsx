@@ -37,7 +37,7 @@ const QUICK_ACTIONS = [
 
 const SYSTEM_PROMPT = `You are Muscle Support, the AI assistant for Muscle AI — a hypertrophy-optimized nutrition tracking app. You help users with:
 1. Password/Login issues — guide them through password reset via email or account recovery
-2. Billing explanations — explain subscription tiers (Elite Annual $79.99/yr, Pro $19.99/mo, Essential $9.99/mo) and how Stripe billing works
+2. Billing explanations — explain subscription tiers (Monthly Essential $9.99/mo, Elite Annual $59.99/yr) and how App Store / Google Play billing works
 3. App feature tutorials — explain how to scan meals, track macros, log weight, view forecasts, and share gains cards
 4. Scanning/troubleshooting — help with camera permissions, image quality tips, and scan accuracy
 
@@ -101,7 +101,7 @@ export default function SupportScreen() {
           login:
             "To reset your password, go to the login screen and tap 'Forgot Password'. Enter your email and we'll send you a reset link. If you signed up with Google or Apple, use those buttons instead.",
           billing:
-            "Muscle AI offers three plans:\n\n• Elite Annual — $79.99/year (best value, 66% savings)\n• Pro — $19.99/month\n• Essential — $9.99/month\n\nAll payments are processed securely through Stripe. You can manage your subscription in Settings.",
+            "Muscle AI offers two plans:\n\n• Monthly Essential — $9.99/month\n• Elite Annual — $59.99/year (best value, save 50%)\n\nAll payments are processed through the App Store (iOS) or Google Play (Android). You can manage your subscription in Settings.",
           scan: "To scan a meal:\n\n1. Tap the camera button on the home screen\n2. Point your camera at your meal\n3. Take a photo — our AI will analyze it\n4. Review the results and tap 'Log This Meal'\n\nFor best results, make sure the food is well-lit and clearly visible.",
           default:
             "I'd be happy to help! Could you provide more details about what you're experiencing? I can assist with login issues, billing questions, app features, and troubleshooting.",

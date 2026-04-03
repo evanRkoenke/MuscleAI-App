@@ -240,17 +240,11 @@ export default function ProfileScreen() {
         ]
       );
     } else {
-      // Web: Stripe Customer Portal
+      // Web: direct to native app for subscription management
       Alert.alert(
         "Update Payment Method",
-        "You can update your payment method through the Stripe billing portal.",
-        [
-          {
-            text: "Open Billing Portal",
-            onPress: () => Linking.openURL("https://billing.stripe.com/p/login/aEU4gG9bK5kQbCw288"),
-          },
-          { text: "Cancel", style: "cancel" },
-        ]
+        "Payment methods are managed through the App Store or Google Play Store. Please open the Muscle AI app on your device to update your payment method.",
+        [{ text: "OK" }]
       );
     }
   };

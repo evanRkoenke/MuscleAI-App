@@ -41,18 +41,7 @@ const TIER_COLORS: Record<string, string> = {
   annual: "#FFFFFF",
 };
 
-// Stripe Customer Portal — In production, the server creates a Billing Portal
-// session via Stripe API and returns the URL. The portal lets users upgrade,
-// downgrade, update payment methods, and cancel subscriptions.
-// For now we route to the Stripe Checkout links as a fallback.
-const STRIPE_CHECKOUT_LINKS: Record<string, string> = {
-  monthly: "https://buy.stripe.com/dRmdR2fEBddR1oT5IybEA07",
-  annual: "https://buy.stripe.com/14A9AMdwta1F9Vpdb0bEA08",
-};
-
-// Production Stripe Customer Portal URL
-// This would be created dynamically via: POST /v1/billing_portal/sessions
-const STRIPE_CUSTOMER_PORTAL = "https://billing.stripe.com/p/login/aEU4gG9bK5kQbCw288";
+// Subscription management is handled through native App Store / Google Play
 
 export default function SettingsScreen() {
   const colors = useColors();
@@ -128,26 +117,12 @@ export default function SettingsScreen() {
         const androidSubsUrl = "https://play.google.com/store/account/subscriptions";
         await Linking.openURL(androidSubsUrl);
       } else {
-        // Web fallback: open Stripe Customer Portal
-        const portalUrl = STRIPE_CUSTOMER_PORTAL;
-        const canOpen = await Linking.canOpenURL(portalUrl);
-        if (canOpen) {
-          await Linking.openURL(portalUrl);
-        } else {
-          const checkoutUrl = STRIPE_CHECKOUT_LINKS[subscription];
-          if (checkoutUrl) {
-            await Linking.openURL(checkoutUrl);
-          } else {
-            Alert.alert(
-              "Unable to Open",
-              "Could not open the subscription management page. Please contact Muscle Support for help.",
-              [
-                { text: "Contact Support", onPress: () => (router as any).push("/support") },
-                { text: "Cancel", style: "cancel" },
-              ]
-            );
-          }
-        }
+        // Web: subscriptions are managed through the native app
+        Alert.alert(
+          "Manage Subscription",
+          "Subscriptions are managed through the App Store or Google Play Store. Please open the Muscle AI app on your device to manage your subscription.",
+          [{ text: "OK" }]
+        );
       }
     } catch (error) {
       Alert.alert(
@@ -174,10 +149,13 @@ export default function SettingsScreen() {
           text: "Cancel Subscription",
           style: "destructive",
           onPress: async () => {
-            // In production: call Stripe API to cancel
-            await setSubscription("none");
-            if (Platform.OS !== "web") {
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+            // Direct to native subscription management
+            if (Platform.OS === "ios") {
+              await Linking.openURL("https://apps.apple.com/account/subscriptions");
+            } else if (Platform.OS === "android") {
+              await Linking.openURL("https://play.google.com/store/account/subscriptions");
+            } else {
+              Alert.alert("Cancel Subscription", "Please manage your subscription through the App Store or Google Play Store on your device.");
             }
           },
         },

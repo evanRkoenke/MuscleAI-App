@@ -17,7 +17,7 @@ import { describe, it, expect } from "vitest";
  *
  * Key principle: Authentication and subscription are SEPARATE concerns.
  * - Authentication = "who are you?" (OAuth login)
- * - Subscription = "what features can you use?" (Stripe payment)
+ * - Subscription = "what features can you use?" (App Store / Google Play IAP)
  */
 
 type SubscriptionTier = "none" | "monthly" | "annual";
