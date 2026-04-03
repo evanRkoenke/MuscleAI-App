@@ -521,3 +521,10 @@
 - [x] Session management, cloud sync, and subscription restoration maintained
 - [x] 297 tests passing, 0 TypeScript errors
 - [ ] Push to GitHub
+
+## Expo Store Launch — Production Config Values
+- [ ] Update bundleIdentifier to com.evankoenke.muscleaiorcalorietracker in app.config.ts and app.json
+- [ ] Add appleTeamId RS439TZ92G to app.config.ts and app.json
+- [ ] Add projectId 18396eeb-c055-4675-932a-b23ba5ca5dd7 to app.config.ts and app.json
+- [ ] Add ITSAppUsesNonExemptEncryption: false to app.config.ts and app.json
+- [ ] Push to GitHub for Expo Launch re-run

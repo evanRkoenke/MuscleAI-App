@@ -12,8 +12,8 @@ const env = {
   // Deep link scheme for OAuth callbacks and universal links
   scheme: "muscleai",
   // Bundle identifiers — must match your Apple Developer and Google Play accounts
-  iosBundleId: "com.evan.muscleai",
-  androidPackage: "com.evan.muscleai",
+  iosBundleId: "com.evankoenke.muscleaiorcalorietracker",
+  androidPackage: "com.evankoenke.muscleaiorcalorietracker",
 };
 
 const config: ExpoConfig = {
@@ -26,10 +26,17 @@ const config: ExpoConfig = {
   userInterfaceStyle: "dark",
   backgroundColor: "#000000",
   newArchEnabled: true,
+  extra: {
+    eas: {
+      projectId: "18396eeb-c055-4675-932a-b23ba5ca5dd7",
+    },
+  },
+  owner: "evankoenke",
   ios: {
     supportsTablet: true,
     bundleIdentifier: env.iosBundleId,
     usesAppleSignIn: true,
+    appleTeamId: "RS439TZ92G",
     backgroundColor: "#000000",
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
