@@ -460,3 +460,12 @@
 - [x] Clear error messages for timeout, network failure, and OAuth errors
 - [x] OAuth callback already redirects to /(tabs) after successful login
 - [x] All 295 tests passing, 0 TS errors
+
+## Fix OAuth Login Redirect Loop
+- [x] After successful Google/Apple OAuth, user must land on dashboard not auth page
+- [x] Fix AuthGate so authenticated users always reach /(tabs)
+- [x] Ensure all login methods (Google, Apple) work correctly end-to-end
+- [x] Decoupled authentication from subscription: auth gates app entry, subscription gates features
+- [x] Removed paywall gate from auth screen login buttons — users can OAuth directly
+- [x] Updated auth-paywall-gate tests for new flow (20 tests, all passing)
+- [x] 296 tests passing, 0 TypeScript errors

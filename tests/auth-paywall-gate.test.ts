@@ -1,31 +1,40 @@
 import { describe, it, expect } from "vitest";
 
 /**
- * Auth → Paywall Gate Tests (Reworked Flow)
+ * Auth → Paywall Gate Tests (Fixed Flow — No Auth Loop)
  *
  * New flow:
  * 1. First launch → onboarding quiz
  * 2. After onboarding → auth screen
- * 3. Auth screen: free user taps Google/Apple/SignUp → redirected to paywall
- * 4. Paywall: subscribe → redirect back to auth?returnFromPaywall=true → complete login → tabs
- * 5. Paywall: "Continue with Free" → skip login entirely → tabs (local only, 5 scans/day)
+ * 3. Auth screen: user taps Google/Apple → OAuth login → tabs
+ * 4. Subscription status is fetched from server after OAuth completes (via AutoSync)
+ * 5. Subscription gates premium features inside the app, NOT app entry
  *
  * AuthGate handles:
  * - Not onboarded → /onboarding
- * - Onboarded, not authenticated, not hasSeenPaywall → /auth
- * - hasSeenPaywall (free user who skipped) → allow tabs
- * - Authenticated → allow tabs
+ * - Onboarded, not authenticated → /auth
+ * - Authenticated → allow tabs (regardless of subscription status)
+ *
+ * Key principle: Authentication and subscription are SEPARATE concerns.
+ * - Authentication = "who are you?" (OAuth login)
+ * - Subscription = "what features can you use?" (Stripe payment)
  */
+
+type SubscriptionTier = "none" | "monthly" | "annual";
 
 interface AppState {
   hasCompletedOnboarding: boolean;
   isAuthenticated: boolean;
   hasSeenPaywall: boolean;
-  subscription: "free" | "essential" | "pro" | "elite";
+  subscription: SubscriptionTier;
 }
 
-// Simulate AuthGate routing logic
+/**
+ * Simulate AuthGate routing logic.
+ * Returns the redirect destination, or null if no redirect is needed.
+ */
 function getAuthGateDestination(state: AppState, currentRoute: string): string | null {
+  // Never redirect during OAuth callback
   if (currentRoute.includes("oauth")) return null;
 
   if (!state.hasCompletedOnboarding) {
@@ -33,8 +42,9 @@ function getAuthGateDestination(state: AppState, currentRoute: string): string |
     return null;
   }
 
-  if (!state.hasSeenPaywall && !state.isAuthenticated) {
-    // Onboarded but hasn't gone through auth/paywall flow
+  if (!state.isAuthenticated) {
+    // Onboarded but not logged in — send to auth
+    // Allow staying on auth, paywall, or onboarding (retake quiz)
     if (
       !currentRoute.includes("auth") &&
       !currentRoute.includes("paywall") &&
@@ -45,39 +55,37 @@ function getAuthGateDestination(state: AppState, currentRoute: string): string |
     return null;
   }
 
-  if (state.hasSeenPaywall || state.isAuthenticated) {
-    if (
-      currentRoute.includes("onboarding") ||
-      (currentRoute === "/auth" && !currentRoute.includes("returnFromPaywall"))
-    ) {
-      return "/(tabs)";
-    }
-    return null;
+  // Authenticated — allow into tabs
+  // If still on auth/paywall/onboarding, redirect to tabs
+  if (
+    currentRoute.includes("onboarding") ||
+    currentRoute === "/auth" ||
+    currentRoute === "/paywall"
+  ) {
+    return "/(tabs)";
   }
 
   return null;
 }
 
-// Simulate auth screen behavior: can the user actually login?
-function canLogin(state: AppState, returnFromPaywall: boolean): boolean {
-  return state.subscription !== "free" || returnFromPaywall;
+/**
+ * Auth screen: login buttons always perform OAuth directly.
+ * No paywall gate before login. Users log in first, then subscription
+ * is fetched from the server.
+ */
+function authScreenLoginAction(): string {
+  return "perform_login";
 }
 
-// Simulate what happens when free user taps login button on auth screen
-function authScreenLoginAction(state: AppState, returnFromPaywall: boolean): string {
-  if (!canLogin(state, returnFromPaywall)) {
-    return "/paywall"; // Redirect to paywall
-  }
-  return "perform_login"; // Actually perform login
-}
-
-// Simulate paywall "Continue with Free"
-function paywallContinueFree(state: AppState): AppState {
-  return { ...state, hasSeenPaywall: true };
-}
-
-// Simulate paywall subscribe
-function paywallSubscribe(state: AppState, tier: AppState["subscription"]): { state: AppState; redirect: string } {
+/**
+ * Paywall subscribe action.
+ * After subscribing, unauthenticated users go to auth to complete login.
+ * Authenticated users go directly to tabs.
+ */
+function paywallSubscribe(
+  state: AppState,
+  tier: SubscriptionTier,
+): { state: AppState; redirect: string } {
   const newState = { ...state, subscription: tier, hasSeenPaywall: true };
   if (state.isAuthenticated) {
     return { state: newState, redirect: "/(tabs)" };
@@ -85,19 +93,21 @@ function paywallSubscribe(state: AppState, tier: AppState["subscription"]): { st
   return { state: newState, redirect: "/auth?returnFromPaywall=true" };
 }
 
-// Simulate OAuth callback destination (always tabs now)
+/**
+ * OAuth callback always redirects to tabs.
+ */
 function oauthCallbackDestination(): string {
   return "/(tabs)";
 }
 
-describe("Auth → Paywall Gate (Reworked Flow)", () => {
+describe("Auth → Paywall Gate (Fixed Flow — No Auth Loop)", () => {
   describe("AuthGate routing", () => {
     it("should redirect unonboarded users to onboarding", () => {
       const state: AppState = {
         hasCompletedOnboarding: false,
         isAuthenticated: false,
         hasSeenPaywall: false,
-        subscription: "free",
+        subscription: "none",
       };
       expect(getAuthGateDestination(state, "/(tabs)")).toBe("/onboarding");
     });
@@ -107,7 +117,7 @@ describe("Auth → Paywall Gate (Reworked Flow)", () => {
         hasCompletedOnboarding: true,
         isAuthenticated: false,
         hasSeenPaywall: false,
-        subscription: "free",
+        subscription: "none",
       };
       expect(getAuthGateDestination(state, "/(tabs)")).toBe("/auth");
     });
@@ -117,7 +127,7 @@ describe("Auth → Paywall Gate (Reworked Flow)", () => {
         hasCompletedOnboarding: true,
         isAuthenticated: false,
         hasSeenPaywall: false,
-        subscription: "free",
+        subscription: "none",
       };
       expect(getAuthGateDestination(state, "/auth")).toBeNull();
     });
@@ -127,29 +137,59 @@ describe("Auth → Paywall Gate (Reworked Flow)", () => {
         hasCompletedOnboarding: true,
         isAuthenticated: false,
         hasSeenPaywall: false,
-        subscription: "free",
+        subscription: "none",
       };
       expect(getAuthGateDestination(state, "/paywall")).toBeNull();
     });
 
-    it("should allow tabs for free user who skipped login (hasSeenPaywall=true)", () => {
+    it("should allow tabs for authenticated user with NO subscription", () => {
       const state: AppState = {
         hasCompletedOnboarding: true,
-        isAuthenticated: false,
-        hasSeenPaywall: true,
-        subscription: "free",
+        isAuthenticated: true,
+        hasSeenPaywall: false,
+        subscription: "none",
       };
       expect(getAuthGateDestination(state, "/(tabs)")).toBeNull();
     });
 
-    it("should allow tabs for authenticated paid user", () => {
+    it("should allow tabs for authenticated user with monthly subscription", () => {
       const state: AppState = {
         hasCompletedOnboarding: true,
         isAuthenticated: true,
         hasSeenPaywall: true,
-        subscription: "elite",
+        subscription: "monthly",
       };
       expect(getAuthGateDestination(state, "/(tabs)")).toBeNull();
+    });
+
+    it("should allow tabs for authenticated user with annual subscription", () => {
+      const state: AppState = {
+        hasCompletedOnboarding: true,
+        isAuthenticated: true,
+        hasSeenPaywall: true,
+        subscription: "annual",
+      };
+      expect(getAuthGateDestination(state, "/(tabs)")).toBeNull();
+    });
+
+    it("should redirect authenticated user FROM auth page TO tabs", () => {
+      const state: AppState = {
+        hasCompletedOnboarding: true,
+        isAuthenticated: true,
+        hasSeenPaywall: true,
+        subscription: "monthly",
+      };
+      expect(getAuthGateDestination(state, "/auth")).toBe("/(tabs)");
+    });
+
+    it("should redirect authenticated user FROM paywall TO tabs", () => {
+      const state: AppState = {
+        hasCompletedOnboarding: true,
+        isAuthenticated: true,
+        hasSeenPaywall: true,
+        subscription: "monthly",
+      };
+      expect(getAuthGateDestination(state, "/paywall")).toBe("/(tabs)");
     });
 
     it("should NOT redirect when on oauth callback", () => {
@@ -157,68 +197,28 @@ describe("Auth → Paywall Gate (Reworked Flow)", () => {
         hasCompletedOnboarding: true,
         isAuthenticated: false,
         hasSeenPaywall: false,
-        subscription: "free",
+        subscription: "none",
       };
       expect(getAuthGateDestination(state, "/oauth/callback")).toBeNull();
     });
   });
 
-  describe("Auth screen login gating", () => {
-    it("free user without returnFromPaywall should be redirected to paywall", () => {
-      const state: AppState = {
-        hasCompletedOnboarding: true,
-        isAuthenticated: false,
-        hasSeenPaywall: false,
-        subscription: "free",
-      };
-      expect(authScreenLoginAction(state, false)).toBe("/paywall");
-    });
-
-    it("free user WITH returnFromPaywall should be allowed to login", () => {
-      // This happens when user subscribed on paywall but subscription hasn't updated yet
-      const state: AppState = {
-        hasCompletedOnboarding: true,
-        isAuthenticated: false,
-        hasSeenPaywall: true,
-        subscription: "free",
-      };
-      expect(authScreenLoginAction(state, true)).toBe("perform_login");
-    });
-
-    it("paid user should be allowed to login", () => {
-      const state: AppState = {
-        hasCompletedOnboarding: true,
-        isAuthenticated: false,
-        hasSeenPaywall: true,
-        subscription: "essential",
-      };
-      expect(authScreenLoginAction(state, false)).toBe("perform_login");
+  describe("Auth screen login", () => {
+    it("login buttons always perform OAuth directly (no paywall gate)", () => {
+      expect(authScreenLoginAction()).toBe("perform_login");
     });
   });
 
   describe("Paywall interactions", () => {
-    it("Continue with Free should mark paywall as seen, keep free tier", () => {
-      const state: AppState = {
-        hasCompletedOnboarding: true,
-        isAuthenticated: false,
-        hasSeenPaywall: false,
-        subscription: "free",
-      };
-      const after = paywallContinueFree(state);
-      expect(after.hasSeenPaywall).toBe(true);
-      expect(after.subscription).toBe("free");
-      expect(after.isAuthenticated).toBe(false);
-    });
-
     it("Subscribe should redirect unauthenticated user back to auth", () => {
       const state: AppState = {
         hasCompletedOnboarding: true,
         isAuthenticated: false,
         hasSeenPaywall: false,
-        subscription: "free",
+        subscription: "none",
       };
-      const result = paywallSubscribe(state, "elite");
-      expect(result.state.subscription).toBe("elite");
+      const result = paywallSubscribe(state, "annual");
+      expect(result.state.subscription).toBe("annual");
       expect(result.state.hasSeenPaywall).toBe(true);
       expect(result.redirect).toBe("/auth?returnFromPaywall=true");
     });
@@ -228,27 +228,27 @@ describe("Auth → Paywall Gate (Reworked Flow)", () => {
         hasCompletedOnboarding: true,
         isAuthenticated: true,
         hasSeenPaywall: true,
-        subscription: "free",
+        subscription: "none",
       };
-      const result = paywallSubscribe(state, "pro");
-      expect(result.state.subscription).toBe("pro");
+      const result = paywallSubscribe(state, "monthly");
+      expect(result.state.subscription).toBe("monthly");
       expect(result.redirect).toBe("/(tabs)");
     });
   });
 
   describe("OAuth callback", () => {
-    it("should always redirect to tabs (user already subscribed)", () => {
+    it("should always redirect to tabs", () => {
       expect(oauthCallbackDestination()).toBe("/(tabs)");
     });
   });
 
   describe("Full user flows", () => {
-    it("Flow 1: onboarding → auth → Continue Free → tabs (no login)", () => {
+    it("Flow 1: onboarding → auth → OAuth login → tabs (subscription fetched from server)", () => {
       let state: AppState = {
         hasCompletedOnboarding: false,
         isAuthenticated: false,
         hasSeenPaywall: false,
-        subscription: "free",
+        subscription: "none",
       };
 
       // Step 1: Redirected to onboarding
@@ -258,81 +258,71 @@ describe("Auth → Paywall Gate (Reworked Flow)", () => {
       state = { ...state, hasCompletedOnboarding: true };
       expect(getAuthGateDestination(state, "/(tabs)")).toBe("/auth");
 
-      // Step 3: User taps "Continue with Free" on auth screen
-      state = paywallContinueFree(state);
-      expect(state.hasSeenPaywall).toBe(true);
-      expect(state.isAuthenticated).toBe(false);
-      expect(state.subscription).toBe("free");
+      // Step 3: User taps Google → OAuth login (no paywall gate)
+      expect(authScreenLoginAction()).toBe("perform_login");
 
-      // Step 4: Now in tabs, AuthGate allows it
-      expect(getAuthGateDestination(state, "/(tabs)")).toBeNull();
-    });
-
-    it("Flow 2: onboarding → auth → paywall → subscribe → auth → login → tabs", () => {
-      let state: AppState = {
-        hasCompletedOnboarding: false,
-        isAuthenticated: false,
-        hasSeenPaywall: false,
-        subscription: "free",
-      };
-
-      // Complete onboarding
-      state = { ...state, hasCompletedOnboarding: true };
-
-      // On auth screen, free user taps Google → redirected to paywall
-      expect(authScreenLoginAction(state, false)).toBe("/paywall");
-
-      // On paywall, user subscribes to Elite
-      const subResult = paywallSubscribe(state, "elite");
-      state = subResult.state;
-      expect(subResult.redirect).toBe("/auth?returnFromPaywall=true");
-      expect(state.subscription).toBe("elite");
-
-      // Back on auth screen with returnFromPaywall=true, user can now login
-      expect(authScreenLoginAction(state, true)).toBe("perform_login");
-
-      // After successful login
-      state = { ...state, isAuthenticated: true };
-      expect(getAuthGateDestination(state, "/(tabs)")).toBeNull();
-    });
-
-    it("Flow 3: onboarding → auth → paywall → subscribe → auth → OAuth → callback → tabs", () => {
-      let state: AppState = {
-        hasCompletedOnboarding: false,
-        isAuthenticated: false,
-        hasSeenPaywall: false,
-        subscription: "free",
-      };
-
-      state = { ...state, hasCompletedOnboarding: true };
-
-      // Free user taps Google → paywall
-      expect(authScreenLoginAction(state, false)).toBe("/paywall");
-
-      // Subscribe
-      const subResult = paywallSubscribe(state, "pro");
-      state = subResult.state;
-
-      // Back on auth, taps Google again (now allowed)
-      expect(authScreenLoginAction(state, true)).toBe("perform_login");
-
-      // OAuth callback always goes to tabs
+      // Step 4: OAuth callback → tabs
       expect(oauthCallbackDestination()).toBe("/(tabs)");
 
-      // After OAuth completes
+      // Step 5: After OAuth completes, user is authenticated
       state = { ...state, isAuthenticated: true };
+      expect(getAuthGateDestination(state, "/(tabs)")).toBeNull();
+
+      // Step 6: AutoSync restores subscription from server
+      state = { ...state, subscription: "monthly" };
       expect(getAuthGateDestination(state, "/(tabs)")).toBeNull();
     });
 
-    it("Cloud sync gated: free user has no cloud sync", () => {
+    it("Flow 2: onboarding → auth → OAuth → tabs (no subscription yet, still allowed)", () => {
+      let state: AppState = {
+        hasCompletedOnboarding: false,
+        isAuthenticated: false,
+        hasSeenPaywall: false,
+        subscription: "none",
+      };
+
+      state = { ...state, hasCompletedOnboarding: true };
+
+      // User taps Google → login directly
+      expect(authScreenLoginAction()).toBe("perform_login");
+
+      // OAuth completes
+      state = { ...state, isAuthenticated: true };
+
+      // User is in tabs even without subscription
+      expect(getAuthGateDestination(state, "/(tabs)")).toBeNull();
+
+      // Subscription is "none" — premium features gated, but app entry is allowed
+      expect(state.subscription).toBe("none");
+    });
+
+    it("Flow 3: authenticated user visits paywall from settings → subscribes → tabs", () => {
+      let state: AppState = {
+        hasCompletedOnboarding: true,
+        isAuthenticated: true,
+        hasSeenPaywall: false,
+        subscription: "none",
+      };
+
+      // User navigates to paywall from settings
+      expect(getAuthGateDestination(state, "/paywall")).toBe("/(tabs)");
+
+      // After subscribing
+      const result = paywallSubscribe(state, "annual");
+      state = result.state;
+      expect(result.redirect).toBe("/(tabs)");
+      expect(state.subscription).toBe("annual");
+    });
+
+    it("Cloud sync gated: unsubscribed user has no cloud sync", () => {
       const state: AppState = {
         hasCompletedOnboarding: true,
-        isAuthenticated: false,
-        hasSeenPaywall: true,
-        subscription: "free",
+        isAuthenticated: true,
+        hasSeenPaywall: false,
+        subscription: "none",
       };
-      expect(state.subscription === "free").toBe(true);
-      expect(state.subscription !== "free").toBe(false);
+      // User is authenticated but has no subscription
+      expect(state.subscription === "none").toBe(true);
     });
 
     it("Cloud sync available: paid authenticated user", () => {
@@ -340,10 +330,21 @@ describe("Auth → Paywall Gate (Reworked Flow)", () => {
         hasCompletedOnboarding: true,
         isAuthenticated: true,
         hasSeenPaywall: true,
-        subscription: "essential",
+        subscription: "annual",
       };
-      expect(state.subscription !== "free").toBe(true);
+      expect(state.subscription !== "none").toBe(true);
       expect(state.isAuthenticated).toBe(true);
+    });
+
+    it("Returning user: already authenticated → goes directly to tabs", () => {
+      const state: AppState = {
+        hasCompletedOnboarding: true,
+        isAuthenticated: true,
+        hasSeenPaywall: true,
+        subscription: "monthly",
+      };
+      // AuthGate should not redirect — user is already authenticated
+      expect(getAuthGateDestination(state, "/(tabs)")).toBeNull();
     });
   });
 });

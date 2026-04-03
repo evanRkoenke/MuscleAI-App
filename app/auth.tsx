@@ -40,35 +40,19 @@ export default function AuthScreen() {
   const { subscription, resetOnboarding } = useApp();
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // If user has a paid subscription OR was explicitly sent back from paywall, allow login
-  const canLogin = subscription !== "none" || params.returnFromPaywall === "true";
+  // Always allow login — OAuth is the entry point to the app.
+  // Subscription gates features inside the app, not the login itself.
+  const hasSeenPaywall = params.returnFromPaywall === "true";
 
   const clearError = useCallback(() => {
     setError("");
   }, []);
-
-  /**
-   * When an unpaid user taps a login button, redirect to paywall.
-   * They need to subscribe first.
-   */
-  const redirectToPaywall = () => {
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-    router.push("/paywall?from=auth");
-  };
 
   const handleSocialAuth = async (provider: string) => {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
     clearError();
-
-    // If unpaid user, redirect to paywall first
-    if (!canLogin) {
-      redirectToPaywall();
-      return;
-    }
 
     setLoading(true);
     setLoadingProvider(provider);
@@ -126,20 +110,11 @@ export default function AuthScreen() {
           {/* Title */}
           <Text style={styles.formTitle}>Sign In</Text>
 
-          {/* Subtitle for unpaid users explaining they need to subscribe */}
-          {!canLogin && (
-            <Text style={styles.subtitleText}>
-              Subscribe to unlock AI-powered nutrition tracking{"\n"}
-              and save your progress across devices.
-            </Text>
-          )}
-
-          {canLogin && (
-            <Text style={styles.subtitleText}>
-              Sign in to access your dashboard{"\n"}
-              and start tracking your nutrition.
-            </Text>
-          )}
+          {/* Subtitle */}
+          <Text style={styles.subtitleText}>
+            Sign in to access your dashboard{"\n"}
+            and start tracking your nutrition.
+          </Text>
 
           {/* Error message */}
           {error ? (
