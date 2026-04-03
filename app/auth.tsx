@@ -72,6 +72,12 @@ export default function AuthScreen() {
         setAuthenticated(true);
         markPaywallSeen();
         router.replace("/(tabs)");
+      } else if (result.error === "NATIVE_MODULE_UNAVAILABLE") {
+        // Native module not available (e.g., Expo Go) — fall back to Manus OAuth
+        setLoading(false);
+        setLoadingProvider(null);
+        handleWebAuth(provider);
+        return;
       } else if (result.error === "Sign-in was cancelled") {
         // User cancelled — just reset the loading state
         setLoading(false);

@@ -5,6 +5,10 @@
  * instead of the Manus OAuth portal. Users see the standard OS-level
  * sign-in sheets directly.
  *
+ * IMPORTANT: Google Sign-In requires a development/production build (EAS Build).
+ * It does NOT work in Expo Go because the native module isn't linked.
+ * When running in Expo Go, Google Sign-In gracefully falls back to Manus OAuth.
+ *
  * Flow:
  * 1. User taps "Continue with Apple/Google" on auth screen
  * 2. Native sign-in sheet appears (Apple sheet on iOS, Google popup)
@@ -14,7 +18,7 @@
  * 6. Client stores session token and user info, navigates to tabs
  */
 
-import { Platform } from "react-native";
+import { Platform, TurboModuleRegistry } from "react-native";
 import * as Auth from "@/lib/_core/auth";
 
 // ─── Types ───
@@ -30,6 +34,41 @@ export interface NativeAuthResult {
     loginMethod: string;
   };
   error?: string;
+}
+
+// ─── Safe Module Availability Detection ───
+// Use TurboModuleRegistry.get() (non-enforcing) to check if native modules exist
+// before trying to require() them. This prevents the Invariant Violation crash.
+
+function isNativeModuleAvailable(moduleName: string): boolean {
+  try {
+    // TurboModuleRegistry.get() returns null if not found (instead of throwing)
+    const mod = TurboModuleRegistry.get(moduleName);
+    return mod !== null && mod !== undefined;
+  } catch {
+    return false;
+  }
+}
+
+// Check once at module load time
+const _googleSignInModuleAvailable =
+  Platform.OS !== "web" && isNativeModuleAvailable("RNGoogleSignin");
+const _appleAuthModuleAvailable =
+  Platform.OS === "ios"; // Apple auth is always available on iOS via Expo
+
+let _GoogleSignin: any = null;
+
+function getGoogleSignIn(): any {
+  if (!_googleSignInModuleAvailable) return null;
+  if (_GoogleSignin) return _GoogleSignin;
+
+  try {
+    const mod = require("@react-native-google-signin/google-signin");
+    _GoogleSignin = mod.GoogleSignin;
+    return _GoogleSignin;
+  } catch {
+    return null;
+  }
 }
 
 // ─── API Base URL ───
@@ -52,9 +91,12 @@ function getApiBaseUrl(): string {
 // ─── Apple Sign-In ───
 
 export async function signInWithApple(): Promise<NativeAuthResult> {
+  if (!_appleAuthModuleAvailable) {
+    return { success: false, error: "NATIVE_MODULE_UNAVAILABLE" };
+  }
+
   try {
-    // Dynamic import to avoid crashes on Android/web where the module isn't available
-    const AppleAuthentication = await import("expo-apple-authentication");
+    const AppleAuthentication = require("expo-apple-authentication");
 
     const credential = await AppleAuthentication.signInAsync({
       requestedScopes: [
@@ -91,10 +133,12 @@ export async function signInWithApple(): Promise<NativeAuthResult> {
 // ─── Google Sign-In ───
 
 export async function signInWithGoogle(): Promise<NativeAuthResult> {
-  try {
-    // Dynamic import to avoid crashes when module isn't available
-    const { GoogleSignin } = await import("@react-native-google-signin/google-signin");
+  const GoogleSignin = getGoogleSignIn();
+  if (!GoogleSignin) {
+    return { success: false, error: "NATIVE_MODULE_UNAVAILABLE" };
+  }
 
+  try {
     // Check if Google Play Services are available (Android)
     if (Platform.OS === "android") {
       await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
@@ -193,27 +237,32 @@ async function verifyTokenWithServer(payload: VerifyTokenPayload): Promise<Nativ
 // ─── Availability Checks ───
 
 export function isAppleSignInAvailable(): boolean {
-  return Platform.OS === "ios";
+  return _appleAuthModuleAvailable;
 }
 
 export function isGoogleSignInAvailable(): boolean {
-  // Google Sign-In works on iOS and Android in standalone builds
-  // On web, we fall back to the Manus OAuth flow
-  return Platform.OS !== "web";
+  return _googleSignInModuleAvailable;
 }
 
 // ─── Configure Google Sign-In ───
 
 export function configureGoogleSignIn(webClientId: string): void {
+  if (!_googleSignInModuleAvailable) {
+    // Native module not available (Expo Go) — silently skip
+    console.log("[NativeAuth] Google Sign-In native module not available — skipping configuration (expected in Expo Go)");
+    return;
+  }
+
+  const GoogleSignin = getGoogleSignIn();
+  if (!GoogleSignin) return;
+
   try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { GoogleSignin } = require("@react-native-google-signin/google-signin");
     GoogleSignin.configure({
       webClientId,
       offlineAccess: false,
       scopes: ["profile", "email"],
     });
-    console.log("[NativeAuth] Google Sign-In configured");
+    console.log("[NativeAuth] Google Sign-In configured successfully");
   } catch (e) {
     console.warn("[NativeAuth] Failed to configure Google Sign-In:", e);
   }

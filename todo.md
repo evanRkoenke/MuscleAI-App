@@ -520,4 +520,4 @@
 - [x] Server verifies identity tokens via Apple/Google JWKS public keys
 - [x] Session management, cloud sync, and subscription restoration maintained
 - [x] 297 tests passing, 0 TypeScript errors
-- [x] Push to GitHub
+- [ ] Push to GitHub
