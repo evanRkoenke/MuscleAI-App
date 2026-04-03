@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import {
   View,
   Text,
@@ -8,7 +8,6 @@ import {
   Platform,
   Alert,
   ActivityIndicator,
-  Image,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
@@ -17,131 +16,27 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useApp } from "@/lib/app-context";
 import {
   PLANS,
-  IAP_PRODUCTS,
-  ALL_PRODUCT_IDS,
-  isNativeIAPAvailable,
   purchaseViaStripe,
-  productIdToTier,
   type PlanInfo,
 } from "@/lib/iap-service";
 import * as Haptics from "expo-haptics";
-import { Typography } from "@/constants/typography";
-
-
-const PRIMARY_WHITE = "#FFFFFF";
-const SILVER = "#C0C0C0";
-const DARK_BG = "#000000";
 
 /**
- * Paywall Screen — Clinical Luxury Design
+ * Paywall Screen — Two-Plan Model (No Trial)
  *
- * On iOS/Android: triggers native StoreKit 2 / Google Play purchase sheet.
- * On Web: falls back to Stripe Payment Links.
- *
- * The useIAP hook from expo-iap is conditionally imported only on native
- * platforms. On web, the hook is replaced with a no-op stub.
+ * Monthly Essential ($9.99/mo) and Elite Annual ($59.99/yr).
+ * Both plans give identical full access. Immediate charge — no free trial.
+ * Users must complete payment before accessing the dashboard.
  */
-
-// ─── Conditional IAP hook (native only) ───
-// expo-iap crashes on web, so we use a stub for web platform
-let useIAPHook: any = null;
-if (Platform.OS !== "web") {
-  try {
-    // Dynamic require to avoid web bundling issues
-    const expoIap = require("expo-iap");
-    useIAPHook = expoIap.useIAP;
-  } catch {
-    // expo-iap not available (e.g., Expo Go)
-    useIAPHook = null;
-  }
-}
 
 export default function PaywallScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ from?: string }>();
-  const canGoBack = !!params.from;
+  const canGoBack = !!params.from && ["settings", "profile", "home", "forecast"].includes(params.from);
   const { setSubscription, markPaywallSeen, isAuthenticated } = useApp();
   const [subscribing, setSubscribing] = useState<string | null>(null);
-  const [iapReady, setIapReady] = useState(false);
-  const [iapProducts, setIapProducts] = useState<any[]>([]);
   const [purchaseError, setPurchaseError] = useState<string | null>(null);
-
-  // ─── Native IAP setup ───
-  const iapCallbacks = {
-    onPurchaseSuccess: async (purchase: any) => {
-      try {
-        const tier = productIdToTier(purchase.productId);
-
-        // Validate receipt on server
-        try {
-          // In production, call server to validate:
-          // await trpc.iap.validateReceipt.mutate({
-          //   transactionId: purchase.transactionId || purchase.id,
-          //   productId: purchase.productId,
-          //   platform: Platform.OS as "ios" | "android",
-          //   receiptData: purchase.transactionReceipt,
-          // });
-          console.log("[IAP] Purchase validated:", purchase.productId);
-        } catch (e) {
-          console.warn("[IAP] Server validation failed, applying locally:", e);
-        }
-
-        // Update subscription locally
-        await setSubscription(tier);
-
-        // Finish the transaction
-        if (iapRef.current?.finishTransaction) {
-          await iapRef.current.finishTransaction({
-            purchase,
-            isConsumable: false,
-          });
-        }
-
-        if (Platform.OS !== "web") {
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        }
-
-        // After subscribing, if not yet authenticated, send back to auth to complete login
-        // If already authenticated (returning user upgrading), go to tabs
-        if (isAuthenticated) {
-          router.replace("/(tabs)");
-        } else {
-          router.replace("/auth?returnFromPaywall=true" as any);
-        }
-      } catch (error) {
-        console.error("[IAP] Post-purchase error:", error);
-        setPurchaseError("Purchase completed but setup failed. Please restart the app.");
-      } finally {
-        setSubscribing(null);
-      }
-    },
-    onPurchaseError: (error: any) => {
-      console.error("[IAP] Purchase error:", error);
-      setSubscribing(null);
-
-      // Don't show error for user cancellation
-      if (error?.code === "E_USER_CANCELLED" || error?.message?.includes("cancel")) {
-        return;
-      }
-
-      setPurchaseError(
-        "Payment could not be processed. Please check your Apple ID payment method and try again."
-      );
-      if (Platform.OS !== "web") {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      }
-    },
-  };
-
-  // Store IAP ref for use in callbacks
-  const iapRef = { current: null as any };
-
-  // Initialize native IAP if available
-  useEffect(() => {
-    if (useIAPHook) {
-      setIapReady(true);
-    }
-  }, []);
+  const [restoring, setRestoring] = useState(false);
 
   // ─── Purchase handler ───
   const handleSubscribe = async (plan: PlanInfo) => {
@@ -152,60 +47,24 @@ export default function PaywallScreen() {
     setSubscribing(plan.id);
 
     try {
-      if (isNativeIAPAvailable() && useIAPHook) {
-        // ─── NATIVE: Trigger StoreKit 2 / Google Play purchase sheet ───
-        // The useIAP hook handles the native purchase flow.
-        // In a real build with App Store Connect products configured,
-        // this triggers the native iOS purchase sheet with FaceID/Apple ID.
-        //
-        // For development/testing:
-        // 1. Configure products in App Store Connect
-        // 2. Use StoreKit Configuration file for local testing
-        // 3. Build with EAS (not Expo Go) for full IAP support
+      // Open Stripe checkout in browser — user is charged immediately
+      await purchaseViaStripe(plan.productId);
 
-        // Attempt native purchase
-        try {
-          // This would be called via the useIAP hook in a real implementation
-          // For now, show what the flow looks like
-          Alert.alert(
-            "Native Purchase",
-            `This will trigger the Apple StoreKit purchase sheet for ${plan.name} (${plan.price}${plan.period}).\n\nTo enable native purchases:\n1. Configure products in App Store Connect\n2. Build with EAS (expo build)\n3. Test with StoreKit sandbox`,
-            [
-              {
-                text: "Use Stripe Instead",
-                onPress: async () => {
-                  await purchaseViaStripe(plan.productId);
-                  await setSubscription(plan.id as any);
-                  if (isAuthenticated) {
-                    router.replace("/(tabs)");
-                  } else {
-                    router.replace("/auth?returnFromPaywall=true" as any);
-                  }
-                },
-              },
-              {
-                text: "Cancel",
-                style: "cancel",
-                onPress: () => setSubscribing(null),
-              },
-            ]
-          );
-        } catch (e: any) {
-          throw e;
-        }
+      // After Stripe checkout completes, set subscription locally
+      // In production, this would be confirmed via Stripe webhook
+      await setSubscription(plan.id as any);
+      await markPaywallSeen();
+
+      if (Platform.OS !== "web") {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+
+      // After subscribing, redirect to auth to complete login (for cloud sync)
+      // If already authenticated (returning user upgrading), go to tabs
+      if (isAuthenticated) {
+        router.replace("/(tabs)");
       } else {
-        // ─── WEB FALLBACK: Open Stripe Payment Link ───
-        await purchaseViaStripe(plan.productId);
-
-        // Set subscription locally (in production, confirmed via webhook)
-        await setSubscription(plan.id as any);
-
-        // After subscribing, if not yet authenticated, send back to auth to complete login
-        if (isAuthenticated) {
-          router.replace("/(tabs)");
-        } else {
-          router.replace("/auth?returnFromPaywall=true" as any);
-        }
+        router.replace("/auth?returnFromPaywall=true" as any);
       }
     } catch (error: any) {
       console.error("[Paywall] Subscribe error:", error);
@@ -216,13 +75,9 @@ export default function PaywallScreen() {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       }
     } finally {
-      if (!isNativeIAPAvailable()) {
-        setSubscribing(null);
-      }
+      setSubscribing(null);
     }
   };
-
-  const [restoring, setRestoring] = useState(false);
 
   // ─── Restore purchases ───
   const handleRestore = async () => {
@@ -233,67 +88,44 @@ export default function PaywallScreen() {
     setPurchaseError(null);
 
     try {
-      // Try server-side restore first (checks DB for active subscription linked to account)
       const { vanillaTrpc } = await import("@/lib/trpc");
       const platform = Platform.OS === "ios" ? "ios" as const : "android" as const;
-      const result = await vanillaTrpc.iap.restorePurchases.mutate({
-        platform,
-      });
+      const result = await vanillaTrpc.iap.restorePurchases.mutate({ platform });
 
-      if (result.success && result.tier && result.tier !== "free") {
-        // Found active subscription on server
-        await setSubscription(result.tier);
+      // Map server tier names to new model
+      const tierMap: Record<string, string> = {
+        free: "none", essential: "monthly", pro: "monthly", elite: "annual",
+        none: "none", monthly: "monthly", annual: "annual",
+      };
+      const mappedTier = tierMap[result.tier] || "none";
+      if (result.success && mappedTier !== "none") {
+        await setSubscription(mappedTier as any);
+        await markPaywallSeen();
         if (Platform.OS !== "web") {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         }
         Alert.alert(
           "Subscription Restored",
-          `Your ${result.tier.charAt(0).toUpperCase() + result.tier.slice(1)} plan has been restored. Welcome back!`,
+          `Your ${mappedTier === "annual" ? "Elite Annual" : "Monthly Essential"} plan has been restored. Welcome back!`,
           [{ text: "Continue", onPress: () => router.replace("/(tabs)") }]
         );
       } else {
-        // No active subscription found on server — try native IAP restore
-        if (isNativeIAPAvailable() && useIAPHook) {
-          Alert.alert(
-            "No Active Subscription Found",
-            "We couldn't find an active subscription linked to your account. If you purchased via Apple or Google, make sure you're signed in with the same Apple ID or Google account.\n\nNeed help? Contact Muscle Support.",
-            [
-              { text: "Contact Support", onPress: () => (router as any).push("/support") },
-              { text: "OK", style: "cancel" },
-            ]
-          );
-        } else {
-          Alert.alert(
-            "No Active Subscription Found",
-            "We couldn't find an active subscription linked to your account. Sign in with the same Google or Apple account you used to purchase.\n\nNeed help? Contact Muscle Support.",
-            [
-              { text: "Contact Support", onPress: () => (router as any).push("/support") },
-              { text: "OK", style: "cancel" },
-            ]
-          );
-        }
+        Alert.alert(
+          "No Active Subscription Found",
+          "We couldn't find an active subscription linked to your account. If you purchased previously, make sure you're signed in with the same account.\n\nNeed help? Contact Muscle Support.",
+          [{ text: "OK", style: "cancel" }]
+        );
       }
     } catch (error: any) {
       console.error("[Paywall] Restore error:", error);
-      // If server call fails (e.g., not authenticated), show generic message
       Alert.alert(
         "Restore Failed",
         "Please make sure you're signed in with the account you used to purchase. If the issue persists, contact Muscle Support.",
-        [
-          { text: "Contact Support", onPress: () => (router as any).push("/support") },
-          { text: "OK", style: "cancel" },
-        ]
+        [{ text: "OK", style: "cancel" }]
       );
     } finally {
       setRestoring(false);
     }
-  };
-
-  const handleSkip = async () => {
-    // "Continue with Free" — skip login entirely, go straight to tabs
-    // Free users get 5 scans/day with local-only storage, no account needed
-    await markPaywallSeen();
-    router.replace("/(tabs)");
   };
 
   return (
@@ -315,24 +147,17 @@ export default function PaywallScreen() {
 
         {/* ─── Header ─── */}
         <View style={styles.header}>
-          <Image
-            source={require("@/assets/images/icon.png")}
-            style={styles.headerLogo}
-            resizeMode="contain"
-          />
           <Text style={styles.title}>Unlock Your</Text>
           <Text style={styles.titleHighlight}>Full Potential</Text>
           <Text style={styles.subtitle}>
             Choose your plan to access AI-powered nutrition tracking
           </Text>
-          {isNativeIAPAvailable() && (
-            <View style={styles.nativeBadge}>
-              <IconSymbol name="checkmark" size={10} color="#C0C0C0" />
-              <Text style={styles.nativeBadgeText}>
-                Secure In-App Purchase via {Platform.OS === "ios" ? "Apple" : "Google Play"}
-              </Text>
-            </View>
-          )}
+          <View style={styles.secureBadge}>
+            <IconSymbol name="checkmark" size={12} color="#4ADE80" />
+            <Text style={styles.secureBadgeText}>
+              Secure In-App Purchase via Apple
+            </Text>
+          </View>
         </View>
 
         {/* ─── Error Banner ─── */}
@@ -346,14 +171,14 @@ export default function PaywallScreen() {
           </View>
         )}
 
-        {/* ─── Tier Cards ─── */}
-        <View style={styles.tiersContainer}>
+        {/* ─── Plan Cards ─── */}
+        <View style={styles.plansContainer}>
           {PLANS.map((plan) => (
             <View
               key={plan.id}
               style={[
-                styles.tierCard,
-                plan.highlighted && styles.tierCardHighlighted,
+                styles.planCard,
+                plan.highlighted && styles.planCardHighlighted,
               ]}
             >
               {plan.highlighted && (
@@ -364,25 +189,22 @@ export default function PaywallScreen() {
                   style={StyleSheet.absoluteFill}
                 />
               )}
-              {plan.highlighted && (
+              {plan.savings && (
                 <LinearGradient
                   colors={["#444444", "#333333"]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
-                  style={styles.badge}
+                  style={styles.savingsBadge}
                 >
-                  <Text style={styles.badgeText}>BEST VALUE</Text>
+                  <Text style={styles.savingsBadgeText}>{plan.savings}</Text>
                 </LinearGradient>
               )}
-              <View style={styles.tierHeader}>
-                <Text style={styles.tierName}>{plan.name}</Text>
+              <View style={styles.planHeader}>
+                <Text style={styles.planName}>{plan.name}</Text>
                 <View style={styles.priceRow}>
-                  <Text style={styles.tierPrice}>{plan.price}</Text>
-                  <Text style={styles.tierPeriod}>{plan.period}</Text>
+                  <Text style={styles.planPrice}>{plan.price}</Text>
+                  <Text style={styles.planPeriod}>{plan.period}</Text>
                 </View>
-                {plan.savings && (
-                  <Text style={styles.savings}>{plan.savings}</Text>
-                )}
               </View>
               <View style={styles.featuresContainer}>
                 {plan.features.map((feature, i) => (
@@ -415,32 +237,20 @@ export default function PaywallScreen() {
                     {subscribing === plan.id ? (
                       <ActivityIndicator color="#FFFFFF" />
                     ) : (
-                      <>
-                        <Text style={styles.subscribeTextWhite}>UNLOCK</Text>
-                        {isNativeIAPAvailable() && (
-                          <IconSymbol name="faceid" size={18} color="#FFFFFF" />
-                        )}
-                      </>
+                      <Text style={styles.subscribeTextWhite}>
+                        {plan.id === "annual" ? "UNLOCK MUSCLEAI ELITE" : "GET INSTANT ACCESS"}
+                      </Text>
                     )}
                   </LinearGradient>
                 ) : subscribing === plan.id ? (
-                  <ActivityIndicator color={"#FFFFFF"} />
+                  <ActivityIndicator color="#FFFFFF" />
                 ) : (
-                  <Text style={styles.subscribeTextBlue}>Subscribe</Text>
+                  <Text style={styles.subscribeTextWhite}>GET INSTANT ACCESS</Text>
                 )}
               </TouchableOpacity>
             </View>
           ))}
         </View>
-
-        {/* ─── Skip ─── */}
-        <TouchableOpacity
-          style={styles.skipButton}
-          onPress={handleSkip}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.skipText}>Continue with Free</Text>
-        </TouchableOpacity>
 
         {/* ─── Restore ─── */}
         <TouchableOpacity
@@ -464,8 +274,9 @@ export default function PaywallScreen() {
 
         {/* ─── Legal ─── */}
         <Text style={styles.legalText}>
-          Payment will be charged to your {Platform.OS === "ios" ? "Apple ID" : "Google"} account.
+          Payment will be charged to your Apple ID account at confirmation of purchase.
           Subscriptions auto-renew unless cancelled at least 24 hours before the end of the current period.
+          You can manage or cancel your subscription in your device's Settings.
         </Text>
       </ScrollView>
     </ScreenContainer>
@@ -488,132 +299,115 @@ const styles = StyleSheet.create({
     marginBottom: 28,
     gap: 4,
   },
-  headerLogo: {
-    width: 60,
-    height: 60,
-    borderRadius: 14,
-    marginBottom: 12,
-  },
   title: {
     fontSize: 28,
     fontWeight: "700",
     color: "#F0F0F0",
+    letterSpacing: 0.5,
   },
   titleHighlight: {
     fontSize: 32,
-    fontWeight: "700",
-    letterSpacing: 1,
+    fontWeight: "800",
     color: "#FFFFFF",
+    letterSpacing: 0.5,
+    marginBottom: 8,
   },
   subtitle: {
     fontSize: 15,
-    textAlign: "center",
-    marginTop: 8,
-    lineHeight: 22,
     color: "#888888",
+    textAlign: "center",
+    lineHeight: 22,
+    paddingHorizontal: 20,
   },
-  nativeBadge: {
+  secureBadge: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    marginTop: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 12,
-    backgroundColor: "rgba(0,230,118,0.08)",
-    borderWidth: 1,
-    borderColor: "rgba(0,230,118,0.2)",
+    backgroundColor: "rgba(74, 222, 128, 0.1)",
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 20,
+    marginTop: 12,
   },
-  nativeBadgeText: {
-    fontSize: 11,
-    fontWeight: "400",
-    color: "#C0C0C0",
+  secureBadgeText: {
+    fontSize: 13,
+    color: "#4ADE80",
+    fontWeight: "600",
   },
   errorBanner: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-    padding: 14,
+    backgroundColor: "rgba(255,61,61,0.1)",
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 10,
     marginBottom: 16,
-    borderRadius: 12,
-    backgroundColor: "rgba(255,61,61,0.08)",
-    borderWidth: 1,
-    borderColor: "rgba(255,61,61,0.2)",
+    gap: 8,
   },
   errorText: {
     flex: 1,
     fontSize: 13,
+    color: "#FF3D3D",
     lineHeight: 18,
-    color: "#FF4444",
   },
-  tiersContainer: {
+  plansContainer: {
     gap: 16,
+    marginBottom: 24,
   },
-  tierCard: {
-    borderRadius: 20,
+  planCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#333333",
     padding: 20,
     overflow: "hidden",
-    borderWidth: 1,
-    borderColor: "#222222",
     backgroundColor: "#111111",
   },
-  tierCardHighlighted: {
-    borderWidth: 2,
-    borderColor: "#FFFFFF",
-    padding: 24,
-    shadowColor: "#FFFFFF",
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.25,
-    shadowRadius: 20,
-    elevation: 8,
+  planCardHighlighted: {
+    borderColor: "#555555",
+    borderWidth: 1.5,
   },
-  badge: {
+  savingsBadge: {
     position: "absolute",
-    top: 0,
-    right: 0,
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderBottomLeftRadius: 12,
+    top: 12,
+    right: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
   },
-  badgeText: {
-    color: "#FFFFFF",
+  savingsBadgeText: {
     fontSize: 10,
-    fontWeight: "400",
-    letterSpacing: 1.5,
+    fontWeight: "700",
+    color: "#FFFFFF",
+    letterSpacing: 1,
   },
-  tierHeader: {
+  planHeader: {
     marginBottom: 16,
   },
-  tierName: {
-    fontSize: 14,
-    fontWeight: "400",
-    letterSpacing: 2.5,
-    color: "#F0F0F0",
+  planName: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#888888",
+    letterSpacing: 2,
+    marginBottom: 8,
   },
   priceRow: {
     flexDirection: "row",
     alignItems: "baseline",
-    marginTop: 6,
+    gap: 4,
   },
-  tierPrice: {
+  planPrice: {
     fontSize: 36,
-    fontWeight: "700",
-    color: "#F0F0F0",
+    fontWeight: "800",
+    color: "#FFFFFF",
   },
-  tierPeriod: {
+  planPeriod: {
     fontSize: 16,
-    marginLeft: 4,
-    color: "#666666",
-  },
-  savings: {
-    fontSize: 13,
-    fontWeight: "400",
-    marginTop: 4,
-    color: "#C0C0C0",
+    color: "#888888",
+    fontWeight: "500",
   },
   featuresContainer: {
     gap: 10,
-    marginBottom: 18,
+    marginBottom: 16,
   },
   featureRow: {
     flexDirection: "row",
@@ -621,67 +415,53 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   featureText: {
-    fontSize: 14,
-    lineHeight: 20,
-    color: "#F0F0F0",
+    fontSize: 15,
+    color: "#E0E0E0",
+    fontWeight: "500",
+    lineHeight: 22,
   },
   subscribeButton: {
-    borderRadius: 26,
+    borderRadius: 12,
     overflow: "hidden",
+    minHeight: 50,
+    justifyContent: "center",
+    alignItems: "center",
   },
   subscribeButtonOutline: {
-    height: 50,
     borderWidth: 1,
-    borderColor: "#FFFFFF",
-    justifyContent: "center",
-    alignItems: "center",
+    borderColor: "#444444",
+    backgroundColor: "#1A1A1A",
   },
   subscribeGradient: {
-    height: 52,
-    borderRadius: 26,
-    flexDirection: "row",
-    justifyContent: "center",
+    width: "100%",
+    paddingVertical: 14,
     alignItems: "center",
-    gap: 10,
+    justifyContent: "center",
+    flexDirection: "row",
+    gap: 8,
   },
   subscribeTextWhite: {
-    color: "#FFFFFF",
-    fontSize: 18,
-    fontWeight: "600",
-    letterSpacing: 3,
-  },
-  subscribeTextBlue: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "600",
-    letterSpacing: 1,
-  },
-  skipButton: {
-    alignItems: "center",
-    marginTop: 20,
-    padding: 12,
-  },
-  skipText: {
     fontSize: 15,
-    fontWeight: "400",
-    color: "#666666",
+    fontWeight: "700",
+    color: "#FFFFFF",
+    letterSpacing: 1.5,
   },
   restoreButton: {
     alignItems: "center",
-    marginTop: 4,
-    padding: 8,
+    paddingVertical: 12,
+    marginBottom: 8,
   },
   restoreText: {
-    fontSize: 13,
-    textDecorationLine: "underline",
-    color: "#666666",
+    fontSize: 14,
+    color: "#888888",
+    fontWeight: "500",
   },
   legalText: {
-    fontSize: 10,
-    lineHeight: 15,
+    fontSize: 11,
+    color: "#555555",
     textAlign: "center",
-    marginTop: 16,
-    paddingHorizontal: 20,
-    color: "#444444",
+    lineHeight: 16,
+    paddingHorizontal: 16,
+    marginTop: 4,
   },
 });

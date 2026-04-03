@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-type SubscriptionTier = "free" | "essential" | "pro" | "elite";
+type SubscriptionTier = "none" | "monthly" | "annual";
 
 interface UserProfile {
   name: string;
@@ -87,6 +87,7 @@ interface AppState {
   isAuthenticated: boolean;
   hasSeenPaywall: boolean;
   subscription: SubscriptionTier;
+
   profile: UserProfile;
   onboardingData: OnboardingData;
   meals: MealEntry[];
@@ -154,7 +155,7 @@ const defaultState: AppState = {
   hasCompletedOnboarding: false,
   isAuthenticated: false,
   hasSeenPaywall: false,
-  subscription: "free",
+  subscription: "none",
   profile: defaultProfile,
   onboardingData: defaultOnboarding,
   meals: [],
@@ -192,6 +193,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             isFavorite: m.isFavorite ?? false,
           }));
         }
+        // Migrate old subscription tier names
+        if (parsed.subscription) {
+          const oldTierMap: Record<string, SubscriptionTier> = {
+            free: "none", essential: "monthly", pro: "monthly", elite: "annual",
+          };
+          if (oldTierMap[parsed.subscription]) {
+            parsed.subscription = oldTierMap[parsed.subscription];
+          }
+        }
+
         setState({ ...defaultState, ...parsed });
       }
     } catch (e) {
@@ -273,11 +284,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const setSubscription = useCallback(async (tier: SubscriptionTier) => {
     // Track the upgrade for the welcome modal (only for paid tiers)
-    if (tier !== "free") {
+    if (tier !== "none") {
       setJustSubscribedTier(tier);
     }
     // Subscribing implicitly means they've seen the paywall
-    await updateState({ subscription: tier, hasSeenPaywall: true });
+    const updates: Partial<AppState> = { subscription: tier, hasSeenPaywall: true };
+
+    await updateState(updates);
   }, [updateState]);
 
   const dismissWelcomeModal = useCallback(() => {
@@ -290,7 +303,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       saveState(next);
       return next;
     });
-    if (state.subscription !== "free") {
+    if (state.subscription !== "none") {
       import("./offline-queue").then(({ enqueue }) => enqueue("profile_update", updates)).catch(() => {});
     }
   }, [state.subscription]);
@@ -303,7 +316,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       return next;
     });
     // Queue for offline sync if paid user
-    if (state.subscription !== "free") {
+    if (state.subscription !== "none") {
       import("./offline-queue").then(({ enqueue }) => enqueue("meal_add", mealWithDefaults)).catch(() => {});
     }
   }, [state.subscription]);
@@ -314,7 +327,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       saveState(next);
       return next;
     });
-    if (state.subscription !== "free") {
+    if (state.subscription !== "none") {
       import("./offline-queue").then(({ enqueue }) => enqueue("meal_remove", { id })).catch(() => {});
     }
   }, [state.subscription]);
@@ -338,7 +351,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       saveState(next);
       return next;
     });
-    if (state.subscription !== "free") {
+    if (state.subscription !== "none") {
       import("./offline-queue").then(({ enqueue }) => enqueue("weight_add", entry)).catch(() => {});
     }
   }, [state.subscription]);
@@ -349,7 +362,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       saveState(next);
       return next;
     });
-    if (state.subscription !== "free") {
+    if (state.subscription !== "none") {
       import("./offline-queue").then(({ enqueue }) => enqueue("weight_remove", { id })).catch(() => {});
     }
   }, [state.subscription]);
@@ -360,7 +373,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       saveState(next);
       return next;
     });
-    if (state.subscription !== "free") {
+    if (state.subscription !== "none") {
       import("./offline-queue").then(({ enqueue }) => enqueue("gains_card_save", card)).catch(() => {});
     }
   }, [state.subscription]);
@@ -489,7 +502,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // ─── Cloud Sync Methods ───
   const syncToCloud = useCallback(async (): Promise<{ success: boolean; message: string }> => {
-    if (state.subscription === "free") {
+    if (state.subscription === "none") {
       setSyncStatusState("upgrade_required");
       return { success: false, message: "Cloud sync requires a paid subscription." };
     }
@@ -518,7 +531,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [state]);
 
   const syncFromCloud = useCallback(async (): Promise<{ success: boolean; message: string }> => {
-    if (state.subscription === "free") {
+    if (state.subscription === "none") {
       setSyncStatusState("upgrade_required");
       return { success: false, message: "Cloud sync requires a paid subscription." };
     }
@@ -572,8 +585,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     try {
       const { vanillaTrpc } = await import("./trpc");
       const result = await vanillaTrpc.sync.getSubscription.query();
-      if (result.tier && result.tier !== "free" && result.tier !== state.subscription) {
-        await updateState({ subscription: result.tier });
+      // Map server tier names to new model
+      const tierMap: Record<string, SubscriptionTier> = {
+        free: "none", essential: "monthly", pro: "monthly", elite: "annual",
+        none: "none", trial: "monthly", monthly: "monthly", annual: "annual",
+      };
+      const mappedTier = tierMap[result.tier] || "none";
+      if (mappedTier !== "none" && mappedTier !== state.subscription) {
+        await updateState({ subscription: mappedTier });
       }
     } catch (error) {
       console.warn("[CloudSync] Failed to restore subscription:", error);

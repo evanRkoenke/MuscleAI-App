@@ -41,8 +41,8 @@ export function AutoSync() {
       // Re-check subscription after restore (need to read from context)
       // Since restoreSubscriptionFromCloud updates state, we use the current
       // subscription value. If user was free and now paid, next launch will sync.
-      if (subscription === "free") {
-        console.log("[AutoSync] Free user — skipping cloud sync");
+      if (subscription === "none") {
+        console.log("[AutoSync] No subscription — skipping cloud sync");
         return;
       }
 

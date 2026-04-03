@@ -30,17 +30,15 @@ import { ProteinWidgetSmall, ProteinWidgetMedium } from "@/components/protein-wi
 const PRIMARY_WHITE = "#FFFFFF";
 
 const TIER_LABELS: Record<string, string> = {
-  free: "Free",
-  essential: "Essential ($9.99/mo)",
-  pro: "Pro ($19.99/mo)",
-  elite: "Elite Annual ($79.99/yr)",
+  none: "No Plan",
+  monthly: "Monthly Essential ($9.99/mo)",
+  annual: "Elite Annual ($59.99/yr)",
 };
 
 const TIER_COLORS: Record<string, string> = {
-  free: "#888888",
-  essential: "#C0C0C0",
-  pro: "#B0B0B0",
-  elite: "#FFFFFF",
+  none: "#444444",
+  monthly: "#C0C0C0",
+  annual: "#FFFFFF",
 };
 
 // Stripe Customer Portal — In production, the server creates a Billing Portal
@@ -48,9 +46,8 @@ const TIER_COLORS: Record<string, string> = {
 // downgrade, update payment methods, and cancel subscriptions.
 // For now we route to the Stripe Checkout links as a fallback.
 const STRIPE_CHECKOUT_LINKS: Record<string, string> = {
-  essential: "https://buy.stripe.com/14A5kwbol0r55F92wmbEA06",
-  pro: "https://buy.stripe.com/8x214gdwt3Dh6Jd1sibEA04",
-  elite: "https://buy.stripe.com/28E00c3VTa1FffJc6WbEA05",
+  monthly: "https://buy.stripe.com/dRmdR2fEBddR1oT5IybEA07",
+  annual: "https://buy.stripe.com/14A9AMdwta1F9Vpdb0bEA08",
 };
 
 // Production Stripe Customer Portal URL
@@ -178,7 +175,7 @@ export default function SettingsScreen() {
           style: "destructive",
           onPress: async () => {
             // In production: call Stripe API to cancel
-            await setSubscription("free");
+            await setSubscription("none");
             if (Platform.OS !== "web") {
               Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
             }
@@ -246,7 +243,7 @@ export default function SettingsScreen() {
             )}
           </TouchableOpacity>
           {/* Upgrade Plan — show for Essential and Pro users (not Elite, they're already at top tier) */}
-          {(subscription === "essential" || subscription === "pro") && (
+          {subscription === "monthly" && (
             <>
               <View style={styles.divider} />
               <TouchableOpacity
@@ -257,11 +254,9 @@ export default function SettingsScreen() {
                 }}
                 activeOpacity={0.7}
               >
-                <Text style={[styles.rowLabel, { color: "#FFFFFF" }]}>Upgrade Plan</Text>
+                <Text style={[styles.rowLabel, { color: "#FFFFFF" }]}>Upgrade to Annual</Text>
                 <View style={styles.upgradeBadge}>
-                  <Text style={styles.upgradeBadgeText}>
-                    {subscription === "essential" ? "PRO / ELITE" : "ELITE"}
-                  </Text>
+                  <Text style={styles.upgradeBadgeText}>SAVE 50%</Text>
                 </View>
               </TouchableOpacity>
             </>

@@ -1,10 +1,9 @@
 /**
- * Muscle AI — Scan Limit Reached Modal
+ * Muscle AI — Subscription Required Modal
  *
- * Shown when a user has exhausted their scan allowance:
- *   - Free: 5 per day (resets at midnight)
- *   - Essential: 50 per month (resets on the 1st)
- * Features a high-contrast CTA to upgrade for unlimited scans.
+ * In the new two-plan model, all subscribers get unlimited scans.
+ * This modal is shown when a user without an active subscription
+ * (tier = "none") tries to scan. It prompts them to subscribe.
  */
 
 import { useEffect, useRef } from "react";
@@ -21,7 +20,6 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import * as Haptics from "expo-haptics";
-import { FREE_DAILY_SCAN_LIMIT, ESSENTIAL_MONTHLY_SCAN_LIMIT } from "@/lib/scan-counter";
 import { Typography } from "@/constants/typography";
 import type { SubscriptionTier } from "@/lib/subscription-features";
 
@@ -44,16 +42,6 @@ export function ScanLimitModal({
 }: ScanLimitModalProps) {
   const scaleAnim = useRef(new Animated.Value(0.85)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
-
-  const isEssential = tier === "essential";
-  const limit = isEssential ? ESSENTIAL_MONTHLY_SCAN_LIMIT : FREE_DAILY_SCAN_LIMIT;
-  const periodLabel = isEssential ? "this month" : "today";
-  const resetLabel = isEssential ? "Your limit resets on the 1st of next month." : "Your limit resets at midnight.";
-  const titleText = isEssential ? "Monthly Limit Reached" : "Daily Limit Reached";
-  const dismissLabel = isEssential ? "Wait Until Next Month" : "Come Back Tomorrow";
-  // Show dots only for free (5 dots), for essential show a text counter instead
-  const showDots = !isEssential;
-  const dotCount = showDots ? FREE_DAILY_SCAN_LIMIT : 0;
 
   useEffect(() => {
     if (visible) {
@@ -136,36 +124,11 @@ export function ScanLimitModal({
           </View>
 
           {/* Title */}
-          <Text style={st.title}>{titleText}</Text>
+          <Text style={st.title}>Subscription Required</Text>
 
           {/* Body */}
           <Text style={st.body}>
-            You've used all {limit} {isEssential ? "Essential" : "free"} scans {periodLabel}.
-            {"\n"}{resetLabel}
-          </Text>
-
-          {/* Scan counter visual */}
-          {showDots ? (
-            <View style={st.counterRow}>
-              {Array.from({ length: dotCount }).map((_, i) => (
-                <View
-                  key={i}
-                  style={[
-                    st.counterDot,
-                    i < scansUsed ? st.counterDotUsed : st.counterDotEmpty,
-                  ]}
-                />
-              ))}
-            </View>
-          ) : (
-            <View style={st.monthlyCounter}>
-              <Text style={st.monthlyCounterNumber}>{scansUsed}</Text>
-              <Text style={st.monthlyCounterSlash}>/</Text>
-              <Text style={st.monthlyCounterNumber}>{limit}</Text>
-            </View>
-          )}
-          <Text style={st.counterLabel}>
-            {scansUsed}/{limit} scans used {periodLabel}
+            Subscribe to unlock unlimited AI meal scans, advanced analytics, and all premium features.
           </Text>
 
           {/* High-contrast upgrade CTA */}
@@ -181,9 +144,7 @@ export function ScanLimitModal({
               style={st.upgradeGrad}
             >
               <IconSymbol name="bolt.fill" size={18} color="#000000" />
-              <Text style={st.upgradeText}>
-                {isEssential ? "Upgrade to Pro for Unlimited" : "Get Unlimited Scans with Elite"}
-              </Text>
+              <Text style={st.upgradeText}>Get Instant Access</Text>
             </LinearGradient>
           </TouchableOpacity>
 
@@ -193,7 +154,7 @@ export function ScanLimitModal({
             onPress={handleDismiss}
             activeOpacity={0.7}
           >
-            <Text style={st.dismissText}>{dismissLabel}</Text>
+            <Text style={st.dismissText}>Not Now</Text>
           </TouchableOpacity>
         </Animated.View>
       </Animated.View>
@@ -245,53 +206,8 @@ const st = StyleSheet.create({
     color: "#888888",
     textAlign: "center",
     lineHeight: 22,
-    marginBottom: 20,
-    paddingHorizontal: 8,
-  },
-  counterRow: {
-    flexDirection: "row",
-    gap: 8,
-    marginBottom: 8,
-  },
-  counterDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-  },
-  counterDotUsed: {
-    backgroundColor: "#FF4444",
-  },
-  counterDotEmpty: {
-    backgroundColor: "#333333",
-    borderWidth: 1,
-    borderColor: "#555555",
-  },
-  monthlyCounter: {
-    flexDirection: "row",
-    alignItems: "baseline",
-    gap: 2,
-    marginBottom: 8,
-  },
-  monthlyCounterNumber: {
-    fontFamily: Typography.fontFamilyBold,
-    fontSize: 28,
-    fontWeight: "700",
-    color: "#FF4444",
-  },
-  monthlyCounterSlash: {
-    fontFamily: Typography.fontFamily,
-    fontSize: 20,
-    fontWeight: "400",
-    color: "#555555",
-    marginHorizontal: 2,
-  },
-  counterLabel: {
-    fontFamily: Typography.fontFamily,
-    fontSize: 12,
-    fontWeight: "600",
-    color: "#666666",
-    letterSpacing: 1,
     marginBottom: 24,
+    paddingHorizontal: 8,
   },
   upgradeBtnWrap: {
     width: "100%",

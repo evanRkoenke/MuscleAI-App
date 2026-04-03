@@ -1,18 +1,20 @@
 /**
  * Muscle AI — useSubscription Hook
  *
- * Provides convenient subscription state and feature-access checks
- * derived from the global AppContext. All feature gating in the UI
- * should use this hook instead of raw subscription string comparisons.
+ * Two-plan model (no trial, immediate charge):
+ *   - monthly ($9.99/mo) — full access
+ *   - annual ($59.99/yr) — full access
+ *   - none = no plan = locked out
  */
 
 import { useMemo } from "react";
 import { useApp } from "@/lib/app-context";
 import {
-  hasFeatureAccess,
+  hasFullAccess,
   isPaidTier,
   getTierLabel,
   getTierColor,
+  hasFeatureAccess,
   type Feature,
   type SubscriptionTier,
 } from "@/lib/subscription-features";
@@ -24,7 +26,10 @@ export function useSubscription() {
     /** Current subscription tier */
     tier: subscription,
 
-    /** Whether the user is on any paid plan */
+    /** Whether the user has full access (monthly or annual) */
+    hasAccess: hasFullAccess(subscription),
+
+    /** Whether the user is on a paid plan */
     isPaid: isPaidTier(subscription),
 
     /** Display label for the current tier */
@@ -36,13 +41,13 @@ export function useSubscription() {
     /** Check if a specific feature is accessible */
     can: (feature: Feature) => hasFeatureAccess(subscription, feature),
 
-    /** Shorthand checks for commonly gated features */
-    canAccessForecast: hasFeatureAccess(subscription, "forecast_12_month"),
-    canAccessPrioritySync: hasFeatureAccess(subscription, "priority_sync"),
-    canAccessAdvancedAnalytics: hasFeatureAccess(subscription, "advanced_analytics"),
-    canAccessUnlimitedScans: hasFeatureAccess(subscription, "unlimited_scans"),
-    canAccessGainsCardsPro: hasFeatureAccess(subscription, "gains_cards_pro"),
-    canEditEmail: hasFeatureAccess(subscription, "edit_email"),
-    canManagePayment: hasFeatureAccess(subscription, "manage_payment"),
+    /** All features are unlocked for any active subscription */
+    canAccessForecast: hasFullAccess(subscription),
+    canAccessPrioritySync: hasFullAccess(subscription),
+    canAccessAdvancedAnalytics: hasFullAccess(subscription),
+    canAccessUnlimitedScans: hasFullAccess(subscription),
+    canAccessGainsCardsPro: hasFullAccess(subscription),
+    canEditEmail: hasFullAccess(subscription),
+    canManagePayment: hasFullAccess(subscription),
   }), [subscription]);
 }

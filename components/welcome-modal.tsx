@@ -2,8 +2,11 @@
  * Muscle AI — Welcome Modal
  *
  * A sleek, premium celebration modal that appears immediately after
- * a successful subscription purchase. Shows tier-specific messaging
+ * a successful subscription purchase. Shows plan-specific messaging
  * and a smooth entrance animation.
+ *
+ * Two-plan model: monthly ($9.99/mo) and annual ($59.99/yr).
+ * Both plans give identical full access.
  */
 
 import { useEffect, useRef } from "react";
@@ -32,24 +35,22 @@ const { width: SW } = Dimensions.get("window");
 
 interface WelcomeModalProps {
   visible: boolean;
-  tier: Exclude<SubscriptionTier, "free">;
+  tier: Exclude<SubscriptionTier, "none">;
   onDismiss: () => void;
 }
 
 export function WelcomeModal({ visible, tier, onDismiss }: WelcomeModalProps) {
   const scaleAnim = useRef(new Animated.Value(0.85)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
-  const message = WELCOME_MESSAGES[tier];
+  const message = (tier === "monthly" || tier === "annual") ? WELCOME_MESSAGES[tier] : null;
   const tierColor = getTierColor(tier);
 
   useEffect(() => {
     if (visible) {
-      // Trigger success haptic
       if (Platform.OS !== "web") {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
 
-      // Entrance animation
       Animated.parallel([
         Animated.spring(scaleAnim, {
           toValue: 1,
@@ -74,7 +75,6 @@ export function WelcomeModal({ visible, tier, onDismiss }: WelcomeModalProps) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
 
-    // Exit animation
     Animated.parallel([
       Animated.timing(scaleAnim, {
         toValue: 0.9,
@@ -111,94 +111,50 @@ export function WelcomeModal({ visible, tier, onDismiss }: WelcomeModalProps) {
             },
           ]}
         >
-          {/* Subtle gradient background */}
           <LinearGradient
             colors={["#0A0A0A", "#111111", "#0A0A0A"]}
             style={StyleSheet.absoluteFill}
           />
 
-          {/* Accent border glow */}
           <View style={[st.glowBorder, { borderColor: tierColor + "40" }]} />
 
-          {/* Crown / tier icon */}
           <View style={[st.iconCircle, { backgroundColor: tierColor + "18" }]}>
-            <IconSymbol
-              name="crown.fill"
-              size={32}
-              color={tierColor}
-            />
+            <IconSymbol name="crown.fill" size={32} color={tierColor} />
           </View>
 
-          {/* Tier badge */}
           <View style={[st.tierBadge, { backgroundColor: tierColor + "15", borderColor: tierColor + "30" }]}>
             <Text style={[st.tierBadgeText, { color: tierColor }]}>
               {getTierLabel(tier).toUpperCase()}
             </Text>
           </View>
 
-          {/* Title */}
           <Text style={st.title}>{message.title}</Text>
-
-          {/* Body */}
           <Text style={st.body}>{message.body}</Text>
 
-          {/* Feature highlights for Elite */}
-          {tier === "elite" && (
-            <View style={st.features}>
-              <View style={st.featureRow}>
-                <IconSymbol name="checkmark.circle.fill" size={16} color="#4ADE80" />
-                <Text style={st.featureText}>12-Month Muscle Forecast</Text>
-              </View>
-              <View style={st.featureRow}>
-                <IconSymbol name="checkmark.circle.fill" size={16} color="#4ADE80" />
-                <Text style={st.featureText}>Priority Sync — Active</Text>
-              </View>
-              <View style={st.featureRow}>
-                <IconSymbol name="checkmark.circle.fill" size={16} color="#4ADE80" />
-                <Text style={st.featureText}>Unlimited AI Scans</Text>
-              </View>
-              <View style={st.featureRow}>
-                <IconSymbol name="checkmark.circle.fill" size={16} color="#4ADE80" />
-                <Text style={st.featureText}>Gains Cards Pro Templates</Text>
-              </View>
+          {/* Feature highlights — same for both plans */}
+          <View style={st.features}>
+            <View style={st.featureRow}>
+              <IconSymbol name="checkmark.circle.fill" size={16} color="#4ADE80" />
+              <Text style={st.featureText}>Unlimited AI Scans</Text>
             </View>
-          )}
-
-          {tier === "pro" && (
-            <View style={st.features}>
-              <View style={st.featureRow}>
-                <IconSymbol name="checkmark.circle.fill" size={16} color="#4ADE80" />
-                <Text style={st.featureText}>Unlimited AI Scans</Text>
-              </View>
-              <View style={st.featureRow}>
-                <IconSymbol name="checkmark.circle.fill" size={16} color="#4ADE80" />
-                <Text style={st.featureText}>Advanced Analytics</Text>
-              </View>
-              <View style={st.featureRow}>
-                <IconSymbol name="checkmark.circle.fill" size={16} color="#4ADE80" />
-                <Text style={st.featureText}>Priority Support</Text>
-              </View>
+            <View style={st.featureRow}>
+              <IconSymbol name="checkmark.circle.fill" size={16} color="#4ADE80" />
+              <Text style={st.featureText}>Advanced Analytics & Insights</Text>
             </View>
-          )}
-
-          {tier === "essential" && (
-            <View style={st.features}>
-              <View style={st.featureRow}>
-                <IconSymbol name="checkmark.circle.fill" size={16} color="#4ADE80" />
-                <Text style={st.featureText}>50 AI Scans / Month</Text>
-              </View>
-              <View style={st.featureRow}>
-                <IconSymbol name="checkmark.circle.fill" size={16} color="#4ADE80" />
-                <Text style={st.featureText}>Basic Analytics</Text>
-              </View>
-              <View style={st.featureRow}>
-                <IconSymbol name="checkmark.circle.fill" size={16} color="#4ADE80" />
-                <Text style={st.featureText}>Full Meal Logging</Text>
-              </View>
+            <View style={st.featureRow}>
+              <IconSymbol name="checkmark.circle.fill" size={16} color="#4ADE80" />
+              <Text style={st.featureText}>12-Month Muscle Forecast</Text>
             </View>
-          )}
+            <View style={st.featureRow}>
+              <IconSymbol name="checkmark.circle.fill" size={16} color="#4ADE80" />
+              <Text style={st.featureText}>Cloud Sync Across Devices</Text>
+            </View>
+            <View style={st.featureRow}>
+              <IconSymbol name="checkmark.circle.fill" size={16} color="#4ADE80" />
+              <Text style={st.featureText}>Gains Cards Pro Templates</Text>
+            </View>
+          </View>
 
-          {/* CTA Button */}
           <TouchableOpacity
             style={st.ctaBtn}
             onPress={handleDismiss}

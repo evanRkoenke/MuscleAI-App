@@ -12,14 +12,14 @@ import { WelcomeModal } from "@/components/welcome-modal";
 export function GlobalWelcome() {
   const { justSubscribedTier, dismissWelcomeModal } = useApp();
 
-  if (!justSubscribedTier || justSubscribedTier === "free") {
+  if (!justSubscribedTier || justSubscribedTier === "none") {
     return null;
   }
 
   return (
     <WelcomeModal
       visible={!!justSubscribedTier}
-      tier={justSubscribedTier as Exclude<typeof justSubscribedTier, "free">}
+      tier={justSubscribedTier as Exclude<typeof justSubscribedTier, "none">}
       onDismiss={dismissWelcomeModal}
     />
   );

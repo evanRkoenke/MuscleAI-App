@@ -1,17 +1,75 @@
 /**
  * Muscle AI — Subscription Feature Access
  *
- * Centralized module that defines which features each subscription tier unlocks.
- * All feature gating across the app should use these helpers instead of
- * hardcoding tier checks. This ensures consistent behavior and makes it
- * trivial to adjust access rules in one place.
+ * Two-plan model (no trial, immediate charge):
+ *   - "monthly"  → Monthly Essential ($9.99/mo) — full access
+ *   - "annual"   → Elite Annual ($59.99/yr) — full access (same features)
+ *   - "none"     → No plan selected (locked out)
+ *
+ * Both paid plans grant identical full access to all features.
+ * There is no free tier or trial — users must pay to access the app.
  */
 
-export type SubscriptionTier = "free" | "essential" | "pro" | "elite";
+export type SubscriptionTier = "none" | "monthly" | "annual";
 
 /**
- * Feature keys used throughout the app.
+ * Check if a subscription tier has full access (any paid plan).
  */
+export function hasFullAccess(tier: SubscriptionTier): boolean {
+  return tier === "monthly" || tier === "annual";
+}
+
+/**
+ * Check if a subscription tier is a paid plan.
+ */
+export function isPaidTier(tier: SubscriptionTier): boolean {
+  return tier === "monthly" || tier === "annual";
+}
+
+/**
+ * Get the display label for a subscription tier.
+ */
+export function getTierLabel(tier: SubscriptionTier): string {
+  switch (tier) {
+    case "annual":
+      return "Elite Annual";
+    case "monthly":
+      return "Monthly Essential";
+    default:
+      return "No Plan";
+  }
+}
+
+/**
+ * Get the tier color for UI display.
+ */
+export function getTierColor(tier: SubscriptionTier): string {
+  switch (tier) {
+    case "annual":
+      return "#FFFFFF";
+    case "monthly":
+      return "#C0C0C0";
+    default:
+      return "#444444";
+  }
+}
+
+/**
+ * Welcome messages after successful subscription.
+ */
+export const WELCOME_MESSAGES: Record<"monthly" | "annual", { title: string; body: string }> = {
+  annual: {
+    title: "Welcome to Muscle AI!",
+    body: "Your Elite Annual plan is active. Full access to all AI scanning, analytics, forecasts, and cloud sync. Let's build that physique!",
+  },
+  monthly: {
+    title: "Welcome to Muscle AI!",
+    body: "Your Monthly Essential plan is active. Full access to all AI scanning, analytics, forecasts, and cloud sync. Let's get started!",
+  },
+};
+
+// ─── Legacy compatibility helpers ───
+
 export type Feature =
   | "ai_scan"
   | "meal_logging"
@@ -26,137 +84,23 @@ export type Feature =
   | "manage_payment";
 
 /**
- * Feature matrix: maps each tier to the set of features it unlocks.
- * Higher tiers inherit all features from lower tiers.
+ * All features are available to any paid subscriber.
  */
-const TIER_FEATURES: Record<SubscriptionTier, Set<Feature>> = {
-  free: new Set([
-    "meal_logging",
-    "ai_scan",
-  ]),
-  essential: new Set([
-    "meal_logging",
-    "ai_scan",
-    "basic_analytics",
-    "edit_email",
-    "manage_payment",
-  ]),
-  pro: new Set([
-    "meal_logging",
-    "ai_scan",
-    "basic_analytics",
-    "advanced_analytics",
-    "unlimited_scans",
-    "priority_support",
-    "edit_email",
-    "manage_payment",
-  ]),
-  elite: new Set([
-    "meal_logging",
-    "ai_scan",
-    "basic_analytics",
-    "advanced_analytics",
-    "unlimited_scans",
-    "priority_support",
-    "forecast_12_month",
-    "priority_sync",
-    "gains_cards_pro",
-    "edit_email",
-    "manage_payment",
-  ]),
-};
-
-/**
- * Check if a given subscription tier has access to a specific feature.
- */
-export function hasFeatureAccess(tier: SubscriptionTier, feature: Feature): boolean {
-  return TIER_FEATURES[tier]?.has(feature) ?? false;
+export function hasFeatureAccess(tier: SubscriptionTier, _feature: Feature): boolean {
+  return hasFullAccess(tier);
 }
 
 /**
- * Check if a subscription tier is a paid tier (not free).
- */
-export function isPaidTier(tier: SubscriptionTier): boolean {
-  return tier !== "free";
-}
-
-/**
- * Get the display label for a subscription tier.
- */
-export function getTierLabel(tier: SubscriptionTier): string {
-  switch (tier) {
-    case "elite":
-      return "Elite Annual";
-    case "pro":
-      return "Pro";
-    case "essential":
-      return "Essential";
-    default:
-      return "Free";
-  }
-}
-
-/**
- * Get the tier color for UI display.
- */
-export function getTierColor(tier: SubscriptionTier): string {
-  switch (tier) {
-    case "elite":
-      return "#FFD700";
-    case "pro":
-      return "#C0C0C0";
-    case "essential":
-      return "#CD7F32";
-    default:
-      return "#666666";
-  }
-}
-
-/**
- * Get the minimum tier required for a given feature.
- * Useful for showing "Upgrade to X" messages.
- */
-export function getMinimumTierForFeature(feature: Feature): SubscriptionTier {
-  const tiers: SubscriptionTier[] = ["free", "essential", "pro", "elite"];
-  for (const tier of tiers) {
-    if (TIER_FEATURES[tier].has(feature)) {
-      return tier;
-    }
-  }
-  return "elite"; // Default to highest tier
-}
-
-/**
- * Tier hierarchy for comparison (higher number = higher tier).
- */
-const TIER_RANK: Record<SubscriptionTier, number> = {
-  free: 0,
-  essential: 1,
-  pro: 2,
-  elite: 3,
-};
-
-/**
- * Check if tier A is at least as high as tier B.
+ * Tier hierarchy for comparison.
  */
 export function isTierAtLeast(current: SubscriptionTier, required: SubscriptionTier): boolean {
-  return TIER_RANK[current] >= TIER_RANK[required];
+  const rank: Record<SubscriptionTier, number> = { none: 0, monthly: 1, annual: 2 };
+  return rank[current] >= rank[required];
 }
 
 /**
- * Welcome messages for each paid tier after successful purchase.
+ * Get the minimum tier for any feature — always "monthly" since all features require a paid plan.
  */
-export const WELCOME_MESSAGES: Record<Exclude<SubscriptionTier, "free">, { title: string; body: string }> = {
-  elite: {
-    title: "Welcome to the 1%!",
-    body: "Your 12-Month Forecast and Priority Sync are now active — let's build that physique.",
-  },
-  pro: {
-    title: "Welcome to Pro!",
-    body: "Unlimited AI scans and advanced analytics are now yours. Time to level up your nutrition.",
-  },
-  essential: {
-    title: "Welcome to Essential!",
-    body: "You're all set with AI-powered meal scanning and analytics. Let's start tracking.",
-  },
-};
+export function getMinimumTierForFeature(_feature: Feature): SubscriptionTier {
+  return "monthly";
+}

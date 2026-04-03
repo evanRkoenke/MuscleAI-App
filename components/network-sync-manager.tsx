@@ -24,7 +24,7 @@ export function NetworkSyncManager() {
   const wasOffline = useRef(false);
   const lastFlush = useRef(0);
 
-  const shouldSync = isAuthenticated && subscription !== "free";
+  const shouldSync = isAuthenticated && subscription !== "none";
 
   const flushQueue = useCallback(async () => {
     if (!shouldSync || isFlushing.current) return;

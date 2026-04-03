@@ -408,3 +408,28 @@
 ## Paywall Back Arrow
 - [x] Add back arrow button to paywall screen header (shows when navigated from settings, profile, home, forecast)
 - [x] Updated all paywall navigation calls to pass from= param
+
+## Subscription Model Overhaul
+- [x] Replace old 4-tier model (free/essential/pro/elite) with 2-plan model (monthly/annual)
+- [x] Monthly Essential: $9.99/mo — full access, Stripe URL configured
+- [x] Elite Annual: $59.99/yr — full access, "Best Value - Save 50%", Stripe URL configured
+- [x] Both plans give identical full access to all features
+- [x] Rewrite paywall UI with only two plan cards
+- [x] Gate: Dashboard locked until user selects a plan and completes Stripe checkout
+- [x] Post-checkout: grant full access to all AI scanning and tracking features
+- [x] Restore Purchase button visible on paywall
+- [x] Update subscription-features.ts to remove old tier logic
+- [x] Update settings screen to remove old tier references
+- [x] Update auth-gate for new gating logic
+- [x] Remove "Continue with Free" option — all users must choose a plan
+- [x] Update all screens referencing old subscription tiers
+
+## Remove Free Trial — Immediate Charge
+- [x] Remove "trial" tier from SubscriptionTier type (only: none, monthly, annual)
+- [x] Update paywall copy: "Start Free Trial" → "Get Instant Access" / "Unlock MuscleAI"
+- [x] Verify Stripe URLs are correct (Monthly $9.99, Annual $59.99)
+- [x] Remove trialStartDate and trial expiry logic from app-context
+- [x] Update auth-gate: require confirmed payment (monthly/annual) before dashboard
+- [x] Update subscription-features, iap-service, scan-counter for no trial tier
+- [x] Update all screens referencing "trial" tier
+- [x] Update tests for no-trial model (295 passed, 0 TS errors)

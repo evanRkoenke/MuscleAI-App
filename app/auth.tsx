@@ -28,7 +28,7 @@ type AuthMode = "login" | "signup" | "forgot";
  * Auth Screen
  *
  * Two modes of operation:
- * 1. **Pre-paywall** (default): User just finished onboarding, subscription is "free".
+ * 1. **Pre-paywall** (default): User just finished onboarding, subscription is "none".
  *    Tapping Google/Apple/Sign Up redirects to /paywall first.
  *    They must subscribe before they can actually log in.
  *
@@ -49,7 +49,7 @@ export default function AuthScreen() {
   const { subscription, setAuthenticated, updateProfile, resetOnboarding, markPaywallSeen } = useApp();
 
   // If user has a paid subscription OR was explicitly sent back from paywall, allow login
-  const canLogin = subscription !== "free" || params.returnFromPaywall === "true";
+  const canLogin = subscription !== "none" || params.returnFromPaywall === "true";
 
   const clearMessages = useCallback(() => {
     setError("");
