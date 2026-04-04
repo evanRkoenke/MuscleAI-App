@@ -81,6 +81,16 @@ export default function SettingsScreen() {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
+    // Clear persisted session token and user info from SecureStore
+    // This ensures the auth state is fully cleared and the user
+    // won't be auto-logged back in on next app launch.
+    try {
+      const Auth = require("@/lib/_core/auth");
+      await Auth.removeSessionToken();
+      await Auth.clearUserInfo();
+    } catch (e) {
+      console.warn("[Settings] Failed to clear auth tokens:", e);
+    }
     await setAuthenticated(false);
     router.replace("/auth");
   };

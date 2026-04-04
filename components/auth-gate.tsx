@@ -8,32 +8,44 @@ import { useApp } from "@/lib/app-context";
  * Flow:
  * 1. First launch → onboarding quiz
  * 2. After onboarding → auth/login page
- * 3. On auth page, user taps Google/Apple → redirected to paywall first (handled by auth.tsx)
- * 4. After viewing paywall → redirected back to auth to complete OAuth login
- * 5. After successful OAuth → tabs (main app)
+ * 3. After successful OAuth → tabs (main app)
  *
- * Key principle:
+ * Key principles:
  * - Once a user is **authenticated** (completed OAuth), they ALWAYS get into the app.
  * - Subscription status gates specific premium features inside the app,
  *   NOT the app entry itself.
- * - This prevents the redirect loop where OAuth succeeds but the user
- *   gets kicked back to auth because subscription is still "none".
+ * - Navigation is debounced to prevent rapid redirect loops.
+ * - The `isNavigating` ref prevents concurrent redirects from racing.
  */
 export function AuthGate() {
   const { hasCompletedOnboarding, isAuthenticated, loading } = useApp();
   const router = useRouter();
   const segments = useSegments();
-  const hasRedirected = useRef(false);
+  const hasRedirectedToTabs = useRef(false);
+  const isNavigating = useRef(false);
+  const navigationTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Reset the redirect guard when user logs out so re-login can redirect to tabs
   useEffect(() => {
     if (!isAuthenticated) {
-      hasRedirected.current = false;
+      hasRedirectedToTabs.current = false;
     }
   }, [isAuthenticated]);
 
+  // Cleanup navigation timer on unmount
+  useEffect(() => {
+    return () => {
+      if (navigationTimer.current) {
+        clearTimeout(navigationTimer.current);
+      }
+    };
+  }, []);
+
   useEffect(() => {
     if (loading) return;
+
+    // Prevent concurrent navigation attempts
+    if (isNavigating.current) return;
 
     const currentRoute = "/" + segments.join("/");
 
@@ -43,7 +55,12 @@ export function AuthGate() {
     if (!hasCompletedOnboarding) {
       // Step 1: First-time user — send to onboarding quiz
       if (!currentRoute.includes("onboarding")) {
+        isNavigating.current = true;
         router.replace("/onboarding");
+        // Reset navigation lock after a short delay
+        navigationTimer.current = setTimeout(() => {
+          isNavigating.current = false;
+        }, 500);
       }
     } else if (!isAuthenticated) {
       // Step 2: Onboarded but not logged in — send to auth page
@@ -53,21 +70,36 @@ export function AuthGate() {
         !currentRoute.includes("paywall") &&
         !currentRoute.includes("onboarding")
       ) {
+        isNavigating.current = true;
         router.replace("/auth");
+        navigationTimer.current = setTimeout(() => {
+          isNavigating.current = false;
+        }, 500);
       }
     } else {
       // Step 3: Authenticated — allow into tabs
-      // If they're still on auth/paywall/onboarding, redirect to tabs
-      if (
-        currentRoute.includes("onboarding") ||
+      // If they're still on auth/paywall/onboarding, redirect to tabs ONCE
+      const isOnAuthScreen =
         currentRoute === "/auth" ||
-        currentRoute.includes("/auth?") ||
+        currentRoute.startsWith("/auth?") ||
+        currentRoute.includes("/(auth)");
+      const isOnPaywall =
         currentRoute === "/paywall" ||
-        currentRoute.includes("/paywall?")
-      ) {
-        if (!hasRedirected.current) {
-          hasRedirected.current = true;
-          router.replace("/(tabs)");
+        currentRoute.startsWith("/paywall?");
+      const isOnOnboarding = currentRoute.includes("onboarding");
+
+      if (isOnAuthScreen || isOnPaywall || isOnOnboarding) {
+        if (!hasRedirectedToTabs.current) {
+          hasRedirectedToTabs.current = true;
+          isNavigating.current = true;
+          // Use a small delay to ensure state has fully committed
+          navigationTimer.current = setTimeout(() => {
+            router.replace("/(tabs)");
+            // Reset navigation lock after navigation completes
+            setTimeout(() => {
+              isNavigating.current = false;
+            }, 300);
+          }, 50);
         }
       }
     }

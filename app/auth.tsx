@@ -33,6 +33,10 @@ import { startOAuthLogin } from "@/constants/oauth";
  *
  * After successful sign-in, the identity token is sent to our server
  * for verification, session creation, and user sync.
+ *
+ * CRITICAL: All state updates (setAuthenticated, markPaywallSeen) MUST be
+ * awaited before navigation to prevent AuthGate from seeing stale state
+ * and redirecting back to /auth.
  */
 export default function AuthScreen() {
   const [loading, setLoading] = useState(false);
@@ -65,13 +69,27 @@ export default function AuthScreen() {
       }
 
       if (result.success) {
-        // Authentication succeeded — mark as authenticated and navigate to tabs
+        // Authentication succeeded — MUST await state updates before navigating
+        // This prevents the race condition where AuthGate sees stale isAuthenticated=false
+        // and redirects back to /auth before the state has committed.
         if (Platform.OS !== "web") {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         }
-        setAuthenticated(true);
-        markPaywallSeen();
-        router.replace("/(tabs)");
+
+        console.log("[Auth] Native sign-in succeeded, updating app state...");
+
+        // AWAIT both state updates to ensure they persist to AsyncStorage
+        // before AuthGate re-evaluates on the next render cycle
+        await setAuthenticated(true);
+        await markPaywallSeen();
+
+        console.log("[Auth] App state updated, navigating to tabs...");
+
+        // Small delay to ensure React state has committed before navigation
+        // This gives the AuthGate effect time to see the updated isAuthenticated=true
+        setTimeout(() => {
+          router.replace("/(tabs)");
+        }, 100);
       } else if (result.error === "NATIVE_MODULE_UNAVAILABLE") {
         // Native module not available (e.g., Expo Go) — fall back to Manus OAuth
         setLoading(false);

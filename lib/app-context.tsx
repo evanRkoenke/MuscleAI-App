@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Platform } from "react-native";
 
 type SubscriptionTier = "none" | "monthly" | "annual";
 
@@ -183,6 +184,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const loadState = async () => {
     try {
       const stored = await AsyncStorage.getItem(STORAGE_KEY);
+      let restoredState = defaultState;
       if (stored) {
         const parsed = JSON.parse(stored);
         // Migrate old meals without sugar field
@@ -203,8 +205,31 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           }
         }
 
-        setState({ ...defaultState, ...parsed });
+        restoredState = { ...defaultState, ...parsed };
       }
+
+      // CRITICAL: Rehydrate isAuthenticated from persisted session token.
+      // This fixes the race condition where native sign-in stores the session
+      // token in SecureStore but the AsyncStorage write for isAuthenticated
+      // didn't complete before the app reloaded or AuthGate re-evaluated.
+      // If a valid session token exists in SecureStore, the user IS authenticated
+      // regardless of what AsyncStorage says.
+      if (!restoredState.isAuthenticated && Platform.OS !== "web") {
+        try {
+          const Auth = require("@/lib/_core/auth");
+          const sessionToken = await Auth.getSessionToken();
+          if (sessionToken) {
+            console.log("[AppContext] Rehydrating isAuthenticated from persisted session token");
+            restoredState = { ...restoredState, isAuthenticated: true };
+            // Persist the corrected state so this doesn't need to happen again
+            await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(restoredState));
+          }
+        } catch (e) {
+          console.warn("[AppContext] Failed to check session token for rehydration:", e);
+        }
+      }
+
+      setState(restoredState);
     } catch (e) {
       console.warn("Failed to load app state:", e);
     } finally {

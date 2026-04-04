@@ -555,3 +555,11 @@
 - [x] Ensure ITSAppUsesNonExemptEncryption: false is in ios.infoPlist
 - [x] Update app.json with matching values
 - [x] Push to GitHub main branch
+
+## Fix Login Redirect Loop (Final Fix)
+- [x] Root cause: Google/Apple sign-in completes, dashboard briefly shows, then redirects back to login
+- [x] Audit AuthGate logic for race conditions or state resets
+- [x] Audit session persistence (SecureStore/AsyncStorage) to ensure token survives navigation
+- [x] Audit app-context auth state management for stale closures or re-initialization
+- [x] Fix the issue permanently so authenticated users stay on dashboard
+- [x] Test and push to GitHub
