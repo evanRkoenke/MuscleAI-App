@@ -546,3 +546,12 @@
 - [x] Update tests: replaced Stripe link tests with native IAP product ID tests
 - [x] 298 tests passing, 0 TypeScript errors
 - [x] Push to GitHub
+
+## Fix Expo Launch CommandError — app.config.ts Production Values
+- [x] Update owner to "evankoenkes-organization" in app.config.ts
+- [x] Update projectId to "aace2de1-ac67-4116-9acf-5820c84bb35c" in app.config.ts extra.eas
+- [x] Ensure appleTeamId RS439TZ92G is set
+- [x] Ensure bundleIdentifier com.evankoenke.muscleaiorcalorietracker is set
+- [x] Ensure ITSAppUsesNonExemptEncryption: false is in ios.infoPlist
+- [x] Update app.json with matching values
+- [x] Push to GitHub main branch

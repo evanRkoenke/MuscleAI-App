@@ -28,10 +28,10 @@ const config: ExpoConfig = {
   newArchEnabled: true,
   extra: {
     eas: {
-      projectId: "18396eeb-c055-4675-932a-b23ba5ca5dd7",
+      projectId: "aace2de1-ac67-4116-9acf-5820c84bb35c",
     },
   },
-  owner: "evankoenke",
+  owner: "evankoenkes-organization",
   ios: {
     supportsTablet: true,
     bundleIdentifier: env.iosBundleId,
