@@ -574,3 +574,7 @@
 
 ## Fix Expo Go Preview
 - [x] Diagnose Expo Go preview — sandbox runs web-only mode; Expo Go requires local dev or EAS Build
+
+## Fix Expo Go HTTP 500 Error
+- [x] Dev server runs with --web flag only, causing HTTP 500 for Expo Go native bundle requests
+- [x] Reconfigure dev server to serve both web and native bundles (removed --web flag from dev:metro script)
