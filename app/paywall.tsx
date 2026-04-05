@@ -175,12 +175,9 @@ export default function PaywallScreen() {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
 
-      // Navigate to app
-      if (isAuthenticated) {
-        router.replace("/(tabs)");
-      } else {
-        router.replace("/auth?returnFromPaywall=true" as any);
-      }
+      // Navigate to app — user is already authenticated at this point
+      await markPaywallSeen();
+      router.replace("/(tabs)");
     } catch (error: any) {
       console.error("[Paywall] Subscribe error:", error);
 
@@ -297,14 +294,31 @@ export default function PaywallScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* ─── Back Arrow ─── */}
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-          activeOpacity={0.7}
-        >
-          <IconSymbol name="arrow.left" size={22} color="#FFFFFF" />
-        </TouchableOpacity>
+        {/* ─── Header Row: Back + Skip ─── */}
+        <View style={styles.headerRow}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+            activeOpacity={0.7}
+          >
+            <IconSymbol name="arrow.left" size={22} color="#FFFFFF" />
+          </TouchableOpacity>
+          {isAuthenticated && (
+            <TouchableOpacity
+              style={styles.skipButton}
+              onPress={async () => {
+                if (Platform.OS !== "web") {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                }
+                await markPaywallSeen();
+                router.replace("/(tabs)");
+              }}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.skipText}>Skip for now</Text>
+            </TouchableOpacity>
+          )}
+        </View>
 
         {/* ─── Header ─── */}
         <View style={styles.header}>
@@ -466,11 +480,23 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     paddingBottom: 40,
   },
-  backButton: {
-    alignSelf: "flex-start",
-    padding: 8,
+  headerRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginTop: 8,
     marginBottom: 8,
+  },
+  backButton: {
+    padding: 8,
+  },
+  skipButton: {
+    padding: 8,
+  },
+  skipText: {
+    fontSize: 15,
+    fontWeight: "500",
+    color: "#888888",
   },
   header: {
     alignItems: "center",

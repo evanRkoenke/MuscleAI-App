@@ -10,7 +10,7 @@ import { useApp } from "@/lib/app-context";
 
 export default function OAuthCallback() {
   const router = useRouter();
-  const { setAuthenticated: setAppAuthenticated, markPaywallSeen } = useApp();
+  const { setAuthenticated: setAppAuthenticated, subscription } = useApp();
   const params = useLocalSearchParams<{
     code?: string;
     state?: string;
@@ -23,12 +23,14 @@ export default function OAuthCallback() {
   const hasHandled = useRef(false);
 
   /**
-   * After successful OAuth, always go to tabs.
-   * The user must have already subscribed (paid) to reach the OAuth flow,
-   * so they've implicitly seen the paywall.
+   * After successful OAuth, go to paywall if no subscription, otherwise tabs.
+   * Users sign in FIRST, then see the paywall.
    */
   const getPostAuthDestination = (): string => {
-    return "/(tabs)";
+    if (subscription !== "none") {
+      return "/(tabs)";
+    }
+    return "/paywall";
   };
 
   // 30-second timeout for the entire OAuth callback
@@ -84,9 +86,8 @@ export default function OAuthCallback() {
             }
           }
 
-          // Mark as authenticated in app context and paywall as seen
+          // Mark as authenticated in app context
           await setAppAuthenticated(true);
-          await markPaywallSeen();
           setStatus("success");
           const destination = getPostAuthDestination();
           console.log(`[OAuth] Web authentication successful, redirecting to ${destination}...`);
@@ -178,7 +179,6 @@ export default function OAuthCallback() {
           await Auth.setSessionToken(sessionToken);
           console.log("[OAuth] Session token stored successfully");
           await setAppAuthenticated(true);
-          await markPaywallSeen();
           setStatus("success");
           const dest = getPostAuthDestination();
           console.log(`[OAuth] Redirecting to ${dest}...`);
@@ -231,9 +231,8 @@ export default function OAuthCallback() {
             console.log("[OAuth] No user data in result");
           }
 
-          // Mark as authenticated in app context and paywall as seen
+          // Mark as authenticated in app context
           await setAppAuthenticated(true);
-          await markPaywallSeen();
           setStatus("success");
           const dest = getPostAuthDestination();
           console.log(`[OAuth] Authentication successful, redirecting to ${dest}...`);
@@ -290,7 +289,7 @@ export default function OAuthCallback() {
             </Text>
             <Text
               className="mt-4 text-base font-semibold text-primary"
-              onPress={() => router.replace("/auth?returnFromPaywall=true" as any)}
+              onPress={() => router.replace("/auth" as any)}
             >
               Back to Sign In
             </Text>

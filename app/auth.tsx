@@ -25,18 +25,14 @@ import { startOAuthLogin } from "@/constants/oauth";
 /**
  * Auth Screen — Sign in with Google or Apple
  *
- * Uses native sign-in on iOS/Android:
- * - Apple: Native iOS "Sign in with Apple" sheet (expo-apple-authentication)
- * - Google: Native Google Sign-In popup (@react-native-google-signin/google-signin)
+ * NEW FLOW: Users sign in FIRST, then see the paywall.
  *
- * Falls back to Manus OAuth on web.
+ * After successful sign-in:
+ * - If user has a subscription → go to tabs
+ * - If user has no subscription → go to paywall
  *
- * After successful sign-in, the identity token is sent to our server
- * for verification, session creation, and user sync.
- *
- * CRITICAL: All state updates (setAuthenticated, markPaywallSeen) MUST be
- * awaited before navigation to prevent AuthGate from seeing stale state
- * and redirecting back to /auth.
+ * CRITICAL: All state updates (setAuthenticated) MUST be awaited before
+ * navigation to prevent AuthGate from seeing stale state.
  */
 export default function AuthScreen() {
   const [loading, setLoading] = useState(false);
@@ -44,12 +40,24 @@ export default function AuthScreen() {
   const [error, setError] = useState("");
   const router = useRouter();
   const params = useLocalSearchParams<{ returnFromPaywall?: string }>();
-  const { subscription, resetOnboarding, setAuthenticated, markPaywallSeen } = useApp();
+  const { subscription, resetOnboarding, setAuthenticated } = useApp();
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const clearError = useCallback(() => {
     setError("");
   }, []);
+
+  /**
+   * Determine where to navigate after successful sign-in.
+   * If user already has a subscription, go to tabs.
+   * Otherwise, go to paywall to choose a plan.
+   */
+  const getPostAuthDestination = (): string => {
+    if (subscription !== "none") {
+      return "/(tabs)";
+    }
+    return "/paywall";
+  };
 
   const handleNativeAuth = async (provider: "Google" | "Apple") => {
     if (Platform.OS !== "web") {
@@ -69,26 +77,21 @@ export default function AuthScreen() {
       }
 
       if (result.success) {
-        // Authentication succeeded — MUST await state updates before navigating
-        // This prevents the race condition where AuthGate sees stale isAuthenticated=false
-        // and redirects back to /auth before the state has committed.
         if (Platform.OS !== "web") {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         }
 
         console.log("[Auth] Native sign-in succeeded, updating app state...");
 
-        // AWAIT both state updates to ensure they persist to AsyncStorage
-        // before AuthGate re-evaluates on the next render cycle
+        // AWAIT state update to ensure it persists before AuthGate re-evaluates
         await setAuthenticated(true);
-        await markPaywallSeen();
 
-        console.log("[Auth] App state updated, navigating to tabs...");
+        const destination = getPostAuthDestination();
+        console.log("[Auth] App state updated, navigating to", destination);
 
         // Small delay to ensure React state has committed before navigation
-        // This gives the AuthGate effect time to see the updated isAuthenticated=true
         setTimeout(() => {
-          router.replace("/(tabs)");
+          router.replace(destination as any);
         }, 100);
       } else if (result.error === "NATIVE_MODULE_UNAVAILABLE") {
         // Native module not available (e.g., Expo Go) — fall back to Manus OAuth

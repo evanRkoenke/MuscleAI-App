@@ -3,32 +3,34 @@ import { useRouter, useSegments } from "expo-router";
 import { useApp } from "@/lib/app-context";
 
 /**
- * AuthGate — Redirect users based on onboarding and authentication state.
+ * AuthGate — Redirect users based on onboarding, authentication, and paywall state.
  *
- * Flow:
+ * NEW Flow (sign in first, then paywall):
  * 1. First launch → onboarding quiz
- * 2. After onboarding → auth/login page
- * 3. After successful OAuth → tabs (main app)
+ * 2. After onboarding → auth/login page (sign in with Google/Apple)
+ * 3. After successful sign-in → paywall (if no subscription yet)
+ * 4. After subscribing (or if already subscribed) → tabs (main app)
  *
  * Key principles:
- * - Once a user is **authenticated** (completed OAuth), they ALWAYS get into the app.
- * - Subscription status gates specific premium features inside the app,
- *   NOT the app entry itself.
+ * - Users sign in FIRST, then see the paywall.
+ * - Authenticated users with a subscription go straight to tabs.
+ * - Authenticated users WITHOUT a subscription see the paywall.
  * - Navigation is debounced to prevent rapid redirect loops.
- * - The `isNavigating` ref prevents concurrent redirects from racing.
  */
 export function AuthGate() {
-  const { hasCompletedOnboarding, isAuthenticated, loading } = useApp();
+  const { hasCompletedOnboarding, isAuthenticated, hasSeenPaywall, subscription, loading } = useApp();
   const router = useRouter();
   const segments = useSegments();
   const hasRedirectedToTabs = useRef(false);
+  const hasRedirectedToPaywall = useRef(false);
   const isNavigating = useRef(false);
   const navigationTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Reset the redirect guard when user logs out so re-login can redirect to tabs
+  // Reset redirect guards when user logs out
   useEffect(() => {
     if (!isAuthenticated) {
       hasRedirectedToTabs.current = false;
+      hasRedirectedToPaywall.current = false;
     }
   }, [isAuthenticated]);
 
@@ -52,22 +54,32 @@ export function AuthGate() {
     // Don't redirect if on oauth callback — let it finish
     if (currentRoute.includes("oauth")) return;
 
+    // Also don't redirect if on support, settings, profile, scan-meal, gains-card screens
+    // (these are in-app screens that authenticated users should access freely)
+    if (
+      currentRoute.includes("support") ||
+      currentRoute.includes("settings") ||
+      currentRoute.includes("profile") ||
+      currentRoute.includes("scan-meal") ||
+      currentRoute.includes("gains-card")
+    ) {
+      return;
+    }
+
     if (!hasCompletedOnboarding) {
       // Step 1: First-time user — send to onboarding quiz
       if (!currentRoute.includes("onboarding")) {
         isNavigating.current = true;
         router.replace("/onboarding");
-        // Reset navigation lock after a short delay
         navigationTimer.current = setTimeout(() => {
           isNavigating.current = false;
         }, 500);
       }
     } else if (!isAuthenticated) {
       // Step 2: Onboarded but not logged in — send to auth page
-      // Allow staying on paywall or onboarding (retake quiz)
+      // Allow staying on onboarding (retake quiz)
       if (
         !currentRoute.includes("auth") &&
-        !currentRoute.includes("paywall") &&
         !currentRoute.includes("onboarding")
       ) {
         isNavigating.current = true;
@@ -76,26 +88,36 @@ export function AuthGate() {
           isNavigating.current = false;
         }, 500);
       }
+    } else if (subscription === "none" && !hasSeenPaywall) {
+      // Step 3: Authenticated but no subscription and hasn't seen paywall — show paywall
+      // Allow staying on paywall
+      if (!currentRoute.includes("paywall")) {
+        if (!hasRedirectedToPaywall.current) {
+          hasRedirectedToPaywall.current = true;
+          isNavigating.current = true;
+          navigationTimer.current = setTimeout(() => {
+            router.replace("/paywall");
+            setTimeout(() => {
+              isNavigating.current = false;
+            }, 300);
+          }, 50);
+        }
+      }
     } else {
-      // Step 3: Authenticated — allow into tabs
-      // If they're still on auth/paywall/onboarding, redirect to tabs ONCE
+      // Step 4: Authenticated AND (has subscription OR has seen paywall) — allow into tabs
+      // If they're still on auth/onboarding, redirect to tabs
       const isOnAuthScreen =
         currentRoute === "/auth" ||
         currentRoute.startsWith("/auth?") ||
         currentRoute.includes("/(auth)");
-      const isOnPaywall =
-        currentRoute === "/paywall" ||
-        currentRoute.startsWith("/paywall?");
       const isOnOnboarding = currentRoute.includes("onboarding");
 
-      if (isOnAuthScreen || isOnPaywall || isOnOnboarding) {
+      if (isOnAuthScreen || isOnOnboarding) {
         if (!hasRedirectedToTabs.current) {
           hasRedirectedToTabs.current = true;
           isNavigating.current = true;
-          // Use a small delay to ensure state has fully committed
           navigationTimer.current = setTimeout(() => {
             router.replace("/(tabs)");
-            // Reset navigation lock after navigation completes
             setTimeout(() => {
               isNavigating.current = false;
             }, 300);
@@ -103,7 +125,7 @@ export function AuthGate() {
         }
       }
     }
-  }, [hasCompletedOnboarding, isAuthenticated, loading, segments]);
+  }, [hasCompletedOnboarding, isAuthenticated, hasSeenPaywall, subscription, loading, segments]);
 
   return null;
 }

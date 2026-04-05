@@ -563,3 +563,14 @@
 - [x] Audit app-context auth state management for stale closures or re-initialization
 - [x] Fix the issue permanently so authenticated users stay on dashboard
 - [x] Test and push to GitHub
+
+## Reverse Auth Flow: Sign In First, Then Paywall
+- [x] Change flow from onboarding→paywall→auth→tabs to onboarding→auth→paywall→tabs
+- [x] Update AuthGate to redirect authenticated users to paywall before tabs (if no subscription)
+- [x] Update auth.tsx to navigate to paywall after successful sign-in (not directly to tabs)
+- [x] Update paywall.tsx to navigate to tabs after subscription or dismiss
+- [x] Ensure oauth/callback.tsx follows the same new flow
+- [x] Remove any pre-auth paywall redirects
+
+## Fix Expo Go Preview
+- [x] Diagnose Expo Go preview — sandbox runs web-only mode; Expo Go requires local dev or EAS Build
