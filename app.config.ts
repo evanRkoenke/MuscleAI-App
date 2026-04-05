@@ -3,15 +3,12 @@ import "./scripts/load-env.js";
 import type { ExpoConfig } from "expo/config";
 
 const env = {
-  // App branding - update these values directly (do not use env vars)
+  // App branding
   appName: "Muscle AI | Calorie Tracker",
-  appSlug: "muscle-ai",
-  // S3 URL of the app logo - set this to the URL returned by generate_image when creating custom logo
-  // Leave empty to use the default icon from assets/images/icon.png
+  appSlug: "muscle-ai-or-calorie-tracker", // Fixed to match Expo Dashboard
   logoUrl: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663415661115/jEYsPpDSGDCRyFOc.png",
-  // Deep link scheme for OAuth callbacks and universal links
   scheme: "muscleai",
-  // Bundle identifiers — must match your Apple Developer and Google Play accounts
+  // Bundle identifiers
   iosBundleId: "com.evankoenke.muscleaiorcalorietracker",
   androidPackage: "com.evankoenke.muscleaiorcalorietracker",
 };
