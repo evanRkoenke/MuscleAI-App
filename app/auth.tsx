@@ -239,6 +239,25 @@ export default function AuthScreen() {
             </TouchableOpacity>
           )}
 
+          {/* Guest Access — bypass login to preview the app */}
+          <TouchableOpacity
+            style={styles.guestButton}
+            onPress={async () => {
+              if (Platform.OS !== "web") {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              }
+              await setAuthenticated(true);
+              setTimeout(() => {
+                router.replace("/(tabs)");
+              }, 100);
+            }}
+            activeOpacity={0.7}
+            disabled={loading}
+          >
+            <Text style={styles.guestButtonText}>Guest Access</Text>
+            <Text style={styles.guestSubtext}>Browse the app without signing in</Text>
+          </TouchableOpacity>
+
           {/* Retake Quiz link */}
           <TouchableOpacity
             style={styles.retakeButton}
@@ -345,6 +364,26 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: "#F0F0F0",
+  },
+  guestButton: {
+    alignItems: "center",
+    justifyContent: "center",
+    height: 56,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#CCFF00",
+    backgroundColor: "rgba(204, 255, 0, 0.08)",
+    marginTop: 8,
+  },
+  guestButtonText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#CCFF00",
+  },
+  guestSubtext: {
+    fontSize: 12,
+    color: "rgba(204, 255, 0, 0.5)",
+    marginTop: 2,
   },
   retakeButton: {
     flexDirection: "row",

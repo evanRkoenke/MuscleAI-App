@@ -578,3 +578,7 @@
 ## Fix Expo Go HTTP 500 Error
 - [x] Dev server runs with --web flag only, causing HTTP 500 for Expo Go native bundle requests
 - [x] Reconfigure dev server to serve both web and native bundles (removed --web flag from dev:metro script)
+
+## Revert UI and Add Guest Access
+- [x] Revert UI/UX back to original V1 design (rolled back to bed7e1df)
+- [ ] Add "Guest Access" button to auth screen that bypasses login and goes to dashboard
