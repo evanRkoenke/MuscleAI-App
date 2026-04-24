@@ -595,3 +595,6 @@
 - [x] Update tab bar with premium dark styling and green active tint
 - [x] Fix ESLint errors (unescaped quotes in JSX)
 - [ ] Strip/gate console.log statements behind __DEV__ (deferred)
+
+## Bypass Login for UI Preview
+- [x] Add "Bypass Login" button to auth screen that navigates directly to dashboard

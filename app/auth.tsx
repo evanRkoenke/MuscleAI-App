@@ -239,6 +239,25 @@ export default function AuthScreen() {
             </TouchableOpacity>
           )}
 
+          {/* Bypass Login — for UI preview */}
+          <TouchableOpacity
+            style={styles.bypassButton}
+            onPress={async () => {
+              if (Platform.OS !== "web") {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              }
+              await setAuthenticated(true);
+              setTimeout(() => {
+                router.replace("/(tabs)");
+              }, 100);
+            }}
+            activeOpacity={0.7}
+            disabled={loading}
+          >
+            <Text style={styles.bypassButtonText}>Bypass Login</Text>
+            <Text style={styles.bypassSubtext}>Preview the new UI</Text>
+          </TouchableOpacity>
+
           {/* Retake Quiz link */}
           <TouchableOpacity
             style={styles.retakeButton}
@@ -351,6 +370,26 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: "#F0F0F0",
+  },
+  bypassButton: {
+    alignItems: "center",
+    justifyContent: "center",
+    height: 56,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "rgba(57, 255, 20, 0.3)",
+    backgroundColor: "rgba(57, 255, 20, 0.08)",
+    marginTop: 8,
+  },
+  bypassButtonText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#39FF14",
+  },
+  bypassSubtext: {
+    fontSize: 12,
+    color: "rgba(57, 255, 20, 0.5)",
+    marginTop: 2,
   },
   retakeButton: {
     flexDirection: "row",
