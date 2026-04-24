@@ -582,3 +582,11 @@
 ## Revert UI and Add Guest Access
 - [x] Revert UI/UX back to original V1 design (rolled back to bed7e1df)
 - [x] Add "Guest Access" button to auth screen that bypasses login and goes to dashboard
+
+## Rebuild V1 Dashboard Layout
+- [x] Add low-poly bicep logo at top of dashboard header
+- [x] Add large red Anabolic Score circle in center of dashboard
+- [x] Add AI Coach insights section below the score circle
+- [x] Add 12-month muscle forecast graph below AI Coach
+- [x] Keep background clean and simple (no neon gradients or complex dark modes)
+- [x] Verify Guest Access button is still on auth screen

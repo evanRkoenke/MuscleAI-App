@@ -15,64 +15,130 @@ import Svg, {
   Defs,
   LinearGradient as SvgGradient,
   Stop,
+  Polyline,
+  Polygon,
+  Line,
+  Text as SvgText,
 } from "react-native-svg";
-import { LinearGradient } from "expo-linear-gradient";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { WeekStrip, getWeekDates } from "@/components/week-strip";
 import { useApp } from "@/lib/app-context";
 import { useSubscription } from "@/hooks/use-subscription";
 import { calculateStreak, getMealDates } from "@/lib/streak";
+import { AICoachInsight } from "@/components/ai-coach-insight";
 import * as Haptics from "expo-haptics";
-import { Typography } from "@/constants/typography";
-
 
 const { width: SW } = Dimensions.get("window");
 
-// ─── Ring geometry ───
-const RING_SIZE = Math.min(SW * 0.62, 260);
-const RING_STROKE = 18;
+// ─── Anabolic Score Ring geometry ───
+const RING_SIZE = Math.min(SW * 0.58, 240);
+const RING_STROKE = 16;
 const RING_R = (RING_SIZE - RING_STROKE) / 2;
 const RING_C = 2 * Math.PI * RING_R;
 
-// ─── Brand palette ───
-const ACCENT = "#FFFFFF";
-const ACCENT_DIM = "#777777";
-const SILVER = "#C0C0C0";
-const PROT = "#E0E0E0";
-const CARB = "#B0B0B0";
-const FATR = "#FF3D3D";
-const BG = "#000000";
-const SURF = "#0A0A0A";
-const SURF2 = "#111111";
-const BDR = "#222222";
-const T1 = "#F0F0F0";
-const T2 = "#888888";
-const T3 = "#444444";
+// ─── Forecast mini-chart geometry ───
+const CHART_W = SW - 72;
+const CHART_H = 160;
+const C_PL = 8;
+const C_PR = 8;
+const C_PT = 16;
+const C_PB = 28;
+
+// ─── Clean V1 palette ───
+const RED = "#E53935";
+const RED_DIM = "rgba(229, 57, 53, 0.15)";
+const BG = "#0D0D0D";
+const CARD_BG = "#141414";
+const BORDER = "#1E1E1E";
+const TEXT_PRIMARY = "#F0F0F0";
+const TEXT_SECONDARY = "#888888";
+const TEXT_DIM = "#555555";
 
 function scoreColor(s: number) {
-  return s >= 80 ? "#C0C0C0" : s >= 60 ? "#B0B0B0" : "#FF3D3D";
+  if (s >= 80) return "#4CAF50";
+  if (s >= 60) return "#FFC107";
+  return RED;
 }
 
 function todayStr() {
   return new Date().toISOString().split("T")[0];
 }
 
+/**
+ * Forecast computation (same formula as forecast tab)
+ */
+function computeForecast(
+  currentWeight: number,
+  calorieGoal: number,
+  proteinGoal: number,
+  targetWeight: number,
+  unit: "lbs" | "kg",
+  trainingDays: number = 4
+) {
+  const weightInLbs = unit === "kg" ? currentWeight * 2.205 : currentWeight;
+  const activityMultiplier = 13 + trainingDays * 0.5;
+  const tdee = weightInLbs * activityMultiplier;
+  const dailySurplus = calorieGoal - tdee;
+  const weeklyChangeLbs = (dailySurplus * 7) / 3500;
+  const proteinRatio = proteinGoal / weightInLbs;
+  const proteinModifier = Math.min(Math.max(proteinRatio, 0.5), 1.5);
+
+  let adjustedWeeklyChange: number;
+  if (dailySurplus > 0) {
+    adjustedWeeklyChange = weeklyChangeLbs * (0.85 + 0.15 * proteinModifier);
+  } else {
+    adjustedWeeklyChange = weeklyChangeLbs * (1.15 - 0.15 * proteinModifier);
+  }
+
+  const monthlyChangeLbs = adjustedWeeklyChange * 4.33;
+  const conversionFactor = unit === "kg" ? 1 / 2.205 : 1;
+  const isSurplus = dailySurplus > 0;
+
+  const pts = [];
+  for (let m = 0; m <= 12; m++) {
+    const diminishing = m === 0 ? 0 : Math.log(1 + m) / Math.log(13);
+    const rawChange = monthlyChangeLbs * m * conversionFactor;
+    const blendedChange = rawChange * (0.4 + 0.6 * (diminishing / (m / 12 || 1)));
+    const projected = Math.round((currentWeight + blendedChange) * 10) / 10;
+    pts.push({ month: m, weight: projected });
+  }
+
+  return { pts, isSurplus };
+}
+
 export default function HomeScreen() {
   const router = useRouter();
-  const { profile, meals: allMeals, getCaloriesByDate, getMacrosByDate, getMealsByDate, selectedDate, setSelectedDate } = useApp();
+  const {
+    profile,
+    meals: allMeals,
+    getCaloriesByDate,
+    getMacrosByDate,
+    getMealsByDate,
+    selectedDate,
+    setSelectedDate,
+    weightLog,
+    onboardingData,
+  } = useApp();
   const sub = useSubscription();
 
   const cal = useMemo(() => getCaloriesByDate(selectedDate), [getCaloriesByDate, selectedDate]);
   const mac = useMemo(() => getMacrosByDate(selectedDate), [getMacrosByDate, selectedDate]);
-  const rem = Math.max(0, profile.calorieGoal - cal);
-  const prog = Math.min(1, cal / profile.calorieGoal);
-  const dashOff = RING_C * (1 - prog * 0.75); // max 270° sweep
-
   const meals = useMemo(() => getMealsByDate(selectedDate), [getMealsByDate, selectedDate]);
   const last = meals.length > 0 ? meals[meals.length - 1] : null;
 
-  // Compute which dates in the week have logged meals (for Anabolic Dot)
+  // Compute average anabolic score for the day
+  const avgAnabolicScore = useMemo(() => {
+    if (meals.length === 0) return 0;
+    const total = meals.reduce((sum, m) => sum + m.anabolicScore, 0);
+    return Math.round(total / meals.length);
+  }, [meals]);
+
+  // Anabolic Score ring progress (0-100 mapped to ring)
+  const scoreProg = Math.min(1, avgAnabolicScore / 100);
+  const scoreDashOff = RING_C * (1 - scoreProg * 0.75); // max 270° sweep
+
+  // Dates with meals for the week strip
   const datesWithMeals = useMemo(() => {
     const weekDates = getWeekDates();
     const set = new Set<string>();
@@ -83,6 +149,63 @@ export default function HomeScreen() {
     return set;
   }, [getMealsByDate]);
 
+  // AI Coach data from the latest meal
+  const coachData = useMemo(() => {
+    if (!last) return null;
+    return {
+      anabolicScore: last.anabolicScore,
+      totalProtein: last.protein,
+      totalCalories: last.calories,
+      totalCarbs: last.carbs,
+      totalFat: last.fat,
+      totalSugar: last.sugar,
+      foods: [{ name: last.name, grams: 0, calories: last.calories, protein: last.protein, carbs: last.carbs, fat: last.fat, sugar: last.sugar, confidence: 1 }],
+      mealName: last.name,
+    };
+  }, [last]);
+
+  // 12-month forecast
+  const currentWeight = weightLog.length > 0
+    ? weightLog[weightLog.length - 1].weight
+    : profile.currentWeight;
+
+  const { forecastData, isSurplus } = useMemo(() => {
+    const result = computeForecast(
+      currentWeight,
+      profile.calorieGoal,
+      profile.proteinGoal,
+      profile.targetWeight,
+      profile.unit,
+      onboardingData?.trainingDays ?? 4
+    );
+    return { forecastData: result.pts, isSurplus: result.isSurplus };
+  }, [currentWeight, profile.calorieGoal, profile.proteinGoal, profile.targetWeight, profile.unit, onboardingData?.trainingDays]);
+
+  // Mini forecast chart points
+  const { chartLine, chartFill, chartDots } = useMemo(() => {
+    const weights = forecastData.map((d) => d.weight);
+    const mn = Math.min(...weights) - 2;
+    const mx = Math.max(...weights) + 2;
+    const range = mx - mn || 1;
+    const plotW = CHART_W - C_PL - C_PR;
+    const plotH = CHART_H - C_PT - C_PB;
+
+    const positions = forecastData.map((d, i) => ({
+      x: C_PL + (i / 12) * plotW,
+      y: C_PT + (1 - (d.weight - mn) / range) * plotH,
+      weight: d.weight,
+      month: d.month,
+    }));
+
+    const lineStr = positions.map((d) => `${d.x},${d.y}`).join(" ");
+    const bottomY = CHART_H - C_PB;
+    const fillStr =
+      lineStr +
+      ` ${positions[positions.length - 1].x},${bottomY} ${positions[0].x},${bottomY}`;
+
+    return { chartLine: lineStr, chartFill: fillStr, chartDots: positions };
+  }, [forecastData]);
+
   const doScan = useCallback(() => {
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     (router as any).push("/scan-meal");
@@ -90,19 +213,13 @@ export default function HomeScreen() {
 
   return (
     <ScreenContainer containerClassName="bg-transparent">
-      {/* Full-screen dark background */}
-      <View style={StyleSheet.absoluteFill}>
-        <LinearGradient
-          colors={[BG, "#000000", BG]}
-          style={StyleSheet.absoluteFill}
-        />
-      </View>
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: BG }]} />
 
       <ScrollView
         contentContainerStyle={s.scroll}
         showsVerticalScrollIndicator={false}
       >
-        {/* ═══ HEADER ═══ */}
+        {/* ═══ HEADER — Low-Poly Bicep Logo ═══ */}
         <View style={s.hdr}>
           <TouchableOpacity
             onPress={() => (router as any).push("/profile")}
@@ -112,54 +229,46 @@ export default function HomeScreen() {
             {profile.profilePhotoUri ? (
               <Image source={{ uri: profile.profilePhotoUri }} style={s.hdrAvatarImg} />
             ) : (
-              <LinearGradient
-                colors={["#555555", "#444444"]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={s.hdrAvatarFallback}
-              >
+              <View style={s.hdrAvatarFallback}>
                 <Text style={s.hdrAvatarText}>
                   {(profile.name || "M").charAt(0).toUpperCase()}
                 </Text>
-              </LinearGradient>
+              </View>
             )}
           </TouchableOpacity>
-          <View style={s.hdrTitleRow}>
-            <Text style={s.hdrTitle}>MUSCLE AI</Text>
+
+          <View style={s.hdrCenter}>
             <Image
               source={require("@/assets/images/logo-cropped.png")}
               style={s.hdrLogo}
               contentFit="contain"
             />
+            <Text style={s.hdrTitle}>MUSCLE AI</Text>
           </View>
+
           <TouchableOpacity
             onPress={() => (router as any).push("/settings")}
             style={s.hdrGear}
             activeOpacity={0.7}
           >
-            <IconSymbol name="gearshape.fill" size={20} color={T3} />
+            <IconSymbol name="gearshape.fill" size={20} color={TEXT_DIM} />
           </TouchableOpacity>
         </View>
 
         {/* ═══ WEEKLY CALENDAR STRIP ═══ */}
         <WeekStrip selectedDate={selectedDate} onSelectDate={setSelectedDate} datesWithMeals={datesWithMeals} />
 
-        {/* ═══ CALORIE RING ═══ */}
+        {/* ═══ LARGE RED ANABOLIC SCORE CIRCLE ═══ */}
         <View style={s.ringWrap}>
-          {/* Multi-layer glow */}
-          <View style={s.glow1} />
-          <View style={s.glow2} />
-          <View style={s.glow3} />
-
           <Svg width={RING_SIZE} height={RING_SIZE}>
             <Defs>
-              <SvgGradient id="rg" x1="0" y1="0" x2="1" y2="1">
-                <Stop offset="0" stopColor={"#777777"} />
-                <Stop offset="0.4" stopColor={ACCENT} />
-                <Stop offset="1" stopColor={SILVER} />
+              <SvgGradient id="scoreGrad" x1="0" y1="0" x2="1" y2="1">
+                <Stop offset="0" stopColor={RED} />
+                <Stop offset="0.5" stopColor="#FF5252" />
+                <Stop offset="1" stopColor="#D32F2F" />
               </SvgGradient>
             </Defs>
-            {/* Track */}
+            {/* Background track */}
             <Circle
               cx={RING_SIZE / 2}
               cy={RING_SIZE / 2}
@@ -168,184 +277,199 @@ export default function HomeScreen() {
               strokeWidth={RING_STROKE}
               fill="transparent"
             />
-            {/* Progress arc */}
+            {/* Red progress arc */}
             <Circle
               cx={RING_SIZE / 2}
               cy={RING_SIZE / 2}
               r={RING_R}
-              stroke="url(#rg)"
+              stroke="url(#scoreGrad)"
               strokeWidth={RING_STROKE}
               fill="transparent"
               strokeDasharray={RING_C}
-              strokeDashoffset={dashOff}
+              strokeDashoffset={scoreDashOff}
               strokeLinecap="round"
               rotation="-225"
               origin={`${RING_SIZE / 2}, ${RING_SIZE / 2}`}
             />
           </Svg>
 
-          {/* Center text */}
+          {/* Center: Anabolic Score */}
           <View style={s.ringCenter}>
-            <Text style={s.ringNum}>{rem.toLocaleString()}</Text>
-            <Text style={s.ringLabel}>Calories Remaining</Text>
+            <Text style={s.ringScore}>{avgAnabolicScore}</Text>
+            <Text style={s.ringLabel}>ANABOLIC{"\n"}SCORE</Text>
           </View>
         </View>
 
-        {/* ═══ MACRO ROW ═══ */}
+        {/* Score subtitle */}
+        <Text style={s.scoreSubtitle}>
+          {meals.length === 0
+            ? "Scan a meal to see your score"
+            : avgAnabolicScore >= 80
+              ? "Elite anabolic performance today"
+              : avgAnabolicScore >= 60
+                ? "Solid muscle-building nutrition"
+                : "Room to optimize for hypertrophy"}
+        </Text>
+
+        {/* ═══ MACRO CARDS ═══ */}
         <View style={s.macRow}>
           {[
-            { val: mac.protein, unit: "g", label: "PROTEIN", color: PROT },
-            { val: mac.carbs, unit: "g", label: "CARBS", color: CARB },
-            { val: mac.fat, unit: "g", label: "FAT", color: FATR },
-            { val: mac.sugar, unit: "g", label: "SUGAR", color: "#A0A0A0" },
-          ].map((m) => {
-            const str = String(m.val);
-            const fs = str.length > 4 ? 18 : str.length > 3 ? 22 : 28;
-            const us = str.length > 4 ? 10 : str.length > 3 ? 12 : 14;
-            return (
-              <View key={m.label} style={s.macCard}>
-                <Text style={[s.macVal, { fontSize: fs }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5}>
-                  {m.val}
-                  <Text style={[s.macUnit, { fontSize: us }]}>{m.unit}</Text>
-                </Text>
-                <Text style={[s.macLbl, { color: m.color }]}>{m.label}</Text>
-              </View>
-            );
-          })}
+            { val: cal, label: "CALORIES", unit: "", color: RED },
+            { val: mac.protein, label: "PROTEIN", unit: "g", color: TEXT_PRIMARY },
+            { val: mac.carbs, label: "CARBS", unit: "g", color: TEXT_SECONDARY },
+            { val: mac.fat, label: "FAT", unit: "g", color: TEXT_SECONDARY },
+          ].map((m) => (
+            <View key={m.label} style={s.macCard}>
+              <Text style={[s.macVal, { color: m.color }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5}>
+                {m.val}
+                <Text style={s.macUnit}>{m.unit}</Text>
+              </Text>
+              <Text style={s.macLbl}>{m.label}</Text>
+            </View>
+          ))}
         </View>
 
-        {/* ═══ QUICK ACTIONS ═══ */}
-        <View style={s.qRow}>
-          <TouchableOpacity style={s.qBtn} onPress={doScan} activeOpacity={0.7}>
-            <IconSymbol name="camera.fill" size={15} color={ACCENT} />
-            <Text style={s.qTxt}>Scan</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={s.qBtn}
-            onPress={() => router.push("/(tabs)/meals")}
-            activeOpacity={0.7}
-          >
-            <IconSymbol name="fork.knife" size={15} color={ACCENT} />
-            <Text style={s.qTxt}>Meals</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={s.qBtn}
-            onPress={() => router.push("/(tabs)/forecast")}
-            activeOpacity={0.7}
-          >
-            <IconSymbol name="chart.line.uptrend.xyaxis" size={15} color={ACCENT} />
-            <Text style={s.qTxt}>Forecast</Text>
-          </TouchableOpacity>
-        </View>
+        {/* ═══ SCAN BUTTON ═══ */}
+        <TouchableOpacity style={s.scanBtn} onPress={doScan} activeOpacity={0.8}>
+          <IconSymbol name="camera.fill" size={20} color="#FFFFFF" />
+          <Text style={s.scanBtnText}>Scan Meal</Text>
+        </TouchableOpacity>
 
-        {/* ═══ STREAK TRACKER ═══ */}
-        {(() => {
-          const streakInfo = calculateStreak(getMealDates(allMeals));
-          if (streakInfo.currentStreak === 0 && streakInfo.longestStreak === 0) return null;
-          return (
-            <View style={s.streakCard}>
-              <View style={s.streakTop}>
-                <View style={s.streakCountWrap}>
-                  <Text style={s.streakFire}>🔥</Text>
-                  <Text style={s.streakCount}>{streakInfo.currentStreak}</Text>
-                  <Text style={s.streakLabel}>DAY STREAK</Text>
-                </View>
-                {streakInfo.longestStreak > streakInfo.currentStreak && (
-                  <Text style={s.streakBest}>Best: {streakInfo.longestStreak} days</Text>
-                )}
-              </View>
-              <View style={s.badgeRow}>
-                {streakInfo.badges.map((badge) => (
-                  <View
-                    key={badge.days}
-                    style={[s.badge, badge.earned && s.badgeEarned]}
+        {/* ═══ AI COACH INSIGHTS ═══ */}
+        {coachData ? (
+          <View style={s.section}>
+            <Text style={s.sectionTitle}>AI COACH</Text>
+            <AICoachInsight {...coachData} />
+          </View>
+        ) : (
+          <View style={s.coachEmpty}>
+            <IconSymbol name="bolt.fill" size={24} color={TEXT_DIM} />
+            <Text style={s.coachEmptyTitle}>AI Coach</Text>
+            <Text style={s.coachEmptyText}>
+              Scan your first meal to get personalized{"\n"}muscle-building insights
+            </Text>
+          </View>
+        )}
+
+        {/* ═══ 12-MONTH MUSCLE FORECAST ═══ */}
+        <View style={s.section}>
+          <View style={s.sectionHeader}>
+            <Text style={s.sectionTitle}>12-MONTH FORECAST</Text>
+            <TouchableOpacity
+              onPress={() => router.push("/(tabs)/forecast")}
+              activeOpacity={0.7}
+            >
+              <Text style={s.sectionLink}>See Full →</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={s.chartCard}>
+            {/* Trend label */}
+            <View style={s.chartTrend}>
+              <Text style={s.chartTrendText}>
+                {isSurplus ? "▲" : "▼"} {Math.abs(forecastData[12]?.weight - currentWeight).toFixed(1)} {profile.unit} projected
+              </Text>
+            </View>
+
+            <Svg width={CHART_W} height={CHART_H}>
+              <Defs>
+                <SvgGradient id="chartFill" x1="0" y1="0" x2="0" y2="1">
+                  <Stop offset="0" stopColor={RED} stopOpacity="0.20" />
+                  <Stop offset="1" stopColor={RED} stopOpacity="0" />
+                </SvgGradient>
+              </Defs>
+
+              {/* Grid lines */}
+              {[0.25, 0.5, 0.75].map((r) => {
+                const y = C_PT + r * (CHART_H - C_PT - C_PB);
+                return (
+                  <Line
+                    key={r}
+                    x1={C_PL}
+                    y1={y}
+                    x2={CHART_W - C_PR}
+                    y2={y}
+                    stroke={BORDER}
+                    strokeWidth={0.5}
+                    strokeDasharray="4,6"
+                  />
+                );
+              })}
+
+              {/* Fill area */}
+              <Polygon points={chartFill} fill="url(#chartFill)" />
+
+              {/* Line */}
+              <Polyline
+                points={chartLine}
+                fill="none"
+                stroke={RED}
+                strokeWidth={2}
+                strokeLinejoin="round"
+              />
+
+              {/* Month labels */}
+              {[0, 3, 6, 9, 12].map((m) => {
+                const dot = chartDots[m];
+                if (!dot) return null;
+                return (
+                  <SvgText
+                    key={m}
+                    x={dot.x}
+                    y={CHART_H - 8}
+                    fontSize={10}
+                    fill={TEXT_DIM}
+                    textAnchor="middle"
                   >
-                    <Text style={s.badgeIcon}>{badge.icon}</Text>
-                    <Text style={[s.badgeDays, badge.earned && s.badgeDaysEarned]}>{badge.days}d</Text>
-                    <Text style={[s.badgeLabel, badge.earned && s.badgeLabelEarned]}>{badge.label}</Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-          );
-        })()}
+                    {m === 0 ? "Now" : `${m}mo`}
+                  </SvgText>
+                );
+              })}
 
-        {/* ═══ PROTEIN PRIORITY ═══ */}
-        <View style={s.ppCard}>
-          <Text style={s.ppHdr}>PROTEIN PRIORITY</Text>
-          {last ? (
-            <View style={s.ppBody}>
-              <View style={s.ppLeft}>
-                <Text style={s.ppName} numberOfLines={1}>{last.name}</Text>
-                <Text style={s.ppDetail}>{last.calories} cal · {last.protein}g protein</Text>
-              </View>
-              <View style={[s.ppBadge, { backgroundColor: scoreColor(last.anabolicScore) + "18", borderColor: scoreColor(last.anabolicScore) + "40" }]}>
-                <Text style={[s.ppScore, { color: scoreColor(last.anabolicScore) }]}>{last.anabolicScore}</Text>
-                <Text style={[s.ppScoreLbl, { color: scoreColor(last.anabolicScore) }]}>ANABOLIC{"\n"}SCORE</Text>
-              </View>
+              {/* Start and end dots */}
+              <Circle cx={chartDots[0]?.x} cy={chartDots[0]?.y} r={4} fill={RED} />
+              <Circle cx={chartDots[12]?.x} cy={chartDots[12]?.y} r={4} fill={RED} />
+            </Svg>
+
+            {/* Weight labels */}
+            <View style={s.chartWeights}>
+              <Text style={s.chartWeightLabel}>{currentWeight} {profile.unit}</Text>
+              <Text style={s.chartWeightLabel}>{forecastData[12]?.weight} {profile.unit}</Text>
             </View>
-          ) : (
-            <View style={s.ppEmpty}>
-              <IconSymbol name="camera.fill" size={28} color={T3} />
-              <Text style={s.ppEmptyTxt}>Scan your first meal to see your Anabolic Score</Text>
-            </View>
-          )}
+          </View>
         </View>
 
-        {/* ═══ FAST FOOD PRO ═══ */}
-        <TouchableOpacity
-          style={s.supCard}
-          onPress={() => (router as any).push("/fast-food-pro")}
-          activeOpacity={0.7}
-        >
-          <LinearGradient
-            colors={["rgba(255,255,255,0.06)", "rgba(255,255,255,0.02)"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={StyleSheet.absoluteFill}
-          />
-          <IconSymbol name="storefront.fill" size={22} color={ACCENT} />
-          <View style={s.supInfo}>
-            <Text style={s.supTitle}>Fast Food Pro</Text>
-            <Text style={s.supSub}>Highest protein at every chain</Text>
-          </View>
-          <IconSymbol name="chevron.right" size={16} color={T3} />
-        </TouchableOpacity>
+        {/* ═══ QUICK LINKS ═══ */}
+        <View style={s.linkRow}>
+          <TouchableOpacity
+            style={s.linkCard}
+            onPress={() => (router as any).push("/fast-food-pro")}
+            activeOpacity={0.7}
+          >
+            <IconSymbol name="storefront.fill" size={18} color={TEXT_PRIMARY} />
+            <Text style={s.linkTitle}>Fast Food Pro</Text>
+            <Text style={s.linkSub}>Best protein picks</Text>
+          </TouchableOpacity>
 
-        {/* ═══ MUSCLE SUPPORT ═══ */}
-        <TouchableOpacity
-          style={s.supCard}
-          onPress={() => (router as any).push("/support")}
-          activeOpacity={0.7}
-        >
-          <LinearGradient
-            colors={["rgba(0,122,255,0.08)", "rgba(0,212,255,0.03)"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={StyleSheet.absoluteFill}
-          />
-          <IconSymbol name="bubble.left.fill" size={22} color={ACCENT} />
-          <View style={s.supInfo}>
-            <Text style={s.supTitle}>Muscle Support</Text>
-            <Text style={s.supSub}>AI-powered help, 24/7</Text>
-          </View>
-          <IconSymbol name="chevron.right" size={16} color={T3} />
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={s.linkCard}
+            onPress={() => (router as any).push("/support")}
+            activeOpacity={0.7}
+          >
+            <IconSymbol name="bubble.left.fill" size={18} color={TEXT_PRIMARY} />
+            <Text style={s.linkTitle}>Support</Text>
+            <Text style={s.linkSub}>AI help, 24/7</Text>
+          </TouchableOpacity>
+        </View>
 
         <View style={{ height: 80 }} />
       </ScrollView>
 
       {/* ═══ FLOATING CAMERA FAB ═══ */}
       <TouchableOpacity style={s.fab} onPress={doScan} activeOpacity={0.8}>
-        <View style={s.fabGlow} />
-        <LinearGradient
-          colors={["#555555", "#444444"]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={s.fabInner}
-        >
+        <View style={s.fabInner}>
           <IconSymbol name="camera.fill" size={26} color="#FFFFFF" />
-        </LinearGradient>
+        </View>
       </TouchableOpacity>
     </ScreenContainer>
   );
@@ -361,20 +485,19 @@ const s = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 12,
   },
-  hdrTitleRow: {
-    flexDirection: "row",
+  hdrCenter: {
     alignItems: "center",
-    gap: 6,
+    gap: 2,
   },
   hdrLogo: {
-    width: 40,
-    height: 27,
+    width: 64,
+    height: 44,
   },
   hdrTitle: {
-    fontSize: 24,
+    fontSize: 14,
     fontWeight: "700",
-    letterSpacing: -0.5,
-    color: T1,
+    letterSpacing: 3,
+    color: TEXT_SECONDARY,
   },
   hdrAvatar: { padding: 2 },
   hdrAvatarImg: {
@@ -382,286 +505,211 @@ const s = StyleSheet.create({
     height: 34,
     borderRadius: 17,
     borderWidth: 1.5,
-    borderColor: ACCENT,
+    borderColor: "#333",
   },
   hdrAvatarFallback: {
     width: 34,
     height: 34,
     borderRadius: 17,
+    backgroundColor: "#222",
     justifyContent: "center" as const,
     alignItems: "center" as const,
   },
   hdrAvatarText: {
     fontSize: 15,
-    fontWeight: "400" as const,
-    color: "#FFFFFF",
+    fontWeight: "600" as const,
+    color: TEXT_PRIMARY,
   },
   hdrGear: { padding: 8 },
 
-  /* Ring */
+  /* Anabolic Score Ring */
   ringWrap: {
     alignItems: "center",
     justifyContent: "center",
     alignSelf: "center",
-    marginVertical: 4,
-    width: RING_SIZE + 60,
-    height: RING_SIZE + 60,
-  },
-  glow1: {
-    position: "absolute",
-    width: RING_SIZE + 50,
-    height: RING_SIZE + 50,
-    borderRadius: (RING_SIZE + 50) / 2,
-    backgroundColor: "rgba(0,122,255,0.06)",
-  },
-  glow2: {
-    position: "absolute",
-    width: RING_SIZE + 30,
-    height: RING_SIZE + 30,
-    borderRadius: (RING_SIZE + 30) / 2,
-    backgroundColor: "transparent",
-    shadowColor: ACCENT,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.55,
-    shadowRadius: 40,
-    elevation: 0,
-  },
-  glow3: {
-    position: "absolute",
-    width: RING_SIZE + 10,
-    height: RING_SIZE + 10,
-    borderRadius: (RING_SIZE + 10) / 2,
-    backgroundColor: "transparent",
-    shadowColor: SILVER,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.25,
-    shadowRadius: 25,
-    elevation: 0,
+    marginVertical: 8,
+    width: RING_SIZE,
+    height: RING_SIZE,
   },
   ringCenter: {
     position: "absolute",
     alignItems: "center",
   },
-  ringNum: {
-    fontSize: 50,
+  ringScore: {
+    fontSize: 56,
     fontWeight: "700",
-    color: T1,
+    color: RED,
     letterSpacing: -2,
   },
   ringLabel: {
-    fontSize: 13,
-    fontWeight: "400",
-    color: T2,
+    fontSize: 10,
+    fontWeight: "600",
+    color: TEXT_SECONDARY,
+    letterSpacing: 2,
+    textAlign: "center",
+    lineHeight: 14,
     marginTop: 2,
   },
 
-  /* Macros */
+  scoreSubtitle: {
+    textAlign: "center",
+    fontSize: 14,
+    color: TEXT_SECONDARY,
+    marginBottom: 20,
+  },
+
+  /* Macro cards */
   macRow: {
     flexDirection: "row",
-    gap: 10,
-    marginBottom: 14,
+    gap: 8,
+    marginBottom: 16,
   },
   macCard: {
     flex: 1,
-    backgroundColor: SURF2,
-    borderRadius: 14,
-    paddingVertical: 16,
-    paddingHorizontal: 6,
+    backgroundColor: CARD_BG,
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 4,
     alignItems: "center",
     borderWidth: 1,
-    borderColor: BDR,
-    gap: 5,
+    borderColor: BORDER,
+    gap: 4,
   },
   macVal: {
-    fontSize: 28,
+    fontSize: 22,
     fontWeight: "700",
-    color: T1,
+    color: TEXT_PRIMARY,
   },
   macUnit: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: "400",
-    color: T2,
+    color: TEXT_SECONDARY,
   },
   macLbl: {
-    fontSize: 10,
-    fontWeight: "400",
-    letterSpacing: 1.5,
-  },
-
-  /* Quick actions */
-  qRow: {
-    flexDirection: "row",
-    gap: 10,
-    marginBottom: 14,
-  },
-  qBtn: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    paddingVertical: 13,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: BDR,
-    backgroundColor: SURF,
-  },
-  qTxt: {
-    fontSize: 14,
-    fontWeight: "400",
-    color: T1,
-  },
-
-  /* Protein Priority */
-  ppCard: {
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: BDR,
-    backgroundColor: SURF2,
-    marginBottom: 12,
-  },
-  ppHdr: {
-    fontSize: 13,
-    fontWeight: "400",
-    letterSpacing: 2.5,
-    color: T1,
-    marginBottom: 14,
-  },
-  ppBody: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  ppLeft: { flex: 1, gap: 4 },
-  ppName: { fontSize: 17, fontWeight: "600", color: T1 },
-  ppDetail: { fontSize: 14, color: T2 },
-  ppBadge: {
-    width: 76,
-    height: 76,
-    borderRadius: 16,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-  },
-  ppScore: { fontSize: 30, fontWeight: "700" },
-  ppScoreLbl: {
-    fontSize: 7,
-    fontWeight: "400",
-    letterSpacing: 0.5,
-    textAlign: "center",
-    lineHeight: 9,
-    marginTop: 2,
-  },
-  ppEmpty: {
-    alignItems: "center",
-    gap: 10,
-    paddingVertical: 24,
-  },
-  ppEmptyTxt: {
-    fontSize: 14,
-    textAlign: "center",
-    lineHeight: 20,
-    color: T3,
-  },
-
-  /* Muscle Support */
-  supCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderRadius: 14,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: BDR,
-    backgroundColor: SURF2,
-    gap: 14,
-    marginBottom: 12,
-    overflow: "hidden",
-  },
-  supInfo: { flex: 1 },
-  supTitle: { fontSize: 16, fontWeight: "600", color: T1 },
-  supSub: { fontSize: 13, marginTop: 2, color: T2 },
-
-  /* Streak Card */
-  streakCard: {
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: BDR,
-    backgroundColor: SURF2,
-    padding: 16,
-    marginBottom: 12,
-  },
-  streakTop: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 14,
-  },
-  streakCountWrap: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  streakFire: {
-    fontSize: 22,
-  },
-  streakCount: {
-    fontSize: 28,
-    fontWeight: "700",
-    color: T1,
-  },
-  streakLabel: {
-    fontSize: 11,
-    fontWeight: "600",
-    letterSpacing: 1.5,
-    color: T2,
-    marginLeft: 2,
-  },
-  streakBest: {
-    fontSize: 12,
-    color: T3,
-  },
-  badgeRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    gap: 8,
-  },
-  badge: {
-    flex: 1,
-    alignItems: "center",
-    paddingVertical: 10,
-    borderRadius: 10,
-    backgroundColor: "#0A0A0A",
-    borderWidth: 1,
-    borderColor: "#1A1A1A",
-    opacity: 0.4,
-  },
-  badgeEarned: {
-    opacity: 1,
-    borderColor: "#333333",
-    backgroundColor: "#111111",
-  },
-  badgeIcon: {
-    fontSize: 18,
-    marginBottom: 4,
-  },
-  badgeDays: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: T3,
-  },
-  badgeDaysEarned: {
-    color: T1,
-  },
-  badgeLabel: {
     fontSize: 9,
-    fontWeight: "500",
-    color: T3,
-    marginTop: 2,
-    textAlign: "center",
+    fontWeight: "600",
+    letterSpacing: 1.2,
+    color: TEXT_DIM,
   },
-  badgeLabelEarned: {
-    color: T2,
+
+  /* Scan button */
+  scanBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: RED,
+    borderRadius: 14,
+    paddingVertical: 16,
+    marginBottom: 20,
+  },
+  scanBtnText: {
+    fontSize: 17,
+    fontWeight: "700",
+    color: "#FFFFFF",
+  },
+
+  /* Sections */
+  section: {
+    marginBottom: 20,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  sectionTitle: {
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 2,
+    color: TEXT_SECONDARY,
+    marginBottom: 10,
+  },
+  sectionLink: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: RED,
+    marginBottom: 10,
+  },
+
+  /* AI Coach empty state */
+  coachEmpty: {
+    backgroundColor: CARD_BG,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: BORDER,
+    padding: 24,
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 20,
+  },
+  coachEmptyTitle: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: TEXT_SECONDARY,
+    letterSpacing: 1,
+  },
+  coachEmptyText: {
+    fontSize: 13,
+    color: TEXT_DIM,
+    textAlign: "center",
+    lineHeight: 19,
+  },
+
+  /* Forecast chart */
+  chartCard: {
+    backgroundColor: CARD_BG,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: BORDER,
+    padding: 16,
+    alignItems: "center",
+  },
+  chartTrend: {
+    alignSelf: "flex-start",
+    marginBottom: 8,
+  },
+  chartTrendText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: RED,
+  },
+  chartWeights: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+    marginTop: 8,
+  },
+  chartWeightLabel: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: TEXT_SECONDARY,
+  },
+
+  /* Quick links */
+  linkRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginBottom: 12,
+  },
+  linkCard: {
+    flex: 1,
+    backgroundColor: CARD_BG,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: BORDER,
+    padding: 16,
+    gap: 6,
+  },
+  linkTitle: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: TEXT_PRIMARY,
+  },
+  linkSub: {
+    fontSize: 12,
+    color: TEXT_DIM,
   },
 
   /* FAB */
@@ -675,24 +723,17 @@ const s = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  fabGlow: {
-    position: "absolute",
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    backgroundColor: "#555555",
-    opacity: 0.35,
-  },
   fabInner: {
     width: 64,
     height: 64,
     borderRadius: 32,
+    backgroundColor: RED,
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#555555",
+    shadowColor: RED,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.6,
-    shadowRadius: 20,
-    elevation: 12,
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 8,
   },
 });
