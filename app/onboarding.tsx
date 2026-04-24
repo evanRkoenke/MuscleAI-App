@@ -17,7 +17,13 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useApp } from "@/lib/app-context";
 import type { FitnessGoal, DietaryRestriction, OnboardingData } from "@/lib/app-context";
 import * as Haptics from "expo-haptics";
-import { Typography } from "@/constants/typography";
+// ─── Premium Dark + Anabolic Green ───
+const GREEN = "#39FF14";
+const GREEN_DIM = "#2BCC10";
+const GREEN_SUBTLE = "rgba(57, 255, 20, 0.08)";
+const GREEN_BORDER = "rgba(57, 255, 20, 0.15)";
+const SURF = "#141414";
+const BDR = "#1E1E1E";
 
 const { width: SW } = Dimensions.get("window");
 const TOTAL_STEPS = 5;
@@ -145,7 +151,7 @@ export default function OnboardingScreen() {
   const renderStep1 = () => (
     <View style={styles.stepContent}>
       <View style={styles.stepIconWrap}>
-        <IconSymbol name="scalemass.fill" size={48} color="#FFFFFF" />
+        <IconSymbol name="scalemass.fill" size={48} color={GREEN} />
       </View>
       <Text style={styles.stepTitle}>What's your current{"\n"}height and weight?</Text>
       <Text style={styles.stepSubtitle}>This helps us calculate your daily calorie needs</Text>
@@ -219,7 +225,7 @@ export default function OnboardingScreen() {
   const renderStep2 = () => (
     <View style={styles.stepContent}>
       <View style={styles.stepIconWrap}>
-        <IconSymbol name="flame.fill" size={48} color="#FFFFFF" />
+        <IconSymbol name="flame.fill" size={48} color={GREEN} />
       </View>
       <Text style={styles.stepTitle}>What's your{"\n"}primary goal?</Text>
       <Text style={styles.stepSubtitle}>We'll customize your calorie and macro targets</Text>
@@ -238,7 +244,7 @@ export default function OnboardingScreen() {
               <Text style={styles.goalDesc}>{g.desc}</Text>
             </View>
             {goal === g.key && (
-              <IconSymbol name="checkmark.circle.fill" size={22} color="#FFFFFF" />
+              <IconSymbol name="checkmark.circle.fill" size={22} color={GREEN} />
             )}
           </TouchableOpacity>
         ))}
@@ -249,7 +255,7 @@ export default function OnboardingScreen() {
   const renderStep3 = () => (
     <View style={styles.stepContent}>
       <View style={styles.stepIconWrap}>
-        <IconSymbol name="bolt.fill" size={48} color="#FFFFFF" />
+        <IconSymbol name="bolt.fill" size={48} color={GREEN} />
       </View>
       <Text style={styles.stepTitle}>How many times{"\n"}do you train per week?</Text>
       <Text style={styles.stepSubtitle}>This adjusts your activity multiplier for accurate goals</Text>
@@ -275,7 +281,7 @@ export default function OnboardingScreen() {
   const renderStep4 = () => (
     <View style={styles.stepContent}>
       <View style={styles.stepIconWrap}>
-        <IconSymbol name="heart.fill" size={48} color="#FFFFFF" />
+        <IconSymbol name="heart.fill" size={48} color={GREEN} />
       </View>
       <Text style={styles.stepTitle}>Any dietary{"\n"}restrictions?</Text>
       <Text style={styles.stepSubtitle}>Select all that apply to personalize meal suggestions</Text>
@@ -306,7 +312,7 @@ export default function OnboardingScreen() {
   const renderStep5 = () => (
     <View style={styles.stepContent}>
       <View style={styles.stepIconWrap}>
-        <IconSymbol name="chart.line.uptrend.xyaxis" size={48} color="#FFFFFF" />
+        <IconSymbol name="chart.line.uptrend.xyaxis" size={48} color={GREEN} />
       </View>
       <Text style={styles.stepTitle}>What's your target{"\n"}body weight?</Text>
       <Text style={styles.stepSubtitle}>We'll build your 12-month Anabolic Forecast around this</Text>
@@ -368,7 +374,7 @@ export default function OnboardingScreen() {
                 style={[
                   styles.progressDot,
                   {
-                    backgroundColor: i < step ? "#FFFFFF" : "#222222",
+                    backgroundColor: i < step ? GREEN : "#1E1E1E",
                     width: i === step - 1 ? 24 : 8,
                   },
                 ]}
@@ -404,7 +410,7 @@ export default function OnboardingScreen() {
             activeOpacity={0.8}
           >
             <LinearGradient
-              colors={["#444444", "#2A2A2A"]}
+              colors={[GREEN, GREEN_DIM]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={styles.nextGradient}
@@ -413,7 +419,7 @@ export default function OnboardingScreen() {
                 {step === TOTAL_STEPS ? "Complete Setup" : "Continue"}
               </Text>
               {step < TOTAL_STEPS && (
-                <IconSymbol name="chevron.right" size={18} color="#FFFFFF" />
+                <IconSymbol name="chevron.right" size={18} color="#0A0A0A" />
               )}
             </LinearGradient>
           </TouchableOpacity>
@@ -437,14 +443,13 @@ const styles = StyleSheet.create({
   topButton: { width: 50, alignItems: "center" },
   progressRow: { flexDirection: "row", alignItems: "center", gap: 6 },
   progressDot: { height: 6, borderRadius: 3 },
-  skipText: { fontFamily: Typography.fontFamily, fontSize: 15, fontWeight: "500", color: "#666666" },
+  skipText: { fontSize: 15, fontWeight: "500", color: "#555555" },
 
   // Step counter
   stepCounter: {
-    fontFamily: Typography.fontFamily,
     fontSize: 12,
-    fontWeight: "500",
-    color: "#444444",
+    fontWeight: "600",
+    color: GREEN,
     textAlign: "center",
     letterSpacing: 1,
     textTransform: "uppercase",
@@ -461,23 +466,23 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: "rgba(255,255,255,0.06)",
+    backgroundColor: GREEN_SUBTLE,
+    borderWidth: 1,
+    borderColor: GREEN_BORDER,
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 8,
   },
   stepTitle: {
-    fontFamily: Typography.fontFamily,
     fontSize: 28,
-    fontWeight: "700",
+    fontWeight: "800",
     color: "#F0F0F0",
     textAlign: "center",
     lineHeight: 36,
   },
   stepSubtitle: {
-    fontFamily: Typography.fontFamily,
     fontSize: 15,
-    color: "#888888",
+    color: "#7A7A7A",
     textAlign: "center",
     lineHeight: 22,
     paddingHorizontal: 16,
@@ -495,20 +500,21 @@ const styles = StyleSheet.create({
   unitButton: {
     paddingVertical: 10,
     paddingHorizontal: 28,
-    backgroundColor: "#111111",
+    backgroundColor: SURF,
   },
   unitButtonActive: {
-    backgroundColor: "#333333",
+    backgroundColor: GREEN_SUBTLE,
+    borderWidth: 1,
+    borderColor: GREEN_BORDER,
   },
-  unitText: { fontFamily: Typography.fontFamily, fontSize: 14, fontWeight: "500", color: "#666666" },
-  unitTextActive: { color: "#FFFFFF" },
+  unitText: { fontSize: 14, fontWeight: "500", color: "#666666" },
+  unitTextActive: { color: GREEN },
 
   // Field labels
   fieldLabel: {
-    fontFamily: Typography.fontFamily,
     fontSize: 12,
     fontWeight: "600",
-    color: "#666666",
+    color: "#555555",
     letterSpacing: 1,
     textTransform: "uppercase",
     alignSelf: "flex-start",
@@ -524,16 +530,15 @@ const styles = StyleSheet.create({
     height: 56,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#222222",
-    backgroundColor: "#111111",
+    borderColor: BDR,
+    backgroundColor: SURF,
     paddingHorizontal: 16,
     gap: 8,
   },
   numberInput: {
-    fontFamily: Typography.fontFamily,
     flex: 1,
     fontSize: 22,
-    fontWeight: "600",
+    fontWeight: "700",
     color: "#F0F0F0",
     height: "100%",
   },
@@ -547,19 +552,19 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#222222",
-    backgroundColor: "#111111",
+    borderColor: BDR,
+    backgroundColor: SURF,
     gap: 14,
   },
   goalCardActive: {
-    borderColor: "#555555",
-    backgroundColor: "#1A1A1A",
+    borderColor: GREEN_BORDER,
+    backgroundColor: GREEN_SUBTLE,
   },
   goalIcon: { fontSize: 28 },
   goalTextWrap: { flex: 1 },
-  goalLabel: { fontFamily: Typography.fontFamily, fontSize: 17, fontWeight: "600", color: "#F0F0F0" },
-  goalLabelActive: { color: "#FFFFFF" },
-  goalDesc: { fontFamily: Typography.fontFamily, fontSize: 13, color: "#888888", marginTop: 2, lineHeight: 18 },
+  goalLabel: { fontSize: 17, fontWeight: "600", color: "#F0F0F0" },
+  goalLabelActive: { color: GREEN },
+  goalDesc: { fontSize: 13, color: "#7A7A7A", marginTop: 2, lineHeight: 18 },
 
   // Training grid
   trainingGrid: {
@@ -574,20 +579,20 @@ const styles = StyleSheet.create({
     height: 72,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#222222",
-    backgroundColor: "#111111",
+    borderColor: BDR,
+    backgroundColor: SURF,
     justifyContent: "center",
     alignItems: "center",
     gap: 2,
   },
   trainingChipActive: {
-    borderColor: "#555555",
-    backgroundColor: "#1A1A1A",
+    borderColor: GREEN_BORDER,
+    backgroundColor: GREEN_SUBTLE,
   },
-  trainingNumber: { fontFamily: Typography.fontFamily, fontSize: 24, fontWeight: "700", color: "#F0F0F0" },
-  trainingNumberActive: { color: "#FFFFFF" },
-  trainingLabel: { fontFamily: Typography.fontFamily, fontSize: 11, fontWeight: "500", color: "#666666" },
-  trainingLabelActive: { color: "#FFFFFF" },
+  trainingNumber: { fontSize: 24, fontWeight: "700", color: "#F0F0F0" },
+  trainingNumberActive: { color: GREEN },
+  trainingLabel: { fontSize: 11, fontWeight: "500", color: "#666666" },
+  trainingLabelActive: { color: GREEN },
 
   // Restriction grid
   restrictionGrid: {
@@ -602,15 +607,15 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: "#222222",
-    backgroundColor: "#111111",
+    borderColor: BDR,
+    backgroundColor: SURF,
   },
   restrictionChipActive: {
-    borderColor: "#555555",
-    backgroundColor: "#1A1A1A",
+    borderColor: GREEN_BORDER,
+    backgroundColor: GREEN_SUBTLE,
   },
-  restrictionLabel: { fontFamily: Typography.fontFamily, fontSize: 14, fontWeight: "500", color: "#888888" },
-  restrictionLabelActive: { color: "#FFFFFF" },
+  restrictionLabel: { fontSize: 14, fontWeight: "500", color: "#7A7A7A" },
+  restrictionLabelActive: { color: GREEN },
 
   // Target weight
   targetInputWrap: {
@@ -619,8 +624,8 @@ const styles = StyleSheet.create({
     height: 72,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: "#222222",
-    backgroundColor: "#111111",
+    borderColor: BDR,
+    backgroundColor: SURF,
     paddingHorizontal: 24,
     gap: 12,
     marginTop: 8,
@@ -628,11 +633,10 @@ const styles = StyleSheet.create({
     maxWidth: 240,
   },
   targetInput: {
-    fontFamily: Typography.fontFamily,
     flex: 1,
     fontSize: 36,
-    fontWeight: "700",
-    color: "#F0F0F0",
+    fontWeight: "800",
+    color: GREEN,
     textAlign: "center",
     height: "100%",
   },
@@ -656,5 +660,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 8,
   },
-  nextText: { fontFamily: Typography.fontFamily, color: "#FFFFFF", fontSize: 17, fontWeight: "600", letterSpacing: 0.5 },
+  nextText: { color: "#0A0A0A", fontSize: 17, fontWeight: "700", letterSpacing: 0.5 },
 });

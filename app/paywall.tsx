@@ -328,7 +328,7 @@ export default function PaywallScreen() {
             Choose your plan to access AI-powered nutrition tracking
           </Text>
           <View style={styles.secureBadge}>
-            <IconSymbol name="checkmark" size={12} color="#4ADE80" />
+            <IconSymbol name="checkmark" size={12} color="#39FF14" />
             <Text style={styles.secureBadgeText}>
               {Platform.OS === "ios"
                 ? "Secure In-App Purchase via Apple"
@@ -362,7 +362,7 @@ export default function PaywallScreen() {
             >
               {plan.highlighted && (
                 <LinearGradient
-                  colors={["rgba(0,122,255,0.08)", "rgba(0,212,255,0.04)"]}
+                  colors={["rgba(57, 255, 20, 0.08)", "rgba(57, 255, 20, 0.03)"]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                   style={StyleSheet.absoluteFill}
@@ -370,7 +370,7 @@ export default function PaywallScreen() {
               )}
               {plan.savings && (
                 <LinearGradient
-                  colors={["#444444", "#333333"]}
+                  colors={["#39FF14", "#2BCC10"]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={styles.savingsBadge}
@@ -393,7 +393,7 @@ export default function PaywallScreen() {
                     <IconSymbol
                       name="checkmark"
                       size={14}
-                      color={plan.highlighted ? "#C0C0C0" : "#FFFFFF"}
+                      color={plan.highlighted ? "#39FF14" : "#39FF14"}
                     />
                     <Text style={styles.featureText}>{feature}</Text>
                   </View>
@@ -410,13 +410,13 @@ export default function PaywallScreen() {
               >
                 {plan.highlighted ? (
                   <LinearGradient
-                    colors={["#444444", "#2A2A2A"]}
+                    colors={["#39FF14", "#2BCC10"]}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 0 }}
                     style={styles.subscribeGradient}
                   >
                     {subscribing === plan.id ? (
-                      <ActivityIndicator color="#FFFFFF" />
+                      <ActivityIndicator color="#0A0A0A" />
                     ) : (
                       <Text style={styles.subscribeTextWhite}>
                         {plan.id === "annual"
@@ -512,7 +512,7 @@ const styles = StyleSheet.create({
   titleHighlight: {
     fontSize: 32,
     fontWeight: "800",
-    color: "#FFFFFF",
+    color: "#39FF14",
     letterSpacing: 0.5,
     marginBottom: 8,
   },
@@ -527,7 +527,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    backgroundColor: "rgba(74, 222, 128, 0.1)",
+    backgroundColor: "rgba(57, 255, 20, 0.08)",
     paddingHorizontal: 14,
     paddingVertical: 6,
     borderRadius: 20,
@@ -535,7 +535,7 @@ const styles = StyleSheet.create({
   },
   secureBadgeText: {
     fontSize: 13,
-    color: "#4ADE80",
+    color: "#39FF14",
     fontWeight: "600",
   },
   errorBanner: {
@@ -561,13 +561,18 @@ const styles = StyleSheet.create({
   planCard: {
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#333333",
+    borderColor: "#1E1E1E",
     padding: 20,
     overflow: "hidden",
-    backgroundColor: "#111111",
+    backgroundColor: "#141414",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 6,
   },
   planCardHighlighted: {
-    borderColor: "#555555",
+    borderColor: "rgba(57, 255, 20, 0.3)",
     borderWidth: 1.5,
   },
   savingsBadge: {
@@ -581,7 +586,7 @@ const styles = StyleSheet.create({
   savingsBadgeText: {
     fontSize: 10,
     fontWeight: "700",
-    color: "#FFFFFF",
+    color: "#0A0A0A",
     letterSpacing: 1,
   },
   planHeader: {
@@ -633,8 +638,8 @@ const styles = StyleSheet.create({
   },
   subscribeButtonOutline: {
     borderWidth: 1,
-    borderColor: "#444444",
-    backgroundColor: "#1A1A1A",
+    borderColor: "rgba(57, 255, 20, 0.15)",
+    backgroundColor: "rgba(57, 255, 20, 0.05)",
   },
   subscribeGradient: {
     width: "100%",
@@ -647,7 +652,7 @@ const styles = StyleSheet.create({
   subscribeTextWhite: {
     fontSize: 15,
     fontWeight: "700",
-    color: "#FFFFFF",
+    color: "#0A0A0A",
     letterSpacing: 1.5,
   },
   restoreButton: {

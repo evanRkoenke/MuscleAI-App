@@ -24,55 +24,81 @@ import { useApp } from "@/lib/app-context";
 import { useSubscription } from "@/hooks/use-subscription";
 import { calculateStreak, getMealDates } from "@/lib/streak";
 import * as Haptics from "expo-haptics";
-import { Typography } from "@/constants/typography";
-
 
 const { width: SW } = Dimensions.get("window");
 
-// ─── Ring geometry ───
-const RING_SIZE = Math.min(SW * 0.62, 260);
-const RING_STROKE = 18;
-const RING_R = (RING_SIZE - RING_STROKE) / 2;
-const RING_C = 2 * Math.PI * RING_R;
+// ─── Anabolic Score Ring geometry ───
+const SCORE_RING_SIZE = Math.min(SW * 0.58, 240);
+const SCORE_STROKE = 14;
+const SCORE_R = (SCORE_RING_SIZE - SCORE_STROKE) / 2;
+const SCORE_C = 2 * Math.PI * SCORE_R;
 
-// ─── Brand palette ───
-const ACCENT = "#FFFFFF";
-const ACCENT_DIM = "#777777";
-const SILVER = "#C0C0C0";
-const PROT = "#E0E0E0";
-const CARB = "#B0B0B0";
-const FATR = "#FF3D3D";
-const BG = "#000000";
-const SURF = "#0A0A0A";
-const SURF2 = "#111111";
-const BDR = "#222222";
+// ─── Calorie Ring geometry (smaller, below score) ───
+const CAL_RING_SIZE = Math.min(SW * 0.32, 140);
+const CAL_STROKE = 10;
+const CAL_R = (CAL_RING_SIZE - CAL_STROKE) / 2;
+const CAL_C = 2 * Math.PI * CAL_R;
+
+// ─── Premium Dark + Anabolic Green Palette ───
+const GREEN = "#39FF14";
+const GREEN_DIM = "#2BCC10";
+const GREEN_GLOW = "rgba(57, 255, 20, 0.25)";
+const GREEN_SUBTLE = "rgba(57, 255, 20, 0.08)";
+const GREEN_BORDER = "rgba(57, 255, 20, 0.15)";
+const BG = "#0A0A0A";
+const SURF = "#141414";
+const SURF2 = "#1A1A1A";
+const BDR = "#1E1E1E";
 const T1 = "#F0F0F0";
-const T2 = "#888888";
+const T2 = "#7A7A7A";
 const T3 = "#444444";
 
+// Macro colors — vibrant for contrast on dark
+const PROT_COLOR = "#39FF14";
+const CARB_COLOR = "#00D4FF";
+const FAT_COLOR = "#FF6B35";
+const SUGAR_COLOR = "#FFB800";
+
 function scoreColor(s: number) {
-  return s >= 80 ? "#C0C0C0" : s >= 60 ? "#B0B0B0" : "#FF3D3D";
+  return s >= 80 ? GREEN : s >= 60 ? "#FFB800" : "#FF3B3B";
 }
 
-function todayStr() {
-  return new Date().toISOString().split("T")[0];
+function scoreLabel(s: number) {
+  return s >= 80 ? "ELITE" : s >= 60 ? "GOOD" : "LOW";
 }
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { profile, meals: allMeals, getCaloriesByDate, getMacrosByDate, getMealsByDate, selectedDate, setSelectedDate } = useApp();
+  const {
+    profile,
+    meals: allMeals,
+    getCaloriesByDate,
+    getMacrosByDate,
+    getMealsByDate,
+    selectedDate,
+    setSelectedDate,
+  } = useApp();
   const sub = useSubscription();
 
   const cal = useMemo(() => getCaloriesByDate(selectedDate), [getCaloriesByDate, selectedDate]);
   const mac = useMemo(() => getMacrosByDate(selectedDate), [getMacrosByDate, selectedDate]);
   const rem = Math.max(0, profile.calorieGoal - cal);
-  const prog = Math.min(1, cal / profile.calorieGoal);
-  const dashOff = RING_C * (1 - prog * 0.75); // max 270° sweep
+  const calProg = Math.min(1, cal / profile.calorieGoal);
+  const calDashOff = CAL_C * (1 - calProg * 0.75);
 
   const meals = useMemo(() => getMealsByDate(selectedDate), [getMealsByDate, selectedDate]);
   const last = meals.length > 0 ? meals[meals.length - 1] : null;
 
-  // Compute which dates in the week have logged meals (for Anabolic Dot)
+  // Compute daily Anabolic Score (average of all meal scores, or 0)
+  const anabolicScore = useMemo(() => {
+    if (meals.length === 0) return 0;
+    const total = meals.reduce((sum, m) => sum + (m.anabolicScore || 0), 0);
+    return Math.round(total / meals.length);
+  }, [meals]);
+  const scoreProg = anabolicScore / 100;
+  const scoreDashOff = SCORE_C * (1 - scoreProg);
+
+  // Dates with meals for week strip dots
   const datesWithMeals = useMemo(() => {
     const weekDates = getWeekDates();
     const set = new Set<string>();
@@ -90,10 +116,9 @@ export default function HomeScreen() {
 
   return (
     <ScreenContainer containerClassName="bg-transparent">
-      {/* Full-screen dark background */}
       <View style={StyleSheet.absoluteFill}>
         <LinearGradient
-          colors={[BG, "#000000", BG]}
+          colors={[BG, "#050505", BG]}
           style={StyleSheet.absoluteFill}
         />
       </View>
@@ -113,7 +138,7 @@ export default function HomeScreen() {
               <Image source={{ uri: profile.profilePhotoUri }} style={s.hdrAvatarImg} />
             ) : (
               <LinearGradient
-                colors={["#555555", "#444444"]}
+                colors={[GREEN_DIM, "#1A8A0A"]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={s.hdrAvatarFallback}
@@ -144,66 +169,76 @@ export default function HomeScreen() {
         {/* ═══ WEEKLY CALENDAR STRIP ═══ */}
         <WeekStrip selectedDate={selectedDate} onSelectDate={setSelectedDate} datesWithMeals={datesWithMeals} />
 
-        {/* ═══ CALORIE RING ═══ */}
-        <View style={s.ringWrap}>
-          {/* Multi-layer glow */}
-          <View style={s.glow1} />
-          <View style={s.glow2} />
-          <View style={s.glow3} />
+        {/* ═══ ANABOLIC SCORE RING — Hero Element ═══ */}
+        <View style={s.scoreWrap}>
+          {/* Multi-layer green glow */}
+          <View style={s.scoreGlow1} />
+          <View style={s.scoreGlow2} />
+          <View style={s.scoreGlow3} />
 
-          <Svg width={RING_SIZE} height={RING_SIZE}>
+          <Svg width={SCORE_RING_SIZE} height={SCORE_RING_SIZE}>
             <Defs>
-              <SvgGradient id="rg" x1="0" y1="0" x2="1" y2="1">
-                <Stop offset="0" stopColor={"#777777"} />
-                <Stop offset="0.4" stopColor={ACCENT} />
-                <Stop offset="1" stopColor={SILVER} />
+              <SvgGradient id="scoreGrad" x1="0" y1="0" x2="1" y2="1">
+                <Stop offset="0" stopColor={GREEN} />
+                <Stop offset="0.5" stopColor="#2BCC10" />
+                <Stop offset="1" stopColor="#1A8A0A" />
               </SvgGradient>
             </Defs>
             {/* Track */}
             <Circle
-              cx={RING_SIZE / 2}
-              cy={RING_SIZE / 2}
-              r={RING_R}
+              cx={SCORE_RING_SIZE / 2}
+              cy={SCORE_RING_SIZE / 2}
+              r={SCORE_R}
               stroke="#1A1A1A"
-              strokeWidth={RING_STROKE}
+              strokeWidth={SCORE_STROKE}
               fill="transparent"
             />
             {/* Progress arc */}
             <Circle
-              cx={RING_SIZE / 2}
-              cy={RING_SIZE / 2}
-              r={RING_R}
-              stroke="url(#rg)"
-              strokeWidth={RING_STROKE}
+              cx={SCORE_RING_SIZE / 2}
+              cy={SCORE_RING_SIZE / 2}
+              r={SCORE_R}
+              stroke="url(#scoreGrad)"
+              strokeWidth={SCORE_STROKE}
               fill="transparent"
-              strokeDasharray={RING_C}
-              strokeDashoffset={dashOff}
+              strokeDasharray={SCORE_C}
+              strokeDashoffset={scoreDashOff}
               strokeLinecap="round"
-              rotation="-225"
-              origin={`${RING_SIZE / 2}, ${RING_SIZE / 2}`}
+              rotation="-90"
+              origin={`${SCORE_RING_SIZE / 2}, ${SCORE_RING_SIZE / 2}`}
             />
           </Svg>
 
-          {/* Center text */}
-          <View style={s.ringCenter}>
-            <Text style={s.ringNum}>{rem.toLocaleString()}</Text>
-            <Text style={s.ringLabel}>Calories Remaining</Text>
+          {/* Center content */}
+          <View style={s.scoreCenter}>
+            <Text style={[s.scoreNum, { color: scoreColor(anabolicScore) }]}>
+              {anabolicScore}
+            </Text>
+            <Text style={s.scoreLabel}>ANABOLIC SCORE</Text>
+            <View style={[s.scoreBadge, { backgroundColor: scoreColor(anabolicScore) + "20", borderColor: scoreColor(anabolicScore) + "40" }]}>
+              <Text style={[s.scoreBadgeText, { color: scoreColor(anabolicScore) }]}>
+                {scoreLabel(anabolicScore)}
+              </Text>
+            </View>
           </View>
         </View>
 
-        {/* ═══ MACRO ROW ═══ */}
+        {/* ═══ MACRO CARDS — Premium rounded with shadows ═══ */}
         <View style={s.macRow}>
           {[
-            { val: mac.protein, unit: "g", label: "PROTEIN", color: PROT },
-            { val: mac.carbs, unit: "g", label: "CARBS", color: CARB },
-            { val: mac.fat, unit: "g", label: "FAT", color: FATR },
-            { val: mac.sugar, unit: "g", label: "SUGAR", color: "#A0A0A0" },
+            { val: mac.protein, unit: "g", label: "PROTEIN", color: PROT_COLOR, icon: "flame.fill" as const },
+            { val: mac.carbs, unit: "g", label: "CARBS", color: CARB_COLOR, icon: "bolt.fill" as const },
+            { val: mac.fat, unit: "g", label: "FAT", color: FAT_COLOR, icon: "leaf.fill" as const },
+            { val: mac.sugar, unit: "g", label: "SUGAR", color: SUGAR_COLOR, icon: "exclamationmark.triangle" as const },
           ].map((m) => {
             const str = String(m.val);
-            const fs = str.length > 4 ? 18 : str.length > 3 ? 22 : 28;
-            const us = str.length > 4 ? 10 : str.length > 3 ? 12 : 14;
+            const fs = str.length > 4 ? 18 : str.length > 3 ? 22 : 26;
+            const us = str.length > 4 ? 10 : str.length > 3 ? 12 : 13;
             return (
               <View key={m.label} style={s.macCard}>
+                <View style={[s.macIconDot, { backgroundColor: m.color + "18" }]}>
+                  <IconSymbol name={m.icon} size={12} color={m.color} />
+                </View>
                 <Text style={[s.macVal, { fontSize: fs }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5}>
                   {m.val}
                   <Text style={[s.macUnit, { fontSize: us }]}>{m.unit}</Text>
@@ -214,26 +249,93 @@ export default function HomeScreen() {
           })}
         </View>
 
+        {/* ═══ CALORIE TRACKER CARD ═══ */}
+        <View style={s.calCard}>
+          <View style={s.calCardInner}>
+            <View style={s.calRingWrap}>
+              <Svg width={CAL_RING_SIZE} height={CAL_RING_SIZE}>
+                <Defs>
+                  <SvgGradient id="calGrad" x1="0" y1="0" x2="1" y2="1">
+                    <Stop offset="0" stopColor={GREEN} />
+                    <Stop offset="1" stopColor={GREEN_DIM} />
+                  </SvgGradient>
+                </Defs>
+                <Circle
+                  cx={CAL_RING_SIZE / 2}
+                  cy={CAL_RING_SIZE / 2}
+                  r={CAL_R}
+                  stroke="#1A1A1A"
+                  strokeWidth={CAL_STROKE}
+                  fill="transparent"
+                />
+                <Circle
+                  cx={CAL_RING_SIZE / 2}
+                  cy={CAL_RING_SIZE / 2}
+                  r={CAL_R}
+                  stroke="url(#calGrad)"
+                  strokeWidth={CAL_STROKE}
+                  fill="transparent"
+                  strokeDasharray={CAL_C}
+                  strokeDashoffset={calDashOff}
+                  strokeLinecap="round"
+                  rotation="-225"
+                  origin={`${CAL_RING_SIZE / 2}, ${CAL_RING_SIZE / 2}`}
+                />
+              </Svg>
+              <View style={s.calRingCenter}>
+                <Text style={s.calRingNum}>{rem.toLocaleString()}</Text>
+                <Text style={s.calRingLabel}>remaining</Text>
+              </View>
+            </View>
+            <View style={s.calStats}>
+              <View style={s.calStatRow}>
+                <View style={[s.calDot, { backgroundColor: GREEN }]} />
+                <Text style={s.calStatLabel}>Eaten</Text>
+                <Text style={s.calStatVal}>{cal.toLocaleString()}</Text>
+              </View>
+              <View style={s.calDivider} />
+              <View style={s.calStatRow}>
+                <View style={[s.calDot, { backgroundColor: T3 }]} />
+                <Text style={s.calStatLabel}>Goal</Text>
+                <Text style={s.calStatVal}>{profile.calorieGoal.toLocaleString()}</Text>
+              </View>
+              <View style={s.calDivider} />
+              <View style={s.calStatRow}>
+                <View style={[s.calDot, { backgroundColor: "#FFB800" }]} />
+                <Text style={s.calStatLabel}>Remaining</Text>
+                <Text style={[s.calStatVal, { color: GREEN }]}>{rem.toLocaleString()}</Text>
+              </View>
+            </View>
+          </View>
+        </View>
+
         {/* ═══ QUICK ACTIONS ═══ */}
         <View style={s.qRow}>
           <TouchableOpacity style={s.qBtn} onPress={doScan} activeOpacity={0.7}>
-            <IconSymbol name="camera.fill" size={15} color={ACCENT} />
-            <Text style={s.qTxt}>Scan</Text>
+            <LinearGradient
+              colors={[GREEN, GREEN_DIM]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={s.qBtnGrad}
+            >
+              <IconSymbol name="camera.fill" size={16} color={BG} />
+              <Text style={s.qTxtPrimary}>Scan Meal</Text>
+            </LinearGradient>
           </TouchableOpacity>
           <TouchableOpacity
-            style={s.qBtn}
+            style={s.qBtnSecondary}
             onPress={() => router.push("/(tabs)/meals")}
             activeOpacity={0.7}
           >
-            <IconSymbol name="fork.knife" size={15} color={ACCENT} />
+            <IconSymbol name="fork.knife" size={15} color={GREEN} />
             <Text style={s.qTxt}>Meals</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={s.qBtn}
+            style={s.qBtnSecondary}
             onPress={() => router.push("/(tabs)/forecast")}
             activeOpacity={0.7}
           >
-            <IconSymbol name="chart.line.uptrend.xyaxis" size={15} color={ACCENT} />
+            <IconSymbol name="chart.line.uptrend.xyaxis" size={15} color={GREEN} />
             <Text style={s.qTxt}>Forecast</Text>
           </TouchableOpacity>
         </View>
@@ -262,7 +364,7 @@ export default function HomeScreen() {
                   >
                     <Text style={s.badgeIcon}>{badge.icon}</Text>
                     <Text style={[s.badgeDays, badge.earned && s.badgeDaysEarned]}>{badge.days}d</Text>
-                    <Text style={[s.badgeLabel, badge.earned && s.badgeLabelEarned]}>{badge.label}</Text>
+                    <Text style={[s.badgeLabel2, badge.earned && s.badgeLabelEarned]}>{badge.label}</Text>
                   </View>
                 ))}
               </View>
@@ -272,16 +374,19 @@ export default function HomeScreen() {
 
         {/* ═══ PROTEIN PRIORITY ═══ */}
         <View style={s.ppCard}>
-          <Text style={s.ppHdr}>PROTEIN PRIORITY</Text>
+          <View style={s.ppHdrRow}>
+            <Text style={s.ppHdr}>PROTEIN PRIORITY</Text>
+            {last && (
+              <View style={[s.ppScorePill, { backgroundColor: scoreColor(last.anabolicScore) + "20", borderColor: scoreColor(last.anabolicScore) + "40" }]}>
+                <Text style={[s.ppScoreText, { color: scoreColor(last.anabolicScore) }]}>{last.anabolicScore}</Text>
+              </View>
+            )}
+          </View>
           {last ? (
             <View style={s.ppBody}>
               <View style={s.ppLeft}>
                 <Text style={s.ppName} numberOfLines={1}>{last.name}</Text>
                 <Text style={s.ppDetail}>{last.calories} cal · {last.protein}g protein</Text>
-              </View>
-              <View style={[s.ppBadge, { backgroundColor: scoreColor(last.anabolicScore) + "18", borderColor: scoreColor(last.anabolicScore) + "40" }]}>
-                <Text style={[s.ppScore, { color: scoreColor(last.anabolicScore) }]}>{last.anabolicScore}</Text>
-                <Text style={[s.ppScoreLbl, { color: scoreColor(last.anabolicScore) }]}>ANABOLIC{"\n"}SCORE</Text>
               </View>
             </View>
           ) : (
@@ -298,13 +403,9 @@ export default function HomeScreen() {
           onPress={() => (router as any).push("/fast-food-pro")}
           activeOpacity={0.7}
         >
-          <LinearGradient
-            colors={["rgba(255,255,255,0.06)", "rgba(255,255,255,0.02)"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={StyleSheet.absoluteFill}
-          />
-          <IconSymbol name="storefront.fill" size={22} color={ACCENT} />
+          <View style={s.supIconWrap}>
+            <IconSymbol name="storefront.fill" size={20} color={GREEN} />
+          </View>
           <View style={s.supInfo}>
             <Text style={s.supTitle}>Fast Food Pro</Text>
             <Text style={s.supSub}>Highest protein at every chain</Text>
@@ -318,13 +419,9 @@ export default function HomeScreen() {
           onPress={() => (router as any).push("/support")}
           activeOpacity={0.7}
         >
-          <LinearGradient
-            colors={["rgba(0,122,255,0.08)", "rgba(0,212,255,0.03)"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={StyleSheet.absoluteFill}
-          />
-          <IconSymbol name="bubble.left.fill" size={22} color={ACCENT} />
+          <View style={s.supIconWrap}>
+            <IconSymbol name="bubble.left.fill" size={20} color={GREEN} />
+          </View>
           <View style={s.supInfo}>
             <Text style={s.supTitle}>Muscle Support</Text>
             <Text style={s.supSub}>AI-powered help, 24/7</Text>
@@ -339,12 +436,12 @@ export default function HomeScreen() {
       <TouchableOpacity style={s.fab} onPress={doScan} activeOpacity={0.8}>
         <View style={s.fabGlow} />
         <LinearGradient
-          colors={["#555555", "#444444"]}
+          colors={[GREEN, GREEN_DIM]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={s.fabInner}
         >
-          <IconSymbol name="camera.fill" size={26} color="#FFFFFF" />
+          <IconSymbol name="camera.fill" size={26} color={BG} />
         </LinearGradient>
       </TouchableOpacity>
     </ScreenContainer>
@@ -378,155 +475,290 @@ const s = StyleSheet.create({
   },
   hdrAvatar: { padding: 2 },
   hdrAvatarImg: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    borderWidth: 1.5,
-    borderColor: ACCENT,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 2,
+    borderColor: GREEN,
   },
   hdrAvatarFallback: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     justifyContent: "center" as const,
     alignItems: "center" as const,
   },
   hdrAvatarText: {
     fontSize: 15,
-    fontWeight: "400" as const,
+    fontWeight: "700" as const,
     color: "#FFFFFF",
   },
   hdrGear: { padding: 8 },
 
-  /* Ring */
-  ringWrap: {
+  /* Anabolic Score Ring */
+  scoreWrap: {
     alignItems: "center",
     justifyContent: "center",
     alignSelf: "center",
-    marginVertical: 4,
-    width: RING_SIZE + 60,
-    height: RING_SIZE + 60,
+    marginVertical: 8,
+    width: SCORE_RING_SIZE + 60,
+    height: SCORE_RING_SIZE + 60,
   },
-  glow1: {
+  scoreGlow1: {
     position: "absolute",
-    width: RING_SIZE + 50,
-    height: RING_SIZE + 50,
-    borderRadius: (RING_SIZE + 50) / 2,
-    backgroundColor: "rgba(0,122,255,0.06)",
+    width: SCORE_RING_SIZE + 50,
+    height: SCORE_RING_SIZE + 50,
+    borderRadius: (SCORE_RING_SIZE + 50) / 2,
+    backgroundColor: GREEN_GLOW,
   },
-  glow2: {
+  scoreGlow2: {
     position: "absolute",
-    width: RING_SIZE + 30,
-    height: RING_SIZE + 30,
-    borderRadius: (RING_SIZE + 30) / 2,
+    width: SCORE_RING_SIZE + 30,
+    height: SCORE_RING_SIZE + 30,
+    borderRadius: (SCORE_RING_SIZE + 30) / 2,
     backgroundColor: "transparent",
-    shadowColor: ACCENT,
+    shadowColor: GREEN,
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.55,
+    shadowOpacity: 0.6,
     shadowRadius: 40,
     elevation: 0,
   },
-  glow3: {
+  scoreGlow3: {
     position: "absolute",
-    width: RING_SIZE + 10,
-    height: RING_SIZE + 10,
-    borderRadius: (RING_SIZE + 10) / 2,
+    width: SCORE_RING_SIZE + 10,
+    height: SCORE_RING_SIZE + 10,
+    borderRadius: (SCORE_RING_SIZE + 10) / 2,
     backgroundColor: "transparent",
-    shadowColor: SILVER,
+    shadowColor: GREEN,
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.25,
+    shadowOpacity: 0.3,
     shadowRadius: 25,
     elevation: 0,
   },
-  ringCenter: {
+  scoreCenter: {
     position: "absolute",
     alignItems: "center",
   },
-  ringNum: {
-    fontSize: 50,
-    fontWeight: "700",
-    color: T1,
+  scoreNum: {
+    fontSize: 56,
+    fontWeight: "800",
     letterSpacing: -2,
   },
-  ringLabel: {
-    fontSize: 13,
-    fontWeight: "400",
+  scoreLabel: {
+    fontSize: 11,
+    fontWeight: "600",
     color: T2,
+    letterSpacing: 2,
     marginTop: 2,
   },
+  scoreBadge: {
+    marginTop: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 3,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  scoreBadgeText: {
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.5,
+  },
 
-  /* Macros */
+  /* Macro Cards */
   macRow: {
     flexDirection: "row",
-    gap: 10,
+    gap: 8,
     marginBottom: 14,
   },
   macCard: {
     flex: 1,
-    backgroundColor: SURF2,
-    borderRadius: 14,
-    paddingVertical: 16,
+    backgroundColor: SURF,
+    borderRadius: 16,
+    paddingVertical: 14,
     paddingHorizontal: 6,
     alignItems: "center",
     borderWidth: 1,
     borderColor: BDR,
-    gap: 5,
+    gap: 4,
+    // Shadow for premium feel
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  macIconDot: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 2,
   },
   macVal: {
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: "700",
     color: T1,
   },
   macUnit: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "400",
     color: T2,
   },
   macLbl: {
-    fontSize: 10,
-    fontWeight: "400",
+    fontSize: 9,
+    fontWeight: "600",
     letterSpacing: 1.5,
   },
 
-  /* Quick actions */
+  /* Calorie Tracker Card */
+  calCard: {
+    backgroundColor: SURF,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: BDR,
+    padding: 20,
+    marginBottom: 14,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  calCardInner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 20,
+  },
+  calRingWrap: {
+    alignItems: "center",
+    justifyContent: "center",
+    width: CAL_RING_SIZE,
+    height: CAL_RING_SIZE,
+  },
+  calRingCenter: {
+    position: "absolute",
+    alignItems: "center",
+  },
+  calRingNum: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: T1,
+    letterSpacing: -1,
+  },
+  calRingLabel: {
+    fontSize: 10,
+    fontWeight: "500",
+    color: T2,
+    marginTop: 1,
+  },
+  calStats: {
+    flex: 1,
+    gap: 10,
+  },
+  calStatRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  calDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  calStatLabel: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: "500",
+    color: T2,
+  },
+  calStatVal: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: T1,
+  },
+  calDivider: {
+    height: 1,
+    backgroundColor: BDR,
+  },
+
+  /* Quick Actions */
   qRow: {
     flexDirection: "row",
     gap: 10,
     marginBottom: 14,
   },
   qBtn: {
+    flex: 1.2,
+    borderRadius: 14,
+    overflow: "hidden",
+  },
+  qBtnGrad: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 14,
+    borderRadius: 14,
+  },
+  qTxtPrimary: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: BG,
+  },
+  qBtnSecondary: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 6,
-    paddingVertical: 13,
-    borderRadius: 12,
+    paddingVertical: 14,
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: BDR,
-    backgroundColor: SURF,
+    borderColor: GREEN_BORDER,
+    backgroundColor: GREEN_SUBTLE,
   },
   qTxt: {
     fontSize: 14,
-    fontWeight: "400",
+    fontWeight: "600",
     color: T1,
   },
 
   /* Protein Priority */
   ppCard: {
-    borderRadius: 16,
+    borderRadius: 18,
     padding: 16,
     borderWidth: 1,
     borderColor: BDR,
-    backgroundColor: SURF2,
+    backgroundColor: SURF,
     marginBottom: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  ppHdrRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 14,
   },
   ppHdr: {
-    fontSize: 13,
-    fontWeight: "400",
+    fontSize: 12,
+    fontWeight: "600",
     letterSpacing: 2.5,
-    color: T1,
-    marginBottom: 14,
+    color: GREEN,
+  },
+  ppScorePill: {
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  ppScoreText: {
+    fontSize: 14,
+    fontWeight: "700",
   },
   ppBody: {
     flexDirection: "row",
@@ -536,23 +768,6 @@ const s = StyleSheet.create({
   ppLeft: { flex: 1, gap: 4 },
   ppName: { fontSize: 17, fontWeight: "600", color: T1 },
   ppDetail: { fontSize: 14, color: T2 },
-  ppBadge: {
-    width: 76,
-    height: 76,
-    borderRadius: 16,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-  },
-  ppScore: { fontSize: 30, fontWeight: "700" },
-  ppScoreLbl: {
-    fontSize: 7,
-    fontWeight: "400",
-    letterSpacing: 0.5,
-    textAlign: "center",
-    lineHeight: 9,
-    marginTop: 2,
-  },
   ppEmpty: {
     alignItems: "center",
     gap: 10,
@@ -565,18 +780,30 @@ const s = StyleSheet.create({
     color: T3,
   },
 
-  /* Muscle Support */
+  /* Support / Feature Cards */
   supCard: {
     flexDirection: "row",
     alignItems: "center",
-    borderRadius: 14,
+    borderRadius: 16,
     padding: 16,
     borderWidth: 1,
     borderColor: BDR,
-    backgroundColor: SURF2,
+    backgroundColor: SURF,
     gap: 14,
     marginBottom: 12,
-    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  supIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: GREEN_SUBTLE,
+    alignItems: "center",
+    justifyContent: "center",
   },
   supInfo: { flex: 1 },
   supTitle: { fontSize: 16, fontWeight: "600", color: T1 },
@@ -584,12 +811,17 @@ const s = StyleSheet.create({
 
   /* Streak Card */
   streakCard: {
-    borderRadius: 14,
+    borderRadius: 18,
     borderWidth: 1,
     borderColor: BDR,
-    backgroundColor: SURF2,
+    backgroundColor: SURF,
     padding: 16,
     marginBottom: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 6,
   },
   streakTop: {
     flexDirection: "row",
@@ -608,7 +840,7 @@ const s = StyleSheet.create({
   streakCount: {
     fontSize: 28,
     fontWeight: "700",
-    color: T1,
+    color: GREEN,
   },
   streakLabel: {
     fontSize: 11,
@@ -630,16 +862,16 @@ const s = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     paddingVertical: 10,
-    borderRadius: 10,
-    backgroundColor: "#0A0A0A",
+    borderRadius: 12,
+    backgroundColor: "#0F0F0F",
     borderWidth: 1,
     borderColor: "#1A1A1A",
     opacity: 0.4,
   },
   badgeEarned: {
     opacity: 1,
-    borderColor: "#333333",
-    backgroundColor: "#111111",
+    borderColor: GREEN_BORDER,
+    backgroundColor: GREEN_SUBTLE,
   },
   badgeIcon: {
     fontSize: 18,
@@ -651,9 +883,9 @@ const s = StyleSheet.create({
     color: T3,
   },
   badgeDaysEarned: {
-    color: T1,
+    color: GREEN,
   },
-  badgeLabel: {
+  badgeLabel2: {
     fontSize: 9,
     fontWeight: "500",
     color: T3,
@@ -680,8 +912,7 @@ const s = StyleSheet.create({
     width: 88,
     height: 88,
     borderRadius: 44,
-    backgroundColor: "#555555",
-    opacity: 0.35,
+    backgroundColor: GREEN_GLOW,
   },
   fabInner: {
     width: 64,
@@ -689,7 +920,7 @@ const s = StyleSheet.create({
     borderRadius: 32,
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#555555",
+    shadowColor: GREEN,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.6,
     shadowRadius: 20,

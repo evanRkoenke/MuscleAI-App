@@ -1,14 +1,21 @@
 /** @type {const} */
 const themeColors = {
-  primary: { light: '#FFFFFF', dark: '#FFFFFF' },
-  background: { light: '#000000', dark: '#000000' },
-  surface: { light: '#111111', dark: '#111111' },
+  // Anabolic Green — the hero accent for buttons, highlights, glows
+  primary:    { light: '#39FF14', dark: '#39FF14' },
+  // Deep black backgrounds — layered for depth
+  background: { light: '#0A0A0A', dark: '#0A0A0A' },
+  // Elevated surface cards — subtle lift from background
+  surface:    { light: '#141414', dark: '#141414' },
+  // Primary text — crisp white
   foreground: { light: '#F0F0F0', dark: '#F0F0F0' },
-  muted: { light: '#888888', dark: '#888888' },
-  border: { light: '#222222', dark: '#222222' },
-  success: { light: '#C0C0C0', dark: '#C0C0C0' },
-  warning: { light: '#A0A0A0', dark: '#A0A0A0' },
-  error: { light: '#FF4444', dark: '#FF4444' },
+  // Secondary text — muted gray
+  muted:      { light: '#7A7A7A', dark: '#7A7A7A' },
+  // Borders — subtle separation
+  border:     { light: '#1E1E1E', dark: '#1E1E1E' },
+  // Semantic colors
+  success:    { light: '#39FF14', dark: '#39FF14' },
+  warning:    { light: '#FFB800', dark: '#FFB800' },
+  error:      { light: '#FF3B3B', dark: '#FF3B3B' },
 };
 
 module.exports = { themeColors };

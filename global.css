@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 html, body, #root {
-  background-color: #0A0E14;
+  background-color: #0A0A0A;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

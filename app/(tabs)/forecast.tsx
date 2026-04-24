@@ -25,9 +25,6 @@ import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useApp } from "@/lib/app-context";
 import { useSubscription } from "@/hooks/use-subscription";
-import { isPaidTier } from "@/lib/subscription-features";
-import { Typography } from "@/constants/typography";
-
 
 const SW = Dimensions.get("window").width;
 const CHART_W = SW - 56;
@@ -37,27 +34,26 @@ const PR = 10;
 const PT = 20;
 const PB = 32;
 
-// Brand palette
-const ACCENT = "#FFFFFF";
-const SILVER = "#C0C0C0";
-const BG = "#000000";
-const SURF = "#0A0A0A";
-const SURF2 = "#111111";
-const BDR = "#222222";
+// ─── Premium Dark + Anabolic Green ───
+const GREEN = "#39FF14";
+const GREEN_DIM = "#2BCC10";
+const GREEN_SUBTLE = "rgba(57, 255, 20, 0.08)";
+const GREEN_BORDER = "rgba(57, 255, 20, 0.15)";
+const GREEN_GLOW = "rgba(57, 255, 20, 0.25)";
+const BG = "#0A0A0A";
+const SURF = "#141414";
+const BDR = "#1E1E1E";
 const T1 = "#F0F0F0";
-const T2 = "#888888";
+const T2 = "#7A7A7A";
 const T3 = "#444444";
 
 /**
  * Dynamic forecast formula:
- * - TDEE is estimated from current weight (bodyweight × 15 for moderate activity)
+ * - TDEE is estimated from current weight (bodyweight x activity multiplier)
  * - Daily surplus/deficit = calorieGoal - TDEE
- * - Weekly weight change = surplus/deficit × 7 / 3500 (3500 cal ≈ 1 lb)
- * - Protein factor: high protein (≥1g/lb) preserves muscle in deficit, enhances lean gain in surplus
- *   proteinRatio = proteinGoal / currentWeight
- *   If surplus: higher protein → more lean mass gain (weight gain efficiency +10-20%)
- *   If deficit: higher protein → less muscle loss (weight loss dampened by 10-20%)
- * - Monthly change = weekly change × 4.33, with diminishing returns over time
+ * - Weekly weight change = surplus/deficit x 7 / 3500 (3500 cal ~ 1 lb)
+ * - Protein factor: high protein preserves muscle in deficit, enhances lean gain in surplus
+ * - Monthly change = weekly change x 4.33, with diminishing returns over time
  */
 function computeForecast(
   currentWeight: number,
@@ -68,23 +64,18 @@ function computeForecast(
   trainingDays: number = 4
 ) {
   const weightInLbs = unit === "kg" ? currentWeight * 2.205 : currentWeight;
-  // TDEE adjusted by training frequency from onboarding
-  const activityMultiplier = 13 + trainingDays * 0.5; // 13 (sedentary) + 0.5 per training day
+  const activityMultiplier = 13 + trainingDays * 0.5;
   const tdee = weightInLbs * activityMultiplier;
-  const dailySurplus = calorieGoal - tdee; // positive = surplus, negative = deficit
+  const dailySurplus = calorieGoal - tdee;
   const weeklyChangeLbs = (dailySurplus * 7) / 3500;
 
-  // Protein ratio: grams per lb of bodyweight
   const proteinRatio = proteinGoal / weightInLbs;
-  // Protein modifier: high protein (≥1g/lb) boosts efficiency
   const proteinModifier = Math.min(Math.max(proteinRatio, 0.5), 1.5);
 
   let adjustedWeeklyChange: number;
   if (dailySurplus > 0) {
-    // Surplus: higher protein → more efficient lean gain
     adjustedWeeklyChange = weeklyChangeLbs * (0.85 + 0.15 * proteinModifier);
   } else {
-    // Deficit: higher protein → preserves muscle, dampens weight loss slightly
     adjustedWeeklyChange = weeklyChangeLbs * (1.15 - 0.15 * proteinModifier);
   }
 
@@ -94,10 +85,8 @@ function computeForecast(
   const isSurplus = dailySurplus > 0;
   const pts = [];
   for (let m = 0; m <= 12; m++) {
-    // Diminishing returns: progress slows as body adapts
     const diminishing = m === 0 ? 0 : Math.log(1 + m) / Math.log(13);
     const rawChange = monthlyChangeLbs * m * conversionFactor;
-    // Blend linear and logarithmic for realistic curve
     const blendedChange = rawChange * (0.4 + 0.6 * (diminishing / (m / 12 || 1)));
     const projected = Math.round((currentWeight + blendedChange) * 10) / 10;
     pts.push({ month: m, weight: projected });
@@ -110,19 +99,14 @@ export default function ForecastScreen() {
   const { subscription, profile, weightLog, onboardingData } = useApp();
   const sub = useSubscription();
   const router = useRouter();
-  // Forecast chart is unlocked for Elite; Priority Sync is Elite-only
-  // All paid tiers get basic forecast access; Elite gets full 12-month + priority sync
   const canSeeForecast = sub.canAccessForecast;
   const canUsePrioritySync = sub.canAccessPrioritySync;
-  const isPaid = sub.isPaid;
 
-  // Use latest weight from log if available
   const currentWeight = weightLog.length > 0
     ? weightLog[weightLog.length - 1].weight
     : profile.currentWeight;
 
-  // Dynamic forecast based on calories and protein
-  const { forecastData, isSurplus, trendDirection } = useMemo(() => {
+  const { forecastData, isSurplus } = useMemo(() => {
     const result = computeForecast(
       currentWeight,
       profile.calorieGoal,
@@ -134,11 +118,9 @@ export default function ForecastScreen() {
     return {
       forecastData: result.pts,
       isSurplus: result.isSurplus,
-      trendDirection: result.isSurplus ? "up" : "down",
     };
   }, [currentWeight, profile.calorieGoal, profile.proteinGoal, profile.targetWeight, profile.unit, onboardingData?.trainingDays]);
 
-  // Chart geometry
   const { chartPoints, fillPoints, dots } = useMemo(() => {
     const weights = forecastData.map((d) => d.weight);
     const mn = Math.min(...weights) - 2;
@@ -155,7 +137,6 @@ export default function ForecastScreen() {
     }));
 
     const lineStr = positions.map((d) => `${d.x},${d.y}`).join(" ");
-    // Fill polygon: line points + bottom-right + bottom-left
     const bottomY = CHART_H - PB;
     const fillStr =
       lineStr +
@@ -168,7 +149,6 @@ export default function ForecastScreen() {
     };
   }, [forecastData]);
 
-  // Target date ~12 months from now
   const targetDate = useMemo(() => {
     const d = new Date();
     d.setMonth(d.getMonth() + 12);
@@ -185,17 +165,17 @@ export default function ForecastScreen() {
   return (
     <ScreenContainer containerClassName="bg-transparent">
       <View style={StyleSheet.absoluteFill}>
-        <LinearGradient colors={[BG, "#000000", BG]} style={StyleSheet.absoluteFill} />
+        <LinearGradient colors={[BG, "#050505", BG]} style={StyleSheet.absoluteFill} />
       </View>
 
       <ScrollView
         contentContainerStyle={st.scroll}
         showsVerticalScrollIndicator={false}
       >
-        {/* ═══ HEADER ═══ */}
+        {/* Header */}
         <View style={st.hdr}>
           <View style={st.hdrLeft}>
-            <IconSymbol name="chart.line.uptrend.xyaxis" size={18} color={ACCENT} />
+            <IconSymbol name="chart.line.uptrend.xyaxis" size={18} color={GREEN} />
             <Text style={st.hdrTitle}>ANABOLIC FORECAST</Text>
           </View>
           <TouchableOpacity
@@ -207,7 +187,7 @@ export default function ForecastScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* ═══ WEIGHT + DATE ═══ */}
+        {/* Weight + Date */}
         <View style={st.wRow}>
           <Text style={st.wVal}>
             {currentWeight}
@@ -217,19 +197,21 @@ export default function ForecastScreen() {
         </View>
 
         {/* Trend indicator */}
-        <Text style={st.trendText}>
-          {isSurplus ? "▲ Trending Up" : "▼ Trending Down"}
-          {" · "}{Math.abs(forecastData[12]?.weight - currentWeight).toFixed(1)} {profile.unit} projected in 12mo
-        </Text>
+        <View style={st.trendPill}>
+          <Text style={st.trendText}>
+            {isSurplus ? "\u25B2 Trending Up" : "\u25BC Trending Down"}
+            {" \u00B7 "}{Math.abs(forecastData[12]?.weight - currentWeight).toFixed(1)} {profile.unit} projected in 12mo
+          </Text>
+        </View>
 
-        {/* ═══ CHART ═══ */}
+        {/* Chart */}
         <View style={st.chartCard}>
           <View style={canSeeForecast ? undefined : st.blurred}>
             <Svg width={CHART_W} height={CHART_H}>
               <Defs>
                 <SvgGrad id="fillG" x1="0" y1="0" x2="0" y2="1">
-                  <Stop offset="0" stopColor={ACCENT} stopOpacity="0.25" />
-                  <Stop offset="1" stopColor={ACCENT} stopOpacity="0" />
+                  <Stop offset="0" stopColor={GREEN} stopOpacity="0.2" />
+                  <Stop offset="1" stopColor={GREEN} stopOpacity="0" />
                 </SvgGrad>
               </Defs>
 
@@ -250,7 +232,7 @@ export default function ForecastScreen() {
                 );
               })}
 
-              {/* X-axis labels: 1M, 7, 10, 12 MONTHS */}
+              {/* X-axis labels */}
               {[
                 { m: 1, label: "1M" },
                 { m: 7, label: "7" },
@@ -276,17 +258,17 @@ export default function ForecastScreen() {
               {/* Gradient fill under the line */}
               <Polygon points={fillPoints} fill="url(#fillG)" />
 
-              {/* Forecast line — WHITE to match reference */}
+              {/* Forecast line — Anabolic Green */}
               <Polyline
                 points={chartPoints}
                 fill="none"
-                stroke="#FFFFFF"
+                stroke={GREEN}
                 strokeWidth={2.5}
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
 
-              {/* Data point dots — white with dark stroke */}
+              {/* Data point dots */}
               {dots
                 .filter((_, i) => i % 3 === 0 || i === 12)
                 .map((d, i) => (
@@ -295,7 +277,7 @@ export default function ForecastScreen() {
                     cx={d.x}
                     cy={d.y}
                     r={4}
-                    fill="#FFFFFF"
+                    fill={GREEN}
                     stroke={BG}
                     strokeWidth={2}
                   />
@@ -307,19 +289,19 @@ export default function ForecastScreen() {
           {!canSeeForecast && (
             <View style={st.lockOverlay}>
               <View style={st.lockCircle}>
-                <IconSymbol name="lock.fill" size={28} color={ACCENT} />
+                <IconSymbol name="lock.fill" size={28} color={GREEN} />
               </View>
               <Text style={st.lockLbl}>Premium Feature</Text>
             </View>
           )}
         </View>
 
-        {/* ═══ PRIORITY SYNC CARD ═══ */}
+        {/* Priority Sync Card */}
         <View style={[st.syncCard, canUsePrioritySync && st.syncCardActive]}>
           <View style={st.syncRow}>
             <View style={[st.syncIcon, canUsePrioritySync && st.syncIconActive]}>
               {canUsePrioritySync ? (
-                <IconSymbol name="checkmark.circle.fill" size={18} color="#4ADE80" />
+                <IconSymbol name="checkmark.circle.fill" size={18} color={GREEN} />
               ) : (
                 <IconSymbol name="lock.fill" size={16} color={T3} />
               )}
@@ -339,28 +321,19 @@ export default function ForecastScreen() {
           </View>
         </View>
 
-        {/* ═══ PREMIUM UPSELL BOX ═══ */}
+        {/* Premium Upsell */}
         {!canSeeForecast && (
           <View style={st.upsellCard}>
-            <LinearGradient
-              colors={["rgba(0,122,255,0.06)", "rgba(255,59,48,0.03)"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={StyleSheet.absoluteFill}
-            />
-
             <Text style={st.upsellBadge}>PREMIUM MEMBERS ONLY</Text>
             <Text style={st.upsellDesc}>
               Unlock this 12-Month Forecast and{"\n"}multiply your gains.
             </Text>
 
-            {/* Price block */}
             <View style={st.priceBlock}>
               <Text style={st.priceMain}>ELITE ANNUAL $79.99</Text>
               <Text style={st.priceSave}>66% SAVINGS</Text>
             </View>
 
-            {/* UNLOCK button — gradient blue → red */}
             <TouchableOpacity
               style={st.unlockBtn}
               onPress={handleUnlock}
@@ -368,7 +341,7 @@ export default function ForecastScreen() {
             >
               <View style={st.unlockGlow} />
               <LinearGradient
-                colors={[ACCENT, "#FF3B30"]}
+                colors={[GREEN, GREEN_DIM]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={st.unlockGrad}
@@ -379,7 +352,7 @@ export default function ForecastScreen() {
           </View>
         )}
 
-        {/* ═══ MILESTONES (Elite only) ═══ */}
+        {/* Milestones (Elite only) */}
         {canSeeForecast && (
           <View style={st.milestones}>
             <Text style={st.msTitle}>Projected Milestones</Text>
@@ -416,7 +389,6 @@ export default function ForecastScreen() {
 const st = StyleSheet.create({
   scroll: { paddingHorizontal: 20, paddingBottom: 100 },
 
-  /* Header */
   hdr: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -433,28 +405,42 @@ const st = StyleSheet.create({
   },
   hdrGear: { padding: 8 },
 
-  /* Weight row */
   wRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "baseline",
     marginBottom: 10,
   },
-  wVal: { fontSize: 38, fontWeight: "700", color: T1 },
+  wVal: { fontSize: 38, fontWeight: "800", color: T1 },
   wUnit: { fontSize: 18, fontWeight: "600", color: T2 },
-  wDate: { fontSize: 14, fontWeight: "400", color: T2 },
-  trendText: { fontSize: 13, fontWeight: "500", color: T2, marginBottom: 10 },
+  wDate: { fontSize: 14, fontWeight: "500", color: T2 },
 
-  /* Chart */
+  trendPill: {
+    alignSelf: "flex-start",
+    backgroundColor: GREEN_SUBTLE,
+    borderWidth: 1,
+    borderColor: GREEN_BORDER,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    marginBottom: 12,
+  },
+  trendText: { fontSize: 13, fontWeight: "600", color: GREEN },
+
   chartCard: {
-    borderRadius: 16,
+    borderRadius: 20,
     padding: 12,
     borderWidth: 1,
     borderColor: BDR,
-    backgroundColor: SURF2,
+    backgroundColor: SURF,
     marginBottom: 14,
     alignItems: "center",
     overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 6,
   },
   blurred: { opacity: 0.15 },
   lockOverlay: {
@@ -467,19 +453,20 @@ const st = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: "rgba(0,122,255,0.12)",
+    backgroundColor: GREEN_SUBTLE,
+    borderWidth: 1,
+    borderColor: GREEN_BORDER,
     justifyContent: "center",
     alignItems: "center",
   },
   lockLbl: { fontSize: 16, fontWeight: "600", color: T1 },
 
-  /* Priority Sync */
   syncCard: {
-    borderRadius: 14,
+    borderRadius: 18,
     padding: 16,
     borderWidth: 1,
     borderColor: BDR,
-    backgroundColor: SURF2,
+    backgroundColor: SURF,
     marginBottom: 14,
   },
   syncRow: { flexDirection: "row", alignItems: "center", gap: 12 },
@@ -495,11 +482,11 @@ const st = StyleSheet.create({
   syncTitle: { fontSize: 16, fontWeight: "600", color: T1 },
   syncSub: { fontSize: 13, color: T2 },
   syncCardActive: {
-    borderColor: "rgba(74,222,128,0.3)",
-    backgroundColor: "rgba(74,222,128,0.05)",
+    borderColor: GREEN_BORDER,
+    backgroundColor: GREEN_SUBTLE,
   },
   syncIconActive: {
-    backgroundColor: "rgba(74,222,128,0.15)",
+    backgroundColor: "rgba(57, 255, 20, 0.15)",
   },
   syncActiveRow: {
     flexDirection: "row" as const,
@@ -510,30 +497,34 @@ const st = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: "#4ADE80",
+    backgroundColor: GREEN,
   },
   syncActiveSub: {
     fontSize: 13,
-    color: "#4ADE80",
+    color: GREEN,
   },
 
-  /* Upsell */
   upsellCard: {
-    borderRadius: 20,
+    borderRadius: 22,
     padding: 24,
     borderWidth: 1.5,
-    borderColor: ACCENT,
-    backgroundColor: SURF2,
+    borderColor: GREEN_BORDER,
+    backgroundColor: SURF,
     alignItems: "center",
     gap: 10,
     overflow: "hidden",
     marginBottom: 14,
+    shadowColor: GREEN,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 4,
   },
   upsellBadge: {
     fontSize: 12,
-    fontWeight: "400",
+    fontWeight: "700",
     letterSpacing: 2.5,
-    color: T1,
+    color: GREEN,
   },
   upsellDesc: {
     fontSize: 15,
@@ -545,11 +536,11 @@ const st = StyleSheet.create({
   priceBlock: { alignItems: "center", gap: 4, marginTop: 4 },
   priceMain: {
     fontSize: 22,
-    fontWeight: "700",
+    fontWeight: "800",
     letterSpacing: 1,
     color: T1,
   },
-  priceSave: { fontSize: 13, fontWeight: "600", color: "#C0C0C0" },
+  priceSave: { fontSize: 13, fontWeight: "600", color: GREEN },
   unlockBtn: {
     width: "100%",
     marginTop: 6,
@@ -562,30 +553,29 @@ const st = StyleSheet.create({
     right: "10%",
     height: 60,
     borderRadius: 30,
-    backgroundColor: ACCENT,
-    opacity: 0.2,
+    backgroundColor: GREEN,
+    opacity: 0.15,
   },
   unlockGrad: {
     height: 52,
     borderRadius: 26,
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: ACCENT,
+    shadowColor: GREEN,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.5,
+    shadowOpacity: 0.4,
     shadowRadius: 16,
     elevation: 8,
   },
   unlockTxt: {
-    color: "#FFFFFF",
+    color: BG,
     fontSize: 18,
-    fontWeight: "600",
+    fontWeight: "800",
     letterSpacing: 4,
   },
 
-  /* Milestones */
   milestones: { marginTop: 4 },
-  msTitle: { fontSize: 18, fontWeight: "600", color: T1, marginBottom: 4 },
+  msTitle: { fontSize: 18, fontWeight: "700", color: T1, marginBottom: 4 },
   msSub: { fontSize: 13, color: T2, marginBottom: 16 },
   msRow: {
     flexDirection: "row",
@@ -599,10 +589,10 @@ const st = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: ACCENT,
+    backgroundColor: GREEN,
   },
   msInfo: { flex: 1 },
-  msMonth: { fontSize: 14, fontWeight: "400", color: ACCENT },
+  msMonth: { fontSize: 14, fontWeight: "600", color: GREEN },
   msLabel: { fontSize: 13, marginTop: 2, color: T2 },
-  msWeight: { fontSize: 16, fontWeight: "600", color: T1 },
+  msWeight: { fontSize: 16, fontWeight: "700", color: T1 },
 });
