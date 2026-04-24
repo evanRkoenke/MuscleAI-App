@@ -28,25 +28,24 @@ import * as Haptics from "expo-haptics";
 import { Typography } from "@/constants/typography";
 
 
-const GREEN = "#39FF14";
-const GREEN_DIM = "#2BCC10";
-const GREEN_SUBTLE = "rgba(57, 255, 20, 0.08)";
-const GREEN_BORDER = "rgba(57, 255, 20, 0.15)";
-const SURFACE = "#141414";
-const BORDER = "#1E1E1E";
+const PRIMARY_WHITE = "#FFFFFF";
+const SILVER = "#C0C0C0";
+const PROTEIN_LIGHT = "#E0E0E0";
+const SURFACE = "#111111";
+const BORDER = "#222222";
 const TEXT_PRIMARY = "#F0F0F0";
-const TEXT_SECONDARY = "#7A7A7A";
-const TEXT_TERTIARY = "#555555";
+const TEXT_SECONDARY = "#888888";
+const TEXT_TERTIARY = "#666666";
 const SCREEN_W = Dimensions.get("window").width;
 const CARD_W = (SCREEN_W - 60) / 2;
 
 const PR_ICONS: Record<string, { icon: "flame.fill" | "bolt.fill" | "star.fill" | "heart.fill" | "chart.line.uptrend.xyaxis" | "scalemass.fill"; color: string }> = {
-  protein: { icon: "bolt.fill", color: GREEN },
-  calories: { icon: "flame.fill", color: GREEN },
-  anabolic: { icon: "star.fill", color: GREEN },
+  protein: { icon: "bolt.fill", color: "#E0E0E0" },
+  calories: { icon: "flame.fill", color: "#B0B0B0" },
+  anabolic: { icon: "star.fill", color: "#FFFFFF" },
   streak: { icon: "heart.fill", color: "#FF4444" },
-  weight_gain: { icon: "chart.line.uptrend.xyaxis", color: GREEN },
-  weight_loss: { icon: "scalemass.fill", color: GREEN },
+  weight_gain: { icon: "chart.line.uptrend.xyaxis", color: "#C0C0C0" },
+  weight_loss: { icon: "scalemass.fill", color: "#D0D0D0" },
 };
 
 const TIER_LABELS: Record<string, string> = {
@@ -58,9 +57,9 @@ const TIER_LABELS: Record<string, string> = {
 
 const TIER_COLORS: Record<string, string> = {
   free: TEXT_TERTIARY,
-  essential: GREEN,
-  pro: GREEN,
-  elite: GREEN,
+  essential: "#C0C0C0",
+  pro: "#B0B0B0",
+  elite: "#FFFFFF",
 };
 
 export default function ProfileScreen() {
@@ -298,7 +297,7 @@ export default function ProfileScreen() {
     return (
       <View style={styles.galleryCard}>
         <LinearGradient
-          colors={["rgba(57, 255, 20, 0.06)", "rgba(57, 255, 20, 0.02)", "transparent"]}
+          colors={["rgba(0,122,255,0.06)", "rgba(0,212,255,0.02)", "transparent"]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={StyleSheet.absoluteFill}
@@ -381,7 +380,7 @@ export default function ProfileScreen() {
           <Image source={{ uri: profile.profilePhotoUri }} style={styles.avatarImage} />
         ) : (
           <LinearGradient
-            colors={[GREEN, GREEN_DIM]}
+            colors={["#444444", "#333333"]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.avatarGradient}
@@ -509,7 +508,7 @@ export default function ProfileScreen() {
             activeOpacity={0.8}
           >
             <LinearGradient
-              colors={[GREEN, GREEN_DIM]}
+              colors={["#444444", "#333333"]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={styles.emptyCreateGrad}
@@ -653,7 +652,7 @@ export default function ProfileScreen() {
               disabled={saving}
             >
               <LinearGradient
-                colors={[GREEN, GREEN_DIM]}
+                colors={["#444444", "#333333"]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.saveGrad}
@@ -766,7 +765,7 @@ const styles = StyleSheet.create({
     height: 88,
     borderRadius: 44,
     borderWidth: 3,
-    borderColor: GREEN,
+    borderColor: "#FFFFFF",
   },
   avatarInitial: {
     fontSize: 36,
@@ -780,7 +779,7 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: GREEN,
+    backgroundColor: "#444444",
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 2,
@@ -821,13 +820,12 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: GREEN_BORDER,
-    backgroundColor: GREEN_SUBTLE,
+    borderColor: "#FFFFFF",
   },
   editProfileBtnText: {
     fontSize: 14,
     fontWeight: "600",
-    color: GREEN,
+    color: "#FFFFFF",
   },
   paymentBtn: {
     flexDirection: "row",
@@ -863,11 +861,6 @@ const styles = StyleSheet.create({
     padding: 14,
     alignItems: "center",
     gap: 4,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    elevation: 4,
   },
   statBoxValue: {
     fontSize: 22,
@@ -903,13 +896,12 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: GREEN_BORDER,
-    backgroundColor: GREEN_SUBTLE,
+    borderColor: "#FFFFFF",
   },
   createCardText: {
     fontSize: 13,
-    fontWeight: "600",
-    color: GREEN,
+    fontWeight: "400",
+    color: "#FFFFFF",
   },
 
   /* Personal Records */
@@ -1011,11 +1003,6 @@ const styles = StyleSheet.create({
     borderColor: BORDER,
     overflow: "hidden",
     gap: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    elevation: 4,
   },
   galleryCardHeader: {
     flexDirection: "row",
@@ -1069,23 +1056,21 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    backgroundColor: GREEN_SUBTLE,
+    backgroundColor: "rgba(0,122,255,0.08)",
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 6,
-    borderWidth: 1,
-    borderColor: GREEN_BORDER,
   },
   galleryCardAnabolicLabel: {
     fontSize: 9,
-    fontWeight: "600",
-    color: GREEN,
+    fontWeight: "400",
+    color: "#FFFFFF",
     letterSpacing: 1,
   },
   galleryCardAnabolicValue: {
     fontSize: 18,
-    fontWeight: "700",
-    color: GREEN,
+    fontWeight: "600",
+    color: "#FFFFFF",
   },
   galleryCardActions: {
     flexDirection: "row",
@@ -1190,8 +1175,8 @@ const styles = StyleSheet.create({
   },
   saveBtnText: {
     fontSize: 16,
-    fontWeight: "700",
-    color: "#0A0A0A",
+    fontWeight: "600",
+    color: "#FFFFFF",
     letterSpacing: 1,
   },
   paymentRow: {

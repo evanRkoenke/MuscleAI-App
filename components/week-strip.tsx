@@ -14,10 +14,6 @@ const DAY_NAMES = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 const DAY_WIDTH = 44;
 const DAY_GAP = 8;
 
-// ─── Premium palette ───
-const GREEN = "#39FF14";
-const BG_DARK = "#0A0A0A";
-
 interface WeekStripProps {
   selectedDate: string; // "YYYY-MM-DD"
   onSelectDate: (date: string) => void;
@@ -151,6 +147,7 @@ const styles = StyleSheet.create({
     gap: DAY_GAP,
     paddingRight: 16,
   },
+  // ─── No background box — transparent cell ───
   dayCell: {
     width: DAY_WIDTH,
     height: 72,
@@ -160,9 +157,9 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent",
     gap: 2,
   },
-  // Selected day: Anabolic Green pill
+  // ─── Selected day: white pill with black text ───
   dayCellSelected: {
-    backgroundColor: GREEN,
+    backgroundColor: "#FFFFFF",
   },
   dayName: {
     fontFamily: Typography.fontFamily,
@@ -172,7 +169,7 @@ const styles = StyleSheet.create({
     color: "rgba(255, 255, 255, 0.45)",
   },
   dayNameSelected: {
-    color: BG_DARK,
+    color: "#000000",
     fontWeight: "700",
   },
   dayNum: {
@@ -182,9 +179,10 @@ const styles = StyleSheet.create({
     color: "rgba(255, 255, 255, 0.85)",
   },
   dayNumSelected: {
-    color: BG_DARK,
+    color: "#000000",
     fontWeight: "800",
   },
+  // ─── Anabolic Dot: 4px indicator for days with meals ───
   dotContainer: {
     height: 6,
     alignItems: "center",
@@ -195,10 +193,10 @@ const styles = StyleSheet.create({
     width: 4,
     height: 4,
     borderRadius: 2,
-    backgroundColor: GREEN,
+    backgroundColor: "rgba(255, 255, 255, 0.5)",
   },
   anabolicDotSelected: {
-    backgroundColor: BG_DARK,
+    backgroundColor: "#000000",
   },
   dotPlaceholder: {
     width: 4,

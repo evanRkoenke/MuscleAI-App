@@ -239,25 +239,6 @@ export default function AuthScreen() {
             </TouchableOpacity>
           )}
 
-          {/* Bypass Login — for UI preview */}
-          <TouchableOpacity
-            style={styles.bypassButton}
-            onPress={async () => {
-              if (Platform.OS !== "web") {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              }
-              await setAuthenticated(true);
-              setTimeout(() => {
-                router.replace("/(tabs)");
-              }, 100);
-            }}
-            activeOpacity={0.7}
-            disabled={loading}
-          >
-            <Text style={styles.bypassButtonText}>Bypass Login</Text>
-            <Text style={styles.bypassSubtext}>Preview the new UI</Text>
-          </TouchableOpacity>
-
           {/* Retake Quiz link */}
           <TouchableOpacity
             style={styles.retakeButton}
@@ -297,23 +278,22 @@ const styles = StyleSheet.create({
   },
   logo: {
     fontSize: 36,
-    fontWeight: "800",
+    fontWeight: "700",
     letterSpacing: -0.7,
-    color: "#39FF14",
+    color: "#FFFFFF",
   },
   tagline: {
     fontSize: 14,
     marginTop: 8,
-    letterSpacing: 1.5,
-    textTransform: "uppercase" as const,
-    color: "#7A7A7A",
+    letterSpacing: 1,
+    color: "#888888",
   },
   form: {
     gap: 16,
   },
   formTitle: {
     fontSize: 26,
-    fontWeight: "800",
+    fontWeight: "700",
     textAlign: "center",
     marginBottom: 4,
     color: "#F0F0F0",
@@ -322,7 +302,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: "center",
     lineHeight: 20,
-    color: "#7A7A7A",
+    color: "#888888",
     marginBottom: 8,
   },
   errorBox: {
@@ -348,18 +328,13 @@ const styles = StyleSheet.create({
     height: 56,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#1E1E1E",
-    backgroundColor: "#141414",
+    borderColor: "#222222",
+    backgroundColor: "#111111",
     gap: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
   },
   socialButtonActive: {
-    borderColor: "rgba(57, 255, 20, 0.15)",
-    backgroundColor: "rgba(57, 255, 20, 0.08)",
+    borderColor: "#333333",
+    backgroundColor: "#1A1A1A",
   },
   socialIcon: {
     fontSize: 20,
@@ -370,26 +345,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: "#F0F0F0",
-  },
-  bypassButton: {
-    alignItems: "center",
-    justifyContent: "center",
-    height: 56,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "rgba(57, 255, 20, 0.3)",
-    backgroundColor: "rgba(57, 255, 20, 0.08)",
-    marginTop: 8,
-  },
-  bypassButtonText: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#39FF14",
-  },
-  bypassSubtext: {
-    fontSize: 12,
-    color: "rgba(57, 255, 20, 0.5)",
-    marginTop: 2,
   },
   retakeButton: {
     flexDirection: "row",

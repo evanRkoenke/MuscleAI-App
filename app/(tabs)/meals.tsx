@@ -14,6 +14,8 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { WeekStrip } from "@/components/week-strip";
 import { useApp } from "@/lib/app-context";
 import * as Haptics from "expo-haptics";
+import { Typography } from "@/constants/typography";
+
 
 const MEAL_TYPES = ["breakfast", "lunch", "dinner", "snack"] as const;
 const MEAL_LABELS: Record<string, string> = {
@@ -28,17 +30,6 @@ const MEAL_ICONS: Record<string, string> = {
   dinner: "🌙",
   snack: "⚡",
 };
-
-// ─── Premium Dark + Anabolic Green ───
-const GREEN = "#39FF14";
-const GREEN_SUBTLE = "rgba(57, 255, 20, 0.08)";
-const GREEN_BORDER = "rgba(57, 255, 20, 0.15)";
-const BG = "#0A0A0A";
-const SURF = "#141414";
-const BDR = "#1E1E1E";
-const T1 = "#F0F0F0";
-const T2 = "#7A7A7A";
-const T3 = "#444444";
 
 type TabMode = "meals" | "favorites";
 
@@ -111,51 +102,51 @@ export default function MealsScreen() {
   );
 
   const renderMealItem = (meal: any) => (
-    <View key={meal.id} style={st.mealItem}>
-      <View style={st.mealInfo}>
-        <View style={st.mealNameRow}>
-          <Text style={st.mealName} numberOfLines={1}>{meal.name}</Text>
+    <View key={meal.id} style={styles.mealItem}>
+      <View style={styles.mealInfo}>
+        <View style={styles.mealNameRow}>
+          <Text style={styles.mealName} numberOfLines={1}>{meal.name}</Text>
           {meal.isFavorite && (
-            <IconSymbol name="star.fill" size={14} color={GREEN} />
+            <IconSymbol name="star.fill" size={14} color="#B0B0B0" />
           )}
         </View>
-        <Text style={st.mealMacros}>
+        <Text style={styles.mealMacros}>
           P: {meal.protein}g · C: {meal.carbs}g · F: {meal.fat}g{meal.sugar > 0 ? ` · S: ${meal.sugar}g` : ""}
         </Text>
       </View>
-      <View style={st.mealActions}>
+      <View style={styles.mealActions}>
         <TouchableOpacity
           onPress={() => handleToggleFavorite(meal.id)}
-          style={st.actionButton}
+          style={styles.actionButton}
           activeOpacity={0.6}
         >
           <IconSymbol
             name="star.fill"
             size={18}
-            color={meal.isFavorite ? GREEN : T3}
+            color={meal.isFavorite ? "#B0B0B0" : "#444444"}
           />
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => handleDeleteMeal(meal.id, meal.name)}
-          style={st.actionButton}
+          style={styles.actionButton}
           activeOpacity={0.6}
         >
-          <IconSymbol name="trash.fill" size={18} color="#FF3B3B" />
+          <IconSymbol name="trash.fill" size={18} color="#FF3D3D" />
         </TouchableOpacity>
-        <View style={st.mealCalContainer}>
-          <Text style={st.mealCalories}>{meal.calories}</Text>
-          <Text style={st.mealCalLabel}>cal</Text>
+        <View style={styles.mealCalContainer}>
+          <Text style={styles.mealCalories}>{meal.calories}</Text>
+          <Text style={styles.mealCalLabel}>cal</Text>
         </View>
       </View>
     </View>
   );
 
   const renderSection = ({ item }: { item: typeof mealSections[0] }) => (
-    <View style={st.section}>
-      <View style={st.sectionHeader}>
-        <Text style={st.sectionIcon}>{item.icon}</Text>
-        <Text style={st.sectionTitle}>{item.label}</Text>
-        <Text style={st.sectionCalories}>
+    <View style={styles.section}>
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionIcon}>{item.icon}</Text>
+        <Text style={styles.sectionTitle}>{item.label}</Text>
+        <Text style={styles.sectionCalories}>
           {item.meals.reduce((sum, m) => sum + m.calories, 0)} cal
         </Text>
       </View>
@@ -163,32 +154,30 @@ export default function MealsScreen() {
         item.meals.map(renderMealItem)
       ) : (
         <TouchableOpacity
-          style={st.addMealButton}
+          style={styles.addMealButton}
           onPress={() => (router as any).push({ pathname: "/scan-meal", params: { category: item.type } })}
           activeOpacity={0.7}
         >
-          <IconSymbol name="plus" size={18} color={GREEN} />
-          <Text style={st.addMealText}>Add {item.label}</Text>
+          <IconSymbol name="plus" size={18} color={"#FFFFFF"} />
+          <Text style={styles.addMealText}>Add {item.label}</Text>
         </TouchableOpacity>
       )}
     </View>
   );
 
   const renderFavoriteItem = ({ item: meal }: { item: any }) => (
-    <View style={st.section}>
+    <View style={styles.section}>
       {renderMealItem(meal)}
     </View>
   );
 
-  const remaining = Math.max(0, profile.calorieGoal - dateCalories);
-
   return (
     <ScreenContainer>
-      <View style={st.header}>
-        <Text style={st.headerTitle}>
-          {activeTab === "meals" ? `${dateLabel}\u2019s Meals` : "Favorite Meals"}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>
+          {activeTab === "meals" ? `${dateLabel}'s Meals` : "Favorite Meals"}
         </Text>
-        <Text style={st.headerDate}>
+        <Text style={styles.headerDate}>
           {activeTab === "meals"
             ? new Date(selectedDate + "T12:00:00").toLocaleDateString("en-US", {
                 weekday: "long",
@@ -199,30 +188,31 @@ export default function MealsScreen() {
         </Text>
       </View>
 
+      {/* Week Strip for date selection */}
       {activeTab === "meals" && (
-        <View style={st.weekStripWrap}>
+        <View style={styles.weekStripWrap}>
           <WeekStrip selectedDate={selectedDate} onSelectDate={setSelectedDate} />
         </View>
       )}
 
       {/* Tab Switcher */}
-      <View style={st.tabRow}>
+      <View style={styles.tabRow}>
         <TouchableOpacity
-          style={[st.tab, activeTab === "meals" && st.tabActive]}
+          style={[styles.tab, activeTab === "meals" && styles.tabActive]}
           onPress={() => setActiveTab("meals")}
           activeOpacity={0.7}
         >
-          <Text style={[st.tabText, activeTab === "meals" && st.tabTextActive]}>
+          <Text style={[styles.tabText, activeTab === "meals" && styles.tabTextActive]}>
             {dateLabel}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[st.tab, activeTab === "favorites" && st.tabActive]}
+          style={[styles.tab, activeTab === "favorites" && styles.tabActive]}
           onPress={() => setActiveTab("favorites")}
           activeOpacity={0.7}
         >
-          <IconSymbol name="star.fill" size={14} color={activeTab === "favorites" ? GREEN : T3} />
-          <Text style={[st.tabText, activeTab === "favorites" && st.tabTextActive]}>
+          <IconSymbol name="star.fill" size={14} color={activeTab === "favorites" ? "#FFFFFF" : "#666666"} />
+          <Text style={[styles.tabText, activeTab === "favorites" && styles.tabTextActive]}>
             Favorites
           </Text>
         </TouchableOpacity>
@@ -231,28 +221,30 @@ export default function MealsScreen() {
       {activeTab === "meals" ? (
         <>
           {/* Daily Summary */}
-          <View style={st.summaryCard}>
-            <View style={st.summaryItem}>
-              <Text style={st.summaryValue}>{dateCalories}</Text>
-              <Text style={st.summaryLabel}>Eaten</Text>
+          <View style={styles.summaryCard}>
+            <View style={styles.summaryItem}>
+              <Text style={styles.summaryValue}>{dateCalories}</Text>
+              <Text style={styles.summaryLabel}>Eaten</Text>
             </View>
-            <View style={st.summaryDivider} />
-            <View style={st.summaryItem}>
-              <Text style={[st.summaryValue, { color: GREEN }]}>{remaining}</Text>
-              <Text style={st.summaryLabel}>Remaining</Text>
+            <View style={styles.summaryDivider} />
+            <View style={styles.summaryItem}>
+              <Text style={[styles.summaryValue, { color: "#FFFFFF" }]}>
+                {Math.max(0, profile.calorieGoal - dateCalories)}
+              </Text>
+              <Text style={styles.summaryLabel}>Remaining</Text>
             </View>
-            <View style={st.summaryDivider} />
-            <View style={st.summaryItem}>
-              <Text style={st.summaryValue}>{profile.calorieGoal}</Text>
-              <Text style={st.summaryLabel}>Goal</Text>
+            <View style={styles.summaryDivider} />
+            <View style={styles.summaryItem}>
+              <Text style={styles.summaryValue}>{profile.calorieGoal}</Text>
+              <Text style={styles.summaryLabel}>Goal</Text>
             </View>
           </View>
 
           {/* Sugar Tracker */}
           {dateMacros.sugar > 0 && (
-            <View style={st.sugarBanner}>
-              <Text style={st.sugarLabel}>Sugar {dateLabel}</Text>
-              <Text style={st.sugarValue}>{dateMacros.sugar}g</Text>
+            <View style={styles.sugarBanner}>
+              <Text style={styles.sugarLabel}>Sugar {dateLabel}</Text>
+              <Text style={styles.sugarValue}>{dateMacros.sugar}g</Text>
             </View>
           )}
 
@@ -260,7 +252,7 @@ export default function MealsScreen() {
             data={mealSections}
             renderItem={renderSection}
             keyExtractor={(item) => item.type}
-            contentContainerStyle={st.listContent}
+            contentContainerStyle={styles.listContent}
             showsVerticalScrollIndicator={false}
           />
         </>
@@ -269,13 +261,13 @@ export default function MealsScreen() {
           data={favoriteMeals}
           renderItem={renderFavoriteItem}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={st.listContent}
+          contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
-            <View style={st.emptyState}>
-              <IconSymbol name="star.fill" size={48} color={T3} />
-              <Text style={st.emptyTitle}>No Favorites Yet</Text>
-              <Text style={st.emptySubtext}>
+            <View style={styles.emptyState}>
+              <IconSymbol name="star.fill" size={48} color="#222222" />
+              <Text style={styles.emptyTitle}>No Favorites Yet</Text>
+              <Text style={styles.emptySubtext}>
                 Tap the star icon on any meal to save it as a favorite
               </Text>
             </View>
@@ -286,21 +278,22 @@ export default function MealsScreen() {
   );
 }
 
-const st = StyleSheet.create({
+const styles = StyleSheet.create({
   header: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 8 },
-  headerTitle: { fontSize: 26, fontWeight: "700", color: T1 },
-  headerDate: { fontSize: 14, marginTop: 4, color: T2 },
+  headerTitle: { fontSize: 26, fontWeight: "700", color: "#F0F0F0" },
+  headerDate: { fontSize: 14, marginTop: 4, color: "#666666" },
 
   weekStripWrap: { paddingHorizontal: 20, marginBottom: 4 },
 
+  // Tab switcher
   tabRow: {
     flexDirection: "row",
     marginHorizontal: 20,
     marginBottom: 12,
-    borderRadius: 14,
-    backgroundColor: SURF,
+    borderRadius: 12,
+    backgroundColor: "#111111",
     borderWidth: 1,
-    borderColor: BDR,
+    borderColor: "#222222",
     padding: 3,
   },
   tab: {
@@ -310,32 +303,29 @@ const st = StyleSheet.create({
     justifyContent: "center",
     gap: 6,
     paddingVertical: 10,
-    borderRadius: 11,
+    borderRadius: 10,
   },
-  tabActive: { backgroundColor: GREEN_SUBTLE, borderWidth: 1, borderColor: GREEN_BORDER },
-  tabText: { fontSize: 14, fontWeight: "500", color: T3 },
-  tabTextActive: { color: T1 },
+  tabActive: { backgroundColor: "rgba(0,122,255,0.12)" },
+  tabText: { fontSize: 14, fontWeight: "400", color: "#666666" },
+  tabTextActive: { color: "#FFFFFF" },
 
+  // Summary
   summaryCard: {
     flexDirection: "row",
     marginHorizontal: 20,
-    borderRadius: 18,
-    padding: 18,
+    borderRadius: 16,
+    padding: 16,
     borderWidth: 1,
-    borderColor: BDR,
-    backgroundColor: SURF,
+    borderColor: "#222222",
+    backgroundColor: "#111111",
     marginBottom: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 6,
   },
   summaryItem: { flex: 1, alignItems: "center" },
-  summaryValue: { fontSize: 22, fontWeight: "700", color: T1 },
-  summaryLabel: { fontSize: 12, marginTop: 4, fontWeight: "500", color: T2 },
-  summaryDivider: { width: 1, height: "100%", backgroundColor: BDR },
+  summaryValue: { fontSize: 22, fontWeight: "700", color: "#F0F0F0" },
+  summaryLabel: { fontSize: 12, marginTop: 4, fontWeight: "400", color: "#666666" },
+  summaryDivider: { width: 1, height: "100%", backgroundColor: "#222222" },
 
+  // Sugar banner
   sugarBanner: {
     flexDirection: "row",
     alignItems: "center",
@@ -344,32 +334,29 @@ const st = StyleSheet.create({
     marginBottom: 12,
     paddingHorizontal: 16,
     paddingVertical: 10,
-    borderRadius: 14,
-    backgroundColor: "rgba(255, 184, 0, 0.08)",
+    borderRadius: 12,
+    backgroundColor: "rgba(192,132,252,0.08)",
     borderWidth: 1,
-    borderColor: "rgba(255, 184, 0, 0.2)",
+    borderColor: "rgba(192,132,252,0.2)",
   },
-  sugarLabel: { fontSize: 13, fontWeight: "500", color: "#FFB800" },
-  sugarValue: { fontSize: 16, fontWeight: "700", color: "#FFB800" },
+  sugarLabel: { fontSize: 13, fontWeight: "400", color: "#A0A0A0" },
+  sugarValue: { fontSize: 16, fontWeight: "600", color: "#A0A0A0" },
 
+  // List
   listContent: { paddingHorizontal: 20, paddingBottom: 100, gap: 12 },
   section: {
-    borderRadius: 18,
+    borderRadius: 16,
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: BDR,
-    backgroundColor: SURF,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    elevation: 4,
+    borderColor: "#222222",
+    backgroundColor: "#111111",
   },
   sectionHeader: { flexDirection: "row", alignItems: "center", padding: 14, gap: 8 },
   sectionIcon: { fontSize: 18 },
-  sectionTitle: { fontSize: 16, fontWeight: "600", flex: 1, color: T1 },
-  sectionCalories: { fontSize: 14, fontWeight: "500", color: T2 },
+  sectionTitle: { fontSize: 16, fontWeight: "600", flex: 1, color: "#F0F0F0" },
+  sectionCalories: { fontSize: 14, fontWeight: "400", color: "#666666" },
 
+  // Meal item
   mealItem: {
     flexDirection: "row",
     alignItems: "center",
@@ -377,12 +364,12 @@ const st = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
     borderTopWidth: 1,
-    borderTopColor: BDR,
+    borderTopColor: "#222222",
   },
   mealInfo: { flex: 1, gap: 2, marginRight: 8 },
   mealNameRow: { flexDirection: "row", alignItems: "center", gap: 6 },
-  mealName: { fontSize: 15, fontWeight: "500", color: T1, flexShrink: 1 },
-  mealMacros: { fontSize: 12, color: T2 },
+  mealName: { fontSize: 15, fontWeight: "400", color: "#F0F0F0", flexShrink: 1 },
+  mealMacros: { fontSize: 12, color: "#888888" },
   mealActions: { flexDirection: "row", alignItems: "center", gap: 4 },
   actionButton: {
     width: 36,
@@ -392,9 +379,10 @@ const st = StyleSheet.create({
     borderRadius: 18,
   },
   mealCalContainer: { alignItems: "flex-end", marginLeft: 4 },
-  mealCalories: { fontSize: 18, fontWeight: "700", color: T1 },
-  mealCalLabel: { fontSize: 11, color: T2 },
+  mealCalories: { fontSize: 18, fontWeight: "600", color: "#F0F0F0" },
+  mealCalLabel: { fontSize: 11, color: "#666666" },
 
+  // Add meal
   addMealButton: {
     flexDirection: "row",
     alignItems: "center",
@@ -402,15 +390,16 @@ const st = StyleSheet.create({
     gap: 8,
     paddingVertical: 14,
     borderTopWidth: 1,
-    borderTopColor: BDR,
+    borderTopColor: "#222222",
   },
-  addMealText: { fontSize: 14, fontWeight: "600", color: GREEN },
+  addMealText: { fontSize: 14, fontWeight: "600", color: "#FFFFFF" },
 
+  // Empty state
   emptyState: {
     alignItems: "center",
     paddingVertical: 60,
     gap: 12,
   },
-  emptyTitle: { fontSize: 18, fontWeight: "600", color: T1 },
-  emptySubtext: { fontSize: 14, color: T2, textAlign: "center", maxWidth: 260 },
+  emptyTitle: { fontSize: 18, fontWeight: "600", color: "#F0F0F0" },
+  emptySubtext: { fontSize: 14, color: "#666666", textAlign: "center", maxWidth: 260 },
 });

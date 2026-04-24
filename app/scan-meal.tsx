@@ -23,21 +23,16 @@ import { trpc } from "@/lib/trpc";
 import { checkScanLimitForTier, incrementScanCount } from "@/lib/scan-counter";
 import { ScanLimitModal } from "@/components/scan-limit-modal";
 import * as Haptics from "expo-haptics";
+import { Typography } from "@/constants/typography";
 import { AICoachInsight } from "@/components/ai-coach-insight";
 
 
-// ─── Premium Dark + Anabolic Green ───
-const GREEN = "#39FF14";
-const GREEN_DIM = "#2BCC10";
-const GREEN_SUBTLE = "rgba(57, 255, 20, 0.08)";
-const GREEN_BORDER = "rgba(57, 255, 20, 0.15)";
-const SURF = "#141414";
-const BDR = "#1E1E1E";
-const T1 = "#F0F0F0";
-const T2 = "#7A7A7A";
-const T3 = "#444444";
-const FAT_RED = "#FF3B3B";
-const SUGAR_AMBER = "#FFB800";
+const PRIMARY_WHITE = "#FFFFFF";
+const SILVER = "#C0C0C0";
+const PROTEIN_LIGHT = "#E0E0E0";
+const CARBS_SILVER = "#B0B0B0";
+const FAT_RED = "#FF4444";
+const SUGAR_GRAY = "#A0A0A0";
 
 interface FoodItem {
   name: string;
@@ -393,7 +388,7 @@ export default function ScanMealScreen() {
           style={styles.backButton}
           activeOpacity={0.7}
         >
-          <IconSymbol name="arrow.left" size={24} color={T1} />
+          <IconSymbol name="arrow.left" size={24} color="#F0F0F0" />
         </TouchableOpacity>
         <Text style={styles.topBarTitle}>Scan Meal</Text>
         <View style={styles.backButton} />
@@ -425,7 +420,7 @@ export default function ScanMealScreen() {
           <View style={styles.cameraSection}>
             <View style={styles.cameraPlaceholder}>
               <View style={styles.cameraIconGlow}>
-                <IconSymbol name="camera.fill" size={48} color={GREEN} />
+                <IconSymbol name="camera.fill" size={48} color={"#FFFFFF"} />
               </View>
               <Text style={styles.cameraText}>Scan Your Meal</Text>
               <Text style={styles.cameraSubtext}>
@@ -449,12 +444,12 @@ export default function ScanMealScreen() {
                 activeOpacity={0.8}
               >
                 <LinearGradient
-                  colors={[GREEN, GREEN_DIM]}
+                  colors={["#444444", "#333333"]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={styles.cameraButtonGradient}
                 >
-                  <IconSymbol name="camera.fill" size={22} color="#0A0A0A" />
+                  <IconSymbol name="camera.fill" size={22} color="#FFFFFF" />
                   <Text style={styles.cameraButtonText}>Camera</Text>
                 </LinearGradient>
               </TouchableOpacity>
@@ -463,7 +458,7 @@ export default function ScanMealScreen() {
                 onPress={() => pickImage(false)}
                 activeOpacity={0.7}
               >
-                <IconSymbol name="magnifyingglass" size={22} color={GREEN} />
+                <IconSymbol name="magnifyingglass" size={22} color={"#FFFFFF"} />
                 <Text style={styles.galleryButtonText}>Gallery</Text>
               </TouchableOpacity>
             </View>
@@ -481,7 +476,7 @@ export default function ScanMealScreen() {
         {scanning && (
           <View style={styles.scanningContainer}>
             <View style={styles.scannerPulse}>
-              <ActivityIndicator size="large" color={GREEN} />
+              <ActivityIndicator size="large" color={"#FFFFFF"} />
             </View>
             <Text style={styles.scanningText}>Analyzing with AI...</Text>
             <Text style={styles.scanningSubtext}>
@@ -529,15 +524,15 @@ export default function ScanMealScreen() {
                 <Text style={styles.totalLabel}>Calories</Text>
               </View>
               <View style={styles.totalCard}>
-                <Text style={[styles.totalValue, { color: GREEN }]}>{result.totalProtein}g</Text>
+                <Text style={[styles.totalValue, { color: "#E0E0E0" }]}>{result.totalProtein}g</Text>
                 <Text style={styles.totalLabel}>Protein</Text>
               </View>
               <View style={styles.totalCard}>
-                <Text style={[styles.totalValue, { color: "#60A5FA" }]}>{result.totalCarbs}g</Text>
+                <Text style={[styles.totalValue, { color: "#B0B0B0" }]}>{result.totalCarbs}g</Text>
                 <Text style={styles.totalLabel}>Carbs</Text>
               </View>
               <View style={styles.totalCard}>
-                <Text style={[styles.totalValue, { color: "#FF3B3B" }]}>{result.totalFat}g</Text>
+                <Text style={[styles.totalValue, { color: FAT_RED }]}>{result.totalFat}g</Text>
                 <Text style={styles.totalLabel}>Fat</Text>
               </View>
             </View>
@@ -568,7 +563,7 @@ export default function ScanMealScreen() {
                   onPress={() => setShowAddModal(true)}
                   activeOpacity={0.7}
                 >
-                  <IconSymbol name="plus" size={16} color={GREEN} />
+                  <IconSymbol name="plus" size={16} color={"#FFFFFF"} />
                   <Text style={styles.addItemText}>Add Item</Text>
                 </TouchableOpacity>
               </View>
@@ -631,7 +626,7 @@ export default function ScanMealScreen() {
                           />
                           <Text style={styles.gramsUnit}>g</Text>
                           <TouchableOpacity onPress={() => handleUpdateGrams(i)} activeOpacity={0.7}>
-                            <IconSymbol name="checkmark" size={16} color={GREEN} />
+                            <IconSymbol name="checkmark" size={16} color="#C0C0C0" />
                           </TouchableOpacity>
                           <TouchableOpacity onPress={() => { setEditingIndex(null); setEditGrams(""); }} activeOpacity={0.7}>
                             <IconSymbol name="xmark" size={16} color="#FF3D3D" />
@@ -701,12 +696,12 @@ export default function ScanMealScreen() {
               activeOpacity={0.8}
             >
               <LinearGradient
-                colors={[GREEN, GREEN_DIM]}
+                colors={["#444444", "#2A2A2A"]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.confirmGradient}
               >
-                <IconSymbol name="checkmark" size={22} color="#0A0A0A" />
+                <IconSymbol name="checkmark" size={22} color="#FFFFFF" />
                 <Text style={styles.confirmButtonText}>Log This Meal</Text>
               </LinearGradient>
             </TouchableOpacity>
@@ -835,12 +830,12 @@ export default function ScanMealScreen() {
               activeOpacity={0.8}
             >
               <LinearGradient
-                colors={[GREEN, GREEN_DIM]}
+                colors={["#444444", "#2A2A2A"]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.modalAddGradient}
               >
-                <IconSymbol name="plus" size={20} color="#0A0A0A" />
+                <IconSymbol name="plus" size={20} color="#FFFFFF" />
                 <Text style={styles.modalAddText}>Add to Meal</Text>
               </LinearGradient>
             </TouchableOpacity>
@@ -864,9 +859,9 @@ export default function ScanMealScreen() {
 }
 
 function getScoreColor(score: number): string {
-  if (score >= 80) return GREEN;
-  if (score >= 60) return "#FFB800";
-  return "#FF3B3B";
+  if (score >= 80) return "#C0C0C0";
+  if (score >= 60) return "#B0B0B0";
+  return "#FF3D3D";
 }
 
 const styles = StyleSheet.create({
@@ -877,8 +872,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
-  backButton: { width: 40, height: 40, justifyContent: "center", alignItems: "center", borderRadius: 20 },
-  topBarTitle: { fontSize: 18, fontWeight: "700", color: T1 },
+  backButton: { width: 40, height: 40, justifyContent: "center", alignItems: "center" },
+  topBarTitle: { fontSize: 18, fontWeight: "600", color: "#F0F0F0" },
   scrollContent: { paddingHorizontal: 20, paddingBottom: 40 },
 
   // Error banner
@@ -904,8 +899,8 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 2,
     borderStyle: "dashed",
-    borderColor: BDR,
-    backgroundColor: SURF,
+    borderColor: "#222222",
+    backgroundColor: "#111111",
     padding: 40,
     alignItems: "center",
     gap: 12,
@@ -914,13 +909,13 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: GREEN_SUBTLE,
+    backgroundColor: "rgba(0,122,255,0.1)",
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 4,
   },
-  cameraText: { fontSize: 22, fontWeight: "700", color: T1 },
-  cameraSubtext: { fontSize: 14, textAlign: "center", lineHeight: 20, color: T2 },
+  cameraText: { fontSize: 22, fontWeight: "700", color: "#F0F0F0" },
+  cameraSubtext: { fontSize: 14, textAlign: "center", lineHeight: 20, color: "#888888" },
   buttonRow: { flexDirection: "row", gap: 12 },
   cameraButton: { flex: 1, borderRadius: 14, overflow: "hidden" },
   cameraButtonGradient: {
@@ -930,7 +925,7 @@ const styles = StyleSheet.create({
     gap: 8,
     height: 54,
   },
-  cameraButtonText: { color: "#0A0A0A", fontSize: 16, fontWeight: "700" },
+  cameraButtonText: { color: "#FFFFFF", fontSize: 16, fontWeight: "600" },
   galleryButton: {
     flex: 1,
     flexDirection: "row",
@@ -940,10 +935,10 @@ const styles = StyleSheet.create({
     height: 54,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: BDR,
-    backgroundColor: SURF,
+    borderColor: "#222222",
+    backgroundColor: "#111111",
   },
-  galleryButtonText: { color: T1, fontSize: 16, fontWeight: "600" },
+  galleryButtonText: { color: "#FFFFFF", fontSize: 16, fontWeight: "600" },
 
   // Image preview
   imagePreview: { borderRadius: 16, overflow: "hidden", marginBottom: 16 },
@@ -955,13 +950,13 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: GREEN_SUBTLE,
+    backgroundColor: "rgba(0,122,255,0.1)",
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 4,
   },
-  scanningText: { fontSize: 18, fontWeight: "700", color: T1 },
-  scanningSubtext: { fontSize: 14, color: T2 },
+  scanningText: { fontSize: 18, fontWeight: "600", color: "#FFFFFF" },
+  scanningSubtext: { fontSize: 14, color: "#888888" },
 
   // Results
   resultContainer: { gap: 16 },
@@ -970,34 +965,24 @@ const styles = StyleSheet.create({
     padding: 22,
     borderRadius: 20,
     borderWidth: 2,
-    backgroundColor: SURF,
+    backgroundColor: "#111111",
     overflow: "hidden",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 6,
   },
-  scoreValue: { fontSize: 56, fontWeight: "800" },
-  scoreLabel: { fontSize: 11, fontWeight: "700", letterSpacing: 2.5, marginTop: 4 },
-  mealName: { fontSize: 22, fontWeight: "700", textAlign: "center", color: T1 },
+  scoreValue: { fontSize: 56, fontWeight: "700" },
+  scoreLabel: { fontSize: 11, fontWeight: "400", letterSpacing: 2.5, marginTop: 4 },
+  mealName: { fontSize: 22, fontWeight: "700", textAlign: "center", color: "#F0F0F0" },
   totalsRow: { flexDirection: "row", gap: 8 },
   totalCard: {
     flex: 1,
     borderRadius: 12,
     padding: 12,
     alignItems: "center",
-    backgroundColor: SURF,
+    backgroundColor: "#111111",
     borderWidth: 1,
-    borderColor: BDR,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
+    borderColor: "#222222",
   },
-  totalValue: { fontSize: 18, fontWeight: "700", color: T1 },
-  totalLabel: { fontSize: 10, fontWeight: "500", marginTop: 4, color: T2 },
+  totalValue: { fontSize: 18, fontWeight: "600", color: "#F0F0F0" },
+  totalLabel: { fontSize: 10, fontWeight: "400", marginTop: 4, color: "#666666" },
 
   // Sugar row
   sugarRow: {
@@ -1007,13 +992,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 12,
-    backgroundColor: "rgba(255, 184, 0, 0.08)",
+    backgroundColor: "rgba(192,132,252,0.08)",
     borderWidth: 1,
-    borderColor: "rgba(255, 184, 0, 0.2)",
+    borderColor: "rgba(192,132,252,0.2)",
   },
   sugarIcon: { fontSize: 16 },
-  sugarLabel: { fontSize: 14, fontWeight: "500", flex: 1, color: SUGAR_AMBER },
-  sugarValue: { fontSize: 18, fontWeight: "700", color: SUGAR_AMBER },
+  sugarLabel: { fontSize: 14, fontWeight: "400", flex: 1, color: "#A0A0A0" },
+  sugarValue: { fontSize: 18, fontWeight: "600", color: "#A0A0A0" },
 
   // Confidence banner
   confidenceBanner: {
@@ -1033,14 +1018,9 @@ const styles = StyleSheet.create({
   foodList: {
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: BDR,
-    backgroundColor: SURF,
+    borderColor: "#222222",
+    backgroundColor: "#111111",
     overflow: "hidden",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    elevation: 4,
   },
   foodListHeader: {
     flexDirection: "row",
@@ -1048,7 +1028,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     padding: 14,
   },
-  foodListTitle: { fontSize: 15, fontWeight: "600", color: T1 },
+  foodListTitle: { fontSize: 15, fontWeight: "400", color: "#F0F0F0" },
   addItemButton: {
     flexDirection: "row",
     alignItems: "center",
@@ -1056,9 +1036,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
-    backgroundColor: GREEN_SUBTLE,
+    backgroundColor: "rgba(0,122,255,0.1)",
   },
-  addItemText: { fontSize: 13, fontWeight: "600", color: GREEN },
+  addItemText: { fontSize: 13, fontWeight: "600", color: "#FFFFFF" },
 
   // Food item
   foodItem: {
@@ -1093,11 +1073,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
-     backgroundColor: GREEN_SUBTLE,
-    borderWidth: 1,
-    borderColor: GREEN_BORDER,
+    backgroundColor: "rgba(255,255,255,0.05)",
   },
-  gramsText: { fontSize: 13, fontWeight: "500", color: GREEN },
+  gramsText: { fontSize: 13, fontWeight: "400", color: "#F0F0F0" },
   gramsEditRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -1142,7 +1120,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     backgroundColor: "rgba(0,230,118,0.15)",
   },
-  confirmYesText: { fontSize: 12, fontWeight: "600", color: GREEN },
+  confirmYesText: { fontSize: 12, fontWeight: "600", color: "#C0C0C0" },
   confirmNo: {
     paddingHorizontal: 12,
     paddingVertical: 4,
@@ -1161,9 +1139,9 @@ const styles = StyleSheet.create({
     height: 54,
     borderRadius: 27,
   },
-  confirmButtonText: { color: "#0A0A0A", fontSize: 17, fontWeight: "700" },
+  confirmButtonText: { color: "#FFFFFF", fontSize: 17, fontWeight: "600" },
   rescanButton: { alignItems: "center", padding: 12 },
-  rescanText: { fontSize: 15, fontWeight: "600", color: GREEN },
+  rescanText: { fontSize: 15, fontWeight: "600", color: "#FFFFFF" },
 
   // Modal
   modalOverlay: {
@@ -1172,7 +1150,7 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   modalContent: {
-    backgroundColor: SURF,
+    backgroundColor: "#111111",
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     padding: 20,
@@ -1184,7 +1162,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 16,
   },
-  modalTitle: { fontSize: 20, fontWeight: "700", color: T1 },
+  modalTitle: { fontSize: 20, fontWeight: "600", color: "#F0F0F0" },
   modalScroll: { marginBottom: 16 },
   inputGroup: { marginBottom: 12 },
   inputLabel: { fontSize: 12, fontWeight: "400", color: "#888888", marginBottom: 6 },
@@ -1209,7 +1187,7 @@ const styles = StyleSheet.create({
     height: 50,
     borderRadius: 14,
   },
-  modalAddText: { color: "#0A0A0A", fontSize: 16, fontWeight: "700" },
+  modalAddText: { color: "#FFFFFF", fontSize: 16, fontWeight: "600" },
 
   // Category picker
   categorySection: { marginBottom: 16 },
@@ -1238,8 +1216,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#111111",
   },
   categoryChipActive: {
-    borderColor: GREEN_BORDER,
-    backgroundColor: GREEN_SUBTLE,
+    borderColor: "#555555",
+    backgroundColor: "#222222",
   },
   categoryIcon: { fontSize: 14 },
   categoryLabel: {
@@ -1248,7 +1226,7 @@ const styles = StyleSheet.create({
     color: "#666666",
   },
   categoryLabelActive: {
-    color: GREEN,
+    color: "#FFFFFF",
     fontWeight: "600" as const,
   },
 

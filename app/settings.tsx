@@ -27,11 +27,7 @@ import { Typography } from "@/constants/typography";
 import { ProteinWidgetSmall, ProteinWidgetMedium } from "@/components/protein-widget";
 
 
-const GREEN = "#39FF14";
-const GREEN_SUBTLE = "rgba(57, 255, 20, 0.08)";
-const GREEN_BORDER = "rgba(57, 255, 20, 0.15)";
-const SURF = "#141414";
-const BDR = "#1E1E1E";
+const PRIMARY_WHITE = "#FFFFFF";
 
 const TIER_LABELS: Record<string, string> = {
   none: "No Plan",
@@ -41,8 +37,8 @@ const TIER_LABELS: Record<string, string> = {
 
 const TIER_COLORS: Record<string, string> = {
   none: "#444444",
-  monthly: GREEN,
-  annual: GREEN,
+  monthly: "#C0C0C0",
+  annual: "#FFFFFF",
 };
 
 // Subscription management is handled through native App Store / Google Play
@@ -521,14 +517,9 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: BDR,
-    backgroundColor: SURF,
+    borderColor: "#222222",
+    backgroundColor: "#111111",
     overflow: "hidden",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    elevation: 4,
   },
   row: {
     flexDirection: "row",
@@ -563,7 +554,7 @@ const styles = StyleSheet.create({
   divider: {
     height: 1,
     marginLeft: 16,
-    backgroundColor: BDR,
+    backgroundColor: "#222222",
   },
   logoutButton: {
     marginTop: 32,
@@ -598,9 +589,9 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 24,
     gap: 14,
-    backgroundColor: SURF,
+    backgroundColor: "#111111",
     borderWidth: 1,
-    borderColor: BDR,
+    borderColor: "#222222",
   },
   modalTitle: {
     fontSize: 20,
@@ -618,8 +609,8 @@ const styles = StyleSheet.create({
   },
   modalInput: {
     borderWidth: 1,
-    borderColor: BDR,
-    backgroundColor: "#0A0A0A",
+    borderColor: "#222222",
+    backgroundColor: "#000000",
     borderRadius: 10,
     paddingHorizontal: 14,
     height: 44,
@@ -650,20 +641,20 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 48,
     borderRadius: 14,
-    backgroundColor: GREEN,
+    backgroundColor: "#444444",
     justifyContent: "center",
     alignItems: "center",
   },
   modalSaveText: {
     fontSize: 16,
-    fontWeight: "700",
-    color: "#0A0A0A",
+    fontWeight: "600",
+    color: "#FFFFFF",
   },
   widgetPreviewContainer: {
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: BDR,
-    backgroundColor: SURF,
+    borderColor: "#222222",
+    backgroundColor: "#111111",
     padding: 16,
     alignItems: "center",
     gap: 12,
@@ -687,17 +678,17 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
   upgradeBadge: {
-    backgroundColor: GREEN_SUBTLE,
+    backgroundColor: "#222222",
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderWidth: 1,
-    borderColor: GREEN_BORDER,
+    borderColor: "#333333",
   },
   upgradeBadgeText: {
     fontSize: 10,
     fontWeight: "700",
     letterSpacing: 1.5,
-    color: GREEN,
+    color: "#FFFFFF",
   },
 });
