@@ -581,4 +581,4 @@
 
 ## Revert UI and Add Guest Access
 - [x] Revert UI/UX back to original V1 design (rolled back to bed7e1df)
-- [ ] Add "Guest Access" button to auth screen that bypasses login and goes to dashboard
+- [x] Add "Guest Access" button to auth screen that bypasses login and goes to dashboard
